@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, UploadCloud } from "lucide-react";
 import { useInvestorData, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/InvestNow.css";
 
@@ -13,6 +13,8 @@ const tenureOptions = [
   { months: 36, rate: 13 },
 ];
 
+const UPI_ID = "inrfs@ybl";
+
 export default function InvestNow() {
   const navigate = useNavigate();
   const { addInvestment } = useInvestorData();
@@ -23,6 +25,10 @@ export default function InvestNow() {
   const [processing, setProcessing] = useState(false);
   const [createdBond, setCreatedBond] = useState(null);
 
+  const [utr, setUtr] = useState("");
+  const [screenshot, setScreenshot] = useState(null);
+  const [screenshotName, setScreenshotName] = useState("");
+
   const selectedTenure = tenureOptions.find((t) => t.months === tenure);
 
   const { monthlyInterest, totalInterest, maturityAmount } = useMemo(() => {
@@ -31,10 +37,21 @@ export default function InvestNow() {
     return { monthlyInterest: monthly, totalInterest: total, maturityAmount: amount + total };
   }, [amount, tenure, selectedTenure]);
 
-  const handlePay = () => {
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setScreenshot(file);
+      setScreenshotName(file.name);
+    }
+  };
+
+  const canSubmit = utr.trim().length > 0 && screenshot;
+
+  const handleSubmitInvestment = () => {
+    if (!canSubmit) return;
     setProcessing(true);
     setTimeout(() => {
-      const inv = addInvestment({ amount, rateValue: selectedTenure.rate, tenure });
+      const inv = addInvestment({ amount, rateValue: selectedTenure.rate, tenure, utr, status: "pending" });
       setCreatedBond(inv);
       setProcessing(false);
       setStep(3);
@@ -128,28 +145,50 @@ export default function InvestNow() {
 
           {step === 2 && (
             <div className="invest-payment-step">
-              <p className="invest-field-label">Choose Payment Method</p>
-              <div className="invest-payment-options">
-                <label className="invest-payment-option invest-payment-option--active">
-                  <input type="radio" name="pay" defaultChecked /> Net Banking
-                </label>
-                <label className="invest-payment-option">
-                  <input type="radio" name="pay" /> UPI
-                </label>
-                <label className="invest-payment-option">
-                  <input type="radio" name="pay" /> NEFT / RTGS
-                </label>
+              <div className="invest-upi-box">
+                <p className="invest-upi-title">Pay via UPI</p>
+                <p className="invest-upi-id">UPI ID: {UPI_ID}</p>
+                <p className="invest-upi-amount">{formatINR(amount)}</p>
               </div>
-              <p className="invest-payment-note">
-                You're about to pay <strong>{formatINR(amount)}</strong> for a {tenure}-month bond at{" "}
-                {selectedTenure.rate}% p.a.
-              </p>
+
+              <label className="invest-field-label" htmlFor="utr">
+                Transaction Reference Number <span className="invest-required">*</span>
+              </label>
+              <div className="invest-amount-input">
+                <input
+                  id="utr"
+                  type="text"
+                  placeholder="Enter UTR / Transaction ID"
+                  value={utr}
+                  onChange={(e) => setUtr(e.target.value)}
+                />
+              </div>
+
+              <label className="invest-field-label" htmlFor="screenshot">
+                Upload Payment Screenshot <span className="invest-required">*</span>
+              </label>
+              <label htmlFor="screenshot" className="invest-upload-box">
+                <UploadCloud size={22} />
+                <span>{screenshotName || "Click to upload payment screenshot"}</span>
+              </label>
+              <input
+                id="screenshot"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="invest-upload-input-hidden"
+              />
+
               <div className="invest-form-actions">
                 <button className="investor-btn investor-btn--outline" onClick={() => setStep(1)}>
                   &lt; Back
                 </button>
-                <button className="investor-btn investor-btn--primary" onClick={handlePay} disabled={processing}>
-                  {processing ? "Processing..." : `Pay ${formatINR(amount)}`}
+                <button
+                  className="investor-btn investor-btn--primary"
+                  onClick={handleSubmitInvestment}
+                  disabled={!canSubmit || processing}
+                >
+                  {processing ? "Submitting..." : "Submit Investment"} &gt;
                 </button>
               </div>
             </div>
@@ -160,17 +199,16 @@ export default function InvestNow() {
               <span className="invest-confirmation-icon">
                 <CheckCircle2 size={40} />
               </span>
-              <p className="invest-confirmation-title">Investment Successful!</p>
+              <p className="invest-confirmation-title">Investment Submitted!</p>
               <p className="invest-confirmation-sub">
-                Bond <strong className="mono">{createdBond.bond}</strong> has been created and will reflect in
-                your dashboard, bonds and investments right away.
+                Your investment is pending admin verification. You'll be notified once approved.
               </p>
               <div className="invest-form-actions invest-form-actions--center">
-                <button className="investor-btn investor-btn--outline" onClick={() => navigate("/investor/my-bonds")}>
-                  View My Bonds
-                </button>
                 <button className="investor-btn investor-btn--primary" onClick={() => navigate("/investor/dashboard")}>
                   Go to Dashboard
+                </button>
+                <button className="investor-btn investor-btn--outline" onClick={() => navigate("/investor/my-investments")}>
+                  View Investments
                 </button>
               </div>
             </div>

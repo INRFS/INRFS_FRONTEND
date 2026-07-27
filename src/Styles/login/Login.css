@@ -80,7 +80,31 @@
   flex-direction: column;
   gap: 12px;
 }
+.auth-logo-img {
+  height: 30px;
+  width: auto;
+  border-radius: 5px;
+  object-fit: contain;
+}
 
+
+.auth-error {
+  font-size: 12px;
+  color: #e5484d;
+  background: #fdecec;
+  border: 1px solid #f6c6c6;
+  border-radius: 7px;
+  padding: 8px 11px;
+  margin: -4px 0 14px;
+}
+
+.auth-back-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
 .auth-feature-list li {
   display: flex;
   align-items: center;

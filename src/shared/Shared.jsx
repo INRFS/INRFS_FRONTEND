@@ -6,17 +6,35 @@ export function formatINR(n) {
     return "₹" + Number(n || 0).toLocaleString("en-IN");
 }
 
-// const statusClassMap = {
-//     Active: "status-badge--active",
-//     Completed: "status-badge--completed",
-//     Approved: "status-badge--approved",
-//     "Pending Approval": "status-badge--pending",
-//     Rejected: "status-badge--rejected",
-// };
+const statusStyleMap = {
+    Approved: { bg: "#dcfce7", color: "#16a34a" },
+    Verified: { bg: "#dcfce7", color: "#16a34a" },
+    Active: { bg: "#dcfce7", color: "#16a34a" },
+    Completed: { bg: "#dcfce7", color: "#16a34a" },
+    Pending: { bg: "#fef3c7", color: "#d97706" },
+    "Pending Approval": { bg: "#fef3c7", color: "#d97706" },
+    Rejected: { bg: "#fee2e2", color: "#dc2626" },
+    Matured: { bg: "#eef1ff", color: "#2f5cf0" },
+};
 
 export function StatusBadge({ status }) {
-    // const modifier = statusClassMap[status] || "status-badge--completed";
-    // return <span className={'status-badge ${modifier}'}>{status}</span>;
+    const style = statusStyleMap[status] || { bg: "#f1f5f9", color: "#64748b" };
+    return (
+        <span
+            style={{
+                display: "inline-block",
+                background: style.bg,
+                color: style.color,
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "4px 10px",
+                borderRadius: "999px",
+                whiteSpace: "nowrap",
+            }}
+        >
+            {status}
+        </span>
+    );
 }
 
 export function StatCard({ label, value, accent }) {

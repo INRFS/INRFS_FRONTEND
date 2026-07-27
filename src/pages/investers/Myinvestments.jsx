@@ -8,6 +8,10 @@ export default function MyInvestments() {
   const navigate = useNavigate();
   const { investments } = useInvestorData();
 
+  const handleViewBond = (bondNumber) => {
+    navigate(`/investor/bond-certificate/${encodeURIComponent(bondNumber)}`);
+  };
+
   return (
     <div className="investor-page">
       <div className="investor-page-actions investor-page-actions--end">
@@ -39,7 +43,13 @@ export default function MyInvestments() {
           <tbody>
             {investments.map((inv) => (
               <tr key={inv.id}>
-                <td className="mono link">{inv.bond}</td>
+                <td
+                  className="mono link"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => handleViewBond(inv.bond)}
+                >
+                  {inv.bond}
+                </td>
                 <td className="mono">{formatINR(inv.amount)}</td>
                 <td><span className="rate-pill">{inv.rate}</span></td>
                 <td>{inv.invested}</td>
@@ -48,8 +58,17 @@ export default function MyInvestments() {
                 <td className="mono">{formatINR(inv.earned)}</td>
                 <td><StatusBadge status={inv.status} /></td>
                 <td className="admin-table-actions">
-                  <button title="View"><Eye size={14} /></button>
-                  <button title="Bond" className="admin-icon-btn--primary"><Download size={14} /> Bond</button>
+                  <button type="button" title="View" onClick={() => handleViewBond(inv.bond)}>
+                    <Eye size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    title="Bond"
+                    className="admin-icon-btn--primary"
+                    onClick={() => handleViewBond(inv.bond)}
+                  >
+                    <Download size={14} /> Bond
+                  </button>
                 </td>
               </tr>
             ))}

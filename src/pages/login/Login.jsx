@@ -42,11 +42,29 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState("investor");
+
   const [investorId, setInvestorId] = useState("");
   const [mobile, setMobile] = useState("");
-  const [step, setStep] = useState("form"); // "form" | "otp"
+  const [step, setStep] = useState("form");
   const [otp, setOtp] = useState("");
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
+
+  const isInvestor = role === "investor";
+
+  const handleRoleChange = (id) => {
+    setRole(id);
+    setError("");
+    setStep("form");
+    setOtp("");
+    setInvestorId("");
+    setMobile("");
+    setUsername("");
+    setPassword("");
+  };
 
   const handleSendOtp = () => {
     setError("");
@@ -72,12 +90,21 @@ export default function Login() {
     setError("");
   };
 
+  const handleStaffLogin = () => {
+    setError("");
+    if (!username.trim() || !password.trim()) {
+      setError("Please enter both username and password.");
+      return;
+    }
+    navigate(roleRedirects[role] || "/");
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-left">
         <div className="auth-logo">
-          <span className="auth-logo-badge">IN</span>
-          <span className="auth-logo-text">INRFS</span>
+          <img src="/assets/logo.JPG" alt="INRFS Logo" className="auth-logo-img" />
+
         </div>
 
         <h1 className="auth-left-title">
@@ -116,7 +143,7 @@ export default function Login() {
                     type="button"
                     key={id}
                     className={`role-card${role === id ? " role-card-active" : ""}`}
-                    onClick={() => setRole(id)}
+                    onClick={() => handleRoleChange(id)}
                   >
                     <span className="role-card-icon">
                       <Icon size={18} />
@@ -127,49 +154,97 @@ export default function Login() {
                 ))}
               </div>
 
-              <label className="auth-field-label" htmlFor="investorId">
-                Investor ID
-              </label>
-              <div className="auth-input">
-                <User size={16} className="auth-input-icon" />
-                <input
-                  id="investorId"
-                  type="text"
-                  placeholder="Enter your Investor ID (e.g. INV001)"
-                  value={investorId}
-                  onChange={(e) => setInvestorId(e.target.value)}
-                />
-              </div>
+              {isInvestor && (
+                <>
+                  <label className="auth-field-label" htmlFor="investorId">
+                    Investor ID
+                  </label>
+                  <div className="auth-input">
+                    <User size={16} className="auth-input-icon" />
+                    <input
+                      id="investorId"
+                      type="text"
+                      placeholder="Enter your Investor ID (e.g. INV001)"
+                      value={investorId}
+                      onChange={(e) => setInvestorId(e.target.value)}
+                    />
+                  </div>
 
-              <label className="auth-field-label" htmlFor="mobile">
-                Registered Mobile Number
-              </label>
-              <div className="auth-input">
-                <Phone size={16} className="auth-input-icon" />
-                <input
-                  id="mobile"
-                  type="tel"
-                  placeholder="+91 XXXXX XXXXX"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
-                />
-              </div>
+                  <label className="auth-field-label" htmlFor="mobile">
+                    Registered Mobile Number
+                  </label>
+                  <div className="auth-input">
+                    <Phone size={16} className="auth-input-icon" />
+                    <input
+                      id="mobile"
+                      type="tel"
+                      placeholder="+91 XXXXX XXXXX"
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value)}
+                    />
+                  </div>
 
-              {error && <p className="auth-error">{error}</p>}
+                  {error && <p className="auth-error">{error}</p>}
 
-              <button
-                type="button"
-                className="btn btn-primary btn-block"
-                onClick={handleSendOtp}
-              >
-                Send OTP <ArrowRight size={16} />
-              </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-block"
+                    onClick={handleSendOtp}
+                  >
+                    Send OTP <ArrowRight size={16} />
+                  </button>
+                </>
+              )}
+
+              {!isInvestor && (
+                <>
+                  <label className="auth-field-label" htmlFor="username">
+                    Username
+                  </label>
+                  <div className="auth-input">
+                    <User size={16} className="auth-input-icon" />
+                    <input
+                      id="username"
+                      type="text"
+                      placeholder="Enter your username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                    />
+                  </div>
+
+                  <label className="auth-field-label" htmlFor="password">
+                    Password
+                  </label>
+                  <div className="auth-input">
+                    <Lock size={16} className="auth-input-icon" />
+                    <input
+                      id="password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+
+                  {error && <p className="auth-error">{error}</p>}
+
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-block"
+                    onClick={handleStaffLogin}
+                  >
+                    Login <ArrowRight size={16} />
+                  </button>
+                </>
+              )}
 
               <div className="auth-divider" />
 
-              <p className="auth-register-hint">
-                New investor? <a href="/register">Register Now</a>
-              </p>
+              {isInvestor && (
+                <p className="auth-register-hint">
+                  New investor? <a href="/register">Register Now</a>
+                </p>
+              )}
 
               <a href="/" className="auth-back-link">
                 <ChevronLeft size={15} /> Back to Home
@@ -177,7 +252,7 @@ export default function Login() {
             </>
           )}
 
-          {step === "otp" && (
+          {step === "otp" && isInvestor && (
             <>
               <h2 className="auth-form-title">Verify OTP</h2>
               <p className="auth-form-subtitle">

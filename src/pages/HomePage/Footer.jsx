@@ -7,8 +7,11 @@ export default function Footer() {
       <div className="footer-grid">
         <div className="footer-brand">
           <div className="inrfs-logo">
-            <span className="inrfs-logo-badge">IN</span>
-            <span className="inrfs-logo-text footer-logo-text">INRFS</span>
+             <img
+            src="/assets/logo.jpg"
+            alt="INRFS Logo"
+            className="inrfs-logo-img"
+          />
           </div>
           <p>
             India's trusted investor management and fixed-income investment

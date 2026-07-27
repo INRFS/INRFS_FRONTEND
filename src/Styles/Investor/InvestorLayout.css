@@ -61,6 +61,12 @@
   background: transparent; border: 1px solid #dc2626; color: #f87171;
   padding: 8px; border-radius: 8px; font-size: 12px; cursor: pointer;
 }
+.auth-logo-img {
+  height: 30px;
+  width: 40%;
+  border-radius: 5px;
+  object-fit: contain;
+}
 .investor-logout:hover { background: rgba(220,38,38,0.1); }
 
 .investor-main {

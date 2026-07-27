@@ -12,6 +12,13 @@
   gap: 36px;
   padding-bottom: 36px;
 }
+.inrfs-logo-img {
+  height: 20px;  
+  width: auto;
+  object-fit: contain;
+  background: #9aa1c7;
+  
+}
 
 .footer-logo-text {
   color: #ffffff;

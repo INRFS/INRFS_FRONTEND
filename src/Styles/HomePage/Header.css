@@ -21,6 +21,11 @@
   align-items: center;
   gap: 10px;
 }
+.inrfs-logo-img {
+  height: 20px;  
+  width: auto;
+  object-fit: contain;
+}
 
 .inrfs-logo-badge {
   width: 30px;

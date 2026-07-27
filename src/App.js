@@ -27,6 +27,7 @@ import MyInvestments from "./pages/investers/Myinvestments";
 import InvestorNotifications from "./pages/investers/Notifications";
 import InvestorProfile from "./pages/investers/Profile";
 import InvestorSettings from "./pages/investers/Settings";
+import BondCertificate from "./pages/investers/bondCertficate";
 
 function App() {
   return (
@@ -60,6 +61,7 @@ function App() {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<InvestorDashboard />} />
+           <Route path="bond-certificate/:bondId" element={<BondCertificate />} />
           <Route path="invest-now" element={<InvestNow />} />
           <Route path="my-bonds" element={<MyBonds />} />
           <Route path="my-investments" element={<MyInvestments />} />

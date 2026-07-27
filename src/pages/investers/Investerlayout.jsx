@@ -49,7 +49,8 @@ export default function InvestorLayout() {
       <aside className="investor-sidebar">
         <div>
           <div className="investor-logo">
-            <span className="investor-logo-badge">IN</span>
+             <img src="/assets/logo.JPG" alt="INRFS Logo" className="auth-logo-img" />
+           
             <div>
               <div className="investor-logo-title">INRFS</div>
               <div className="investor-logo-sub">INVESTMENT PORTAL</div>

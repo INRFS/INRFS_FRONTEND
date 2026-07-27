@@ -1,16 +1,136 @@
-.settings-layout { max-width: 620px; }
+.investor-page-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f1729;
+  margin: 0 0 20px;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .settings-card {
-  background: #fff; border-radius: 12px; border: 1px solid #eef1f7;
-  padding: 20px; display: flex; flex-direction: column;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eef1f7;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
+
+.settings-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f1729;
+  margin: 0 0 8px;
+}
+
 .settings-toggle-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 0; border-bottom: 1px solid #f1f4f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f4f9;
 }
-.settings-toggle-title { font-size: 13.5px; font-weight: 600; color: #1e293b; margin: 0; }
-.settings-toggle-desc { font-size: 12px; color: #94a3b8; margin: 2px 0 0; }
-.settings-field-label { font-size: 12.5px; font-weight: 600; color: #334155; margin: 16px 0 6px; }
+
+.settings-toggle-row--last {
+  border-bottom: none;
+}
+
+.settings-toggle-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.settings-toggle-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 2px 0 0;
+}
+
+/* Toggle switch */
+.settings-switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: #cbd5e1;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.settings-switch--on {
+  background: #2f5cf0;
+}
+
+.settings-switch__knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: left 0.2s ease;
+}
+
+.settings-switch--on .settings-switch__knob {
+  left: 21px;
+}
+
+/* Password fields */
+.settings-field-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  margin: 16px 0 6px;
+  display: block;
+}
+
 .settings-input {
-  border: 1px solid #e2e8f0; border-radius: 8px; padding: 9px 12px;
-  font-size: 13px; outline: none; margin-bottom: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  outline: none;
+  margin-bottom: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.settings-input:focus {
+  border-color: #2f5cf0;
+}
+
+.settings-update-btn {
+  margin-top: 16px;
+  background: #2f5cf0;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.settings-update-btn:hover {
+  background: #1e46d6;
 }

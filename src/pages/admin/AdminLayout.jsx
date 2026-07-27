@@ -9,8 +9,10 @@ import {
   Activity,
   BarChart3,
   Bell,
+  User,
   LogOut,
   Search,
+  Settings,
 } from "lucide-react";
 import "../../Styles/Admin/AdminLayout.css";
 
@@ -23,6 +25,8 @@ const navItems = [
   { to: "/admin/settlement", label: "Settlement", icon: Activity },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
   { to: "/admin/notifications", label: "Notifications", icon: Bell },
+  { to: "/admin/profile", label: "Profile", icon: User },
+  { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminLayout({ breadcrumb = ["Home", "Admin Portal"] }) {
@@ -36,7 +40,8 @@ export default function AdminLayout({ breadcrumb = ["Home", "Admin Portal"] }) {
     <div className="admin-shell">
       <aside className="admin-sidebar">
         <div className="admin-logo">
-          <span className="admin-logo-badge">IN</span>
+          <img src="/assets/logo.JPG" alt="INRFS Logo" className="auth-logo-img" />
+          
           <div>
             <div className="admin-logo-title">INRFS</div>
             <div className="admin-logo-sub">INVESTMENT PORTAL</div>

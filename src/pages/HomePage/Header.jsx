@@ -9,8 +9,11 @@ export default function Header() {
     <header className="inrfs-navbar">
       <div className="inrfs-navbar-inner">
         <div className="inrfs-logo">
-          <span className="inrfs-logo-badge">IN</span>
-          <span className="inrfs-logo-text">INRFS</span>
+          <img
+            src="/assets/logo.jpg"
+            alt="INRFS Logo"
+            className="inrfs-logo-img"
+          />
         </div>
         <nav className="inrfs-nav-links">
           <a href="#about">About</a>
