@@ -8,6 +8,7 @@ export default function MyBonds() {
   const navigate = useNavigate();
   const { investments } = useInvestorData();
 
+  
   const handleViewBond = (bondNumber) => {
     navigate(`/investor/bond-certificate/${encodeURIComponent(bondNumber)}`);
   };

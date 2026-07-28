@@ -113,6 +113,7 @@
   display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0;
   border-radius: 8px; padding: 12px; font-size: 13px; cursor: pointer;
 }
+
 .invest-payment-option--active { border-color: #2f5cf0; background: #f5f8ff; }
 .invest-payment-note { font-size: 13px; color: #64748b; margin-top: 16px; }
 

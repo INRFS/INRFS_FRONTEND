@@ -7,6 +7,7 @@ export default function PersonalInfoStep({ formData, setFormData, onNext }) {
 
   return (
     <>
+    
       <div className="reg-form-grid">
         <div className="reg-field">
           <label>

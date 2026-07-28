@@ -8,6 +8,7 @@
   width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
 }
+
 .notif-icon--success { background: #dcfce7; color: #16a34a; }
 .notif-icon--info { background: #e0e7ff; color: #4338ca; }
 .notif-icon--warning { background: #fef3c7; color: #d97706; }

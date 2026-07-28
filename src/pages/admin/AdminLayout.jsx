@@ -29,6 +29,7 @@ const navItems = [
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
+
 export default function AdminLayout({ breadcrumb = ["Home", "Admin Portal"] }) {
   const navigate = useNavigate();
 

@@ -13,6 +13,7 @@ const reviewRows = [
   { key: "pin", label: "PIN Code" },
 ];
 
+
 export default function ReviewSubmitStep({
   formData,
   agreed,

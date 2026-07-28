@@ -13,6 +13,7 @@ const tenureOptions = [
   { months: 36, rate: 13 },
 ];
 
+
 const UPI_ID = "inrfs@ybl";
 
 export default function InvestNow() {

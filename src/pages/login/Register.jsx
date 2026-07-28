@@ -9,6 +9,7 @@ const steps = [
   { id: 2, label: "Review & Submit" },
 ];
 
+
 export default function Register() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({

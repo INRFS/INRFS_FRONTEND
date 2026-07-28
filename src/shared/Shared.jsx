@@ -6,6 +6,7 @@ export function formatINR(n) {
     return "₹" + Number(n || 0).toLocaleString("en-IN");
 }
 
+
 const statusStyleMap = {
     Approved: { bg: "#dcfce7", color: "#16a34a" },
     Verified: { bg: "#dcfce7", color: "#16a34a" },

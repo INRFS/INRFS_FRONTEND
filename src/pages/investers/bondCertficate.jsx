@@ -6,6 +6,7 @@ import jsPDF from "jspdf";
 import { useInvestorData, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/BondCertificate.css";
 
+
 function amountInWords(num) {
   const a = [
     "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",

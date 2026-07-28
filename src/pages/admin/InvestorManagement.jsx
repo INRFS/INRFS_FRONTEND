@@ -256,6 +256,7 @@ export default function InvestorManagement() {
                     </button>
                     <button className="im-icon-btn">
                       <Pencil size={14} />
+                  
                     </button>
                     <button className="im-icon-btn im-icon-btn-danger">
                       <Trash2 size={14} />

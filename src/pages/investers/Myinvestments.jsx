@@ -12,6 +12,7 @@ export default function MyInvestments() {
     navigate(`/investor/bond-certificate/${encodeURIComponent(bondNumber)}`);
   };
 
+  
   return (
     <div className="investor-page">
       <div className="investor-page-actions investor-page-actions--end">

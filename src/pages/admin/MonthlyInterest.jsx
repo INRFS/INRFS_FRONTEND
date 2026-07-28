@@ -9,6 +9,7 @@ const initialRows = [
   { investor: "Vikram Singh", bond: "BND-2025-007", amount: 3385, due: "28 Jul 2025", ref: "-", status: "Overdue" },
 ];
 
+
 export default function MonthlyInterest() {
   const [rows, setRows] = useState(initialRows);
 

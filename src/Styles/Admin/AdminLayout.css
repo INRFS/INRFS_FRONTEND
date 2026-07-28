@@ -16,6 +16,7 @@
   --red: #dc2626;
   --red-soft: #fdecec;
 
+  
   min-height: 100vh;
   display: flex;
   background: var(--bg-page);
