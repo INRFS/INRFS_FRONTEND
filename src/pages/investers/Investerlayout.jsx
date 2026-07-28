@@ -7,7 +7,7 @@ import {
   Award,
   Bell,
   User,
-  Settings as SettingsIcon,
+  // Settings as SettingsIcon,
   LogOut,
   Search,
 } from "lucide-react";
@@ -32,9 +32,9 @@ export default function InvestorLayout() {
     { to: "/investor/invest-now", label: "Invest Now", icon: Plus },
     { to: "/investor/my-investments", label: "My Investments", icon: TrendingUp },
     { to: "/investor/my-bonds", label: "My Bonds", icon: Award },
-    { to: "/investor/notifications", label: "Notifications", icon: Bell, badge: unreadCount },
+    // { to: "/investor/notifications", label: "Notifications", icon: Bell, badge: unreadCount },
     { to: "/investor/profile", label: "Profile", icon: User },
-    { to: "/investor/settings", label: "Settings", icon: SettingsIcon },
+    // { to: "/investor/settings", label: "Settings", icon: SettingsIcon },
   ];
 
   const activeItem = navItems.find((item) => location.pathname.startsWith(item.to));

@@ -24,7 +24,7 @@ const navItems = [
   { to: "/admin/monthly-interest", label: "Monthly Interest", icon: DollarSign },
   { to: "/admin/settlement", label: "Settlement", icon: Activity },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { to: "/admin/notifications", label: "Notifications", icon: Bell },
+  // { to: "/admin/notifications", label: "Notifications", icon: Bell },
   { to: "/admin/profile", label: "Profile", icon: User },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];

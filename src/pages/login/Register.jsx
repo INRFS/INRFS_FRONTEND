@@ -1,38 +1,30 @@
 import React, { useState } from "react";
 import PersonalInfoStep from "./Personalinfo";
-import UploadDocumentsStep from "./UploadDocuments";
 import ReviewSubmitStep from "./ReviewSubmit";
 import { CheckCircle2 } from "lucide-react";
 import "../../Styles/login/Register.css";
 
 const steps = [
   { id: 1, label: "Personal Info" },
-  { id: 2, label: "Upload Documents" },
-  { id: 3, label: "Review & Submit" },
+  { id: 2, label: "Review & Submit" },
 ];
 
 export default function Register() {
   const [currentStep, setCurrentStep] = useState(1);
-const [formData, setFormData] = useState({
-  fullName: "",
-  mobile: "",
-  email: "",
-  dob: "",
-  aadhaar: "",
-  address: "",
-  city: "",
-  state: "",
-  pin: "",
-});
-const [documents, setDocuments] = useState({
-  aadhaarFront: null,
-  aadhaarBack: null,
-  photo: null,
-  passbook: null,
-});
+  const [formData, setFormData] = useState({
+    fullName: "",
+    mobile: "",
+    email: "",
+    dob: "",
+    aadhaar: "",
+    address: "",
+    city: "",
+    state: "",
+    pin: "",
+  });
   const [agreed, setAgreed] = useState(false);
 
-  const goNext = () => setCurrentStep((s) => Math.min(s + 1, 3));
+  const goNext = () => setCurrentStep((s) => Math.min(s + 1, steps.length));
   const goBack = () => setCurrentStep((s) => Math.max(s - 1, 1));
 
   return (
@@ -95,15 +87,8 @@ const [documents, setDocuments] = useState({
             onNext={goNext}
           />
         )}
+
         {currentStep === 2 && (
-          <UploadDocumentsStep
-            documents={documents}
-            setDocuments={setDocuments}
-            onNext={goNext}
-            onBack={goBack}
-          />
-        )}
-        {currentStep === 3 && (
           <ReviewSubmitStep
             formData={formData}
             agreed={agreed}

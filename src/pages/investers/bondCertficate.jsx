@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Printer, Download } from "lucide-react";
+import { ChevronLeft, Printer, Download, Loader2 } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { useInvestorData, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/BondCertificate.css";
 
@@ -56,6 +58,8 @@ export default function BondCertificate() {
   const { bondId } = useParams();
   const navigate = useNavigate();
   const { investments } = useInvestorData();
+  const certRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
 
   const decodedBondId = decodeURIComponent(bondId || "");
 
@@ -64,7 +68,56 @@ export default function BondCertificate() {
   );
 
   const handlePrint = () => window.print();
-  const handleDownloadPdf = () => window.print();
+
+  const handleDownloadPdf = async () => {
+    if (!certRef.current || downloading) return;
+    setDownloading(true);
+    try {
+      const node = certRef.current;
+
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+
+      // A4 in points: 595.28 x 841.89
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: "a4",
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = `Bond-Certificate-${investment?.bond || "INRFS"}.pdf`;
+      pdf.save(fileName);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Could not generate the PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (!investment) {
     return (
@@ -94,14 +147,23 @@ export default function BondCertificate() {
           <button className="investor-btn investor-btn--outline" onClick={handlePrint}>
             <Printer size={14} /> Print Bond
           </button>
-          <button className="investor-btn investor-btn--primary" onClick={handleDownloadPdf}>
-            <Download size={14} /> Download PDF
+          <button
+            className="investor-btn investor-btn--primary"
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+          >
+            {downloading ? (
+              <Loader2 size={14} className="spin" />
+            ) : (
+              <Download size={14} />
+            )}
+            {downloading ? "Generating..." : "Download PDF"}
           </button>
         </div>
       </div>
 
       <div className="bond-cert-wrap">
-        <div className="bond-cert-card">
+        <div className="bond-cert-card" ref={certRef}>
          <div
   className="bond-cert-header"
   style={{ display: "block", textAlign: "center", width: "100%" }}
@@ -274,8 +336,17 @@ export default function BondCertificate() {
           <button className="investor-btn investor-btn--outline" onClick={handlePrint}>
             <Printer size={14} /> Print Bond
           </button>
-          <button className="investor-btn investor-btn--primary" onClick={handleDownloadPdf}>
-            <Download size={14} /> Download PDF
+          <button
+            className="investor-btn investor-btn--primary"
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+          >
+            {downloading ? (
+              <Loader2 size={14} className="spin" />
+            ) : (
+              <Download size={14} />
+            )}
+            {downloading ? "Generating..." : "Download PDF"}
           </button>
         </div>
       </div>

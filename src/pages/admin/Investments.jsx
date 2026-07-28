@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { Plus, Eye, Zap, RefreshCw, Download, X, Printer } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Plus, Eye, Zap, RefreshCw, Download, X, Printer, Loader2 } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { StatusBadge, formatINR } from "../../shared/Shared";
 import "../../Styles/Admin/investments.css";
 const initialInvestments = [
@@ -88,6 +90,57 @@ function BondCertificate({ investment, onClose }) {
   const monthlyInterest = Math.round((investment.amount * investment.rate) / (100 * 12));
   const maturityAmount = investment.amount + totalInterest;
 
+  const printableRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (!printableRef.current || downloading) return;
+    setDownloading(true);
+    try {
+      const node = printableRef.current;
+
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: "a4",
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`Bond-Certificate-${investment.bondNumber}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Could not generate the PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="bond-modal-overlay" onClick={onClose}>
       <div className="bond-modal" onClick={(e) => e.stopPropagation()}>
@@ -99,13 +152,18 @@ function BondCertificate({ investment, onClose }) {
             <button className="admin-btn admin-btn--outline" onClick={() => window.print()}>
               <Printer size={14} /> Print Bond
             </button>
-            <button className="admin-btn admin-btn--primary" onClick={() => window.print()}>
-              <Download size={14} /> Download PDF
+            <button
+              className="admin-btn admin-btn--primary"
+              onClick={handleDownloadPdf}
+              disabled={downloading}
+            >
+              {downloading ? <Loader2 size={14} className="spin" /> : <Download size={14} />}
+              {downloading ? "Generating..." : "Download PDF"}
             </button>
           </div>
         </div>
 
-        <div className="bond-certificate-printable">
+        <div className="bond-certificate-printable" ref={printableRef}>
           <div className="bond-certificate">
             <div className="bond-cert-header">
               <div className="bond-cert-logo">IN</div>

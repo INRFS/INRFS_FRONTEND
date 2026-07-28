@@ -13,7 +13,7 @@ import Investments from "./pages/admin/Investments";
 import MonthlyInterest from "./pages/admin/MonthlyInterest";
 import Settlement from "./pages/admin/Settlement";
 import Reports from "./pages/admin/Reports";
-import Notifications from "./pages/admin/Notifications";
+// import Notifications from "./pages/admin/Notifications";
 import Profile from "./pages/admin/Profile";
 import Settings from "./pages/admin/Settings";
 
@@ -24,9 +24,9 @@ import InvestorDashboard from "./pages/investers/Dashboard";
 import InvestNow from "./pages/investers/Investnow";
 import MyBonds from "./pages/investers/Mybonds";
 import MyInvestments from "./pages/investers/Myinvestments";
-import InvestorNotifications from "./pages/investers/Notifications";
+// import InvestorNotifications from "./pages/investers/Notifications";
 import InvestorProfile from "./pages/investers/Profile";
-import InvestorSettings from "./pages/investers/Settings";
+// import InvestorSettings from "./pages/investers/Settings";
 import BondCertificate from "./pages/investers/bondCertficate";
 
 function App() {
@@ -46,7 +46,7 @@ function App() {
           <Route path="monthly-interest" element={<MonthlyInterest />} />
           <Route path="settlement" element={<Settlement />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="notifications" element={<Notifications />} />
+          {/* <Route path="notifications" element={<Notifications />} /> */}
           <Route path="profile" element={<Profile />} />
           <Route path="settings" element={<Settings />} />
         </Route>
@@ -65,9 +65,9 @@ function App() {
           <Route path="invest-now" element={<InvestNow />} />
           <Route path="my-bonds" element={<MyBonds />} />
           <Route path="my-investments" element={<MyInvestments />} />
-          <Route path="notifications" element={<InvestorNotifications />} />
+          {/* <Route path="notifications" element={<InvestorNotifications />} /> */}
           <Route path="profile" element={<InvestorProfile />} />
-          <Route path="settings" element={<InvestorSettings />} />
+          {/* <Route path="settings" element={<InvestorSettings />} /> */}
         </Route>
       </Routes>
     </BrowserRouter>

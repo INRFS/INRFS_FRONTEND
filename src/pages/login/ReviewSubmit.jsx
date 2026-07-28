@@ -5,9 +5,12 @@ const reviewRows = [
   { key: "fullName", label: "Full Name" },
   { key: "mobile", label: "Mobile" },
   { key: "email", label: "Email" },
-  { key: "pan", label: "PAN" },
+  { key: "dob", label: "Date of Birth" },
   { key: "aadhaar", label: "Aadhaar" },
   { key: "address", label: "Address" },
+  { key: "city", label: "City" },
+  { key: "state", label: "State" },
+  { key: "pin", label: "PIN Code" },
 ];
 
 export default function ReviewSubmitStep({
