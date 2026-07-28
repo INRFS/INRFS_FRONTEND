@@ -36,7 +36,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
+        
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
@@ -51,14 +51,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
         </Route>
 
-        <Route
-          path="/investor"
-          element={
-            <InvestorDataProvider>
-              <InvestorLayout />
-            </InvestorDataProvider>
-          }
-        >
+        <Route path="/investor" element={ <InvestorDataProvider> <InvestorLayout /> </InvestorDataProvider>}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<InvestorDashboard />} />
            <Route path="bond-certificate/:bondId" element={<BondCertificate />} />

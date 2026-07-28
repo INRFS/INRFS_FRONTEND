@@ -1,10 +1,3 @@
-/* ==========================================================================
-   AdminLayout.css
-   Shared styling for the INRFS Admin Portal — sidebar, topbar, tables,
-   stat cards, KYC review, settlement, reports, notifications, profile,
-   and settings screens.
-   ========================================================================== */
-
 .admin-shell {
   --brand-blue: #2f5cf0;
   --brand-blue-dark: #1e46d6;
@@ -46,11 +39,6 @@
   text-decoration: none;
   color: inherit;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Sidebar                                                                  */
-/* ---------------------------------------------------------------------- */
-
 .admin-sidebar {
   width: 232px;
   flex-shrink: 0;
@@ -225,11 +213,6 @@
 .admin-logout:hover {
   background: rgba(255, 255, 255, 0.06);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Main area / topbar                                                       */
-/* ---------------------------------------------------------------------- */
-
 .admin-main {
   flex: 1;
   min-width: 0;
@@ -356,11 +339,6 @@
   margin: 0 0 18px;
   color: var(--text-dark);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Generic page / section helpers                                          */
-/* ---------------------------------------------------------------------- */
-
 .admin-page {
   display: flex;
   flex-direction: column;
@@ -435,10 +413,6 @@
   font-weight: 600;
 }
 
-/* ---------------------------------------------------------------------- */
-/* Buttons                                                                  */
-/* ---------------------------------------------------------------------- */
-
 .admin-btn {
   display: inline-flex;
   align-items: center;
@@ -506,11 +480,6 @@
 .admin-btn--block {
   width: 100%;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Stat cards                                                               */
-/* ---------------------------------------------------------------------- */
-
 .admin-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -561,11 +530,6 @@
 .stat-card__trend--down {
   color: var(--red);
 }
-
-/* ---------------------------------------------------------------------- */
-/* List rows (dashboard pending verification)                              */
-/* ---------------------------------------------------------------------- */
-
 .admin-list-card {
   display: flex;
   flex-direction: column;
@@ -635,11 +599,6 @@
   align-items: center;
   gap: 5px;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Tables                                                                   */
-/* ---------------------------------------------------------------------- */
-
 .admin-table-card {
   background: #ffffff;
   border: 1px solid var(--border-light);
@@ -734,11 +693,6 @@
   padding: 3px 9px;
   border-radius: 999px;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Status badges                                                            */
-/* ---------------------------------------------------------------------- */
-
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -773,10 +727,6 @@
   background: var(--red-soft);
   color: var(--red);
 }
-
-/* ---------------------------------------------------------------------- */
-/* KYC Approvals                                                            */
-/* ---------------------------------------------------------------------- */
 
 .kyc-layout {
   display: grid;
@@ -935,10 +885,6 @@
   gap: 10px;
 }
 
-/* ---------------------------------------------------------------------- */
-/* Settlement                                                               */
-/* ---------------------------------------------------------------------- */
-
 .settlement-layout {
   display: grid;
   grid-template-columns: 1fr 280px;
@@ -1036,22 +982,12 @@
   color: var(--text-dark);
   font-weight: 700;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Reports                                                                  */
-/* ---------------------------------------------------------------------- */
-
 .admin-chart-card {
   background: #ffffff;
   border: 1px solid var(--border-light);
   border-radius: 12px;
   padding: 20px;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Notifications                                                            */
-/* ---------------------------------------------------------------------- */
-
 .notif-list {
   display: flex;
   flex-direction: column;
@@ -1134,11 +1070,6 @@
   color: var(--text-muted);
   margin: 0;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Profile                                                                  */
-/* ---------------------------------------------------------------------- */
-
 .profile-layout {
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -1226,10 +1157,6 @@
   color: var(--text-dark);
 }
 
-/* ---------------------------------------------------------------------- */
-/* Settings                                                                 */
-/* ---------------------------------------------------------------------- */
-
 .settings-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1295,9 +1222,6 @@
   margin-top: 18px;
 }
 
-
-
-/* Toggle switch */
 .switch {
   position: relative;
   display: inline-block;
@@ -1341,10 +1265,6 @@
 .switch input:checked + .switch-slider::before {
   transform: translateX(16px);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Responsive                                                               */
-/* ---------------------------------------------------------------------- */
 
 @media (max-width: 1200px) {
   .admin-stats-grid {

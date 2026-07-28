@@ -1,4 +1,3 @@
-/* MyInvestments-specific tweaks */
 .investor-table-card th:nth-child(2),
 .investor-table-card td:nth-child(2) { text-align: right; }
 

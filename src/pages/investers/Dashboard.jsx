@@ -1,13 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  DollarSign, TrendingUp, Award, Activity, BarChart3, Calendar,
-  Eye, Download, Plus, BookOpen, UserCog,
-} from "lucide-react";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
-} from "recharts";
+import {DollarSign, TrendingUp, Award, Activity, BarChart3, Calendar,Eye, Download, Plus, BookOpen, UserCog,} from "lucide-react";
+import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,PieChart, Pie, Cell,} from "recharts";
 import { useInvestorData, StatusBadge, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/Dashboard.css";
 

@@ -1,9 +1,3 @@
-/* ==========================================================================
-   KycApprovals.css
-   Split-view layout for the KYC Approvals screen: application list on the
-   left, review detail panel on the right.
-   ========================================================================== */
-
 @import "./common.css";
 
 .kyc-layout {

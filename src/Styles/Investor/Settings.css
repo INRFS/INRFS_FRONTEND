@@ -58,8 +58,6 @@
   color: #94a3b8;
   margin: 2px 0 0;
 }
-
-/* Toggle switch */
 .settings-switch {
   position: relative;
   width: 42px;
@@ -92,8 +90,6 @@
 .settings-switch--on .settings-switch__knob {
   left: 21px;
 }
-
-/* Password fields */
 .settings-field-label {
   font-size: 12.5px;
   font-weight: 600;

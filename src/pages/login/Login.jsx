@@ -104,9 +104,7 @@ export default function Login() {
       <div className="auth-left">
         <div className="auth-logo">
           <img src="/assets/logo.JPG" alt="INRFS Logo" className="auth-logo-img" />
-
         </div>
-
         <h1 className="auth-left-title">
           Secure Investor
           <br />

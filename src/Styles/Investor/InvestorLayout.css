@@ -108,7 +108,6 @@
 }
 .investor-page-title { font-size: 20px; font-weight: 700; color: #0f1729; margin-bottom: 4px; }
 
-/* ===== Shared base classes used across all investor pages ===== */
 .investor-page { display: flex; flex-direction: column; gap: 18px; }
 .investor-page-subtitle { color: #64748b; font-size: 13px; margin: 0; }
 .investor-section__title { font-size: 14px; font-weight: 700; color: #0f1729; margin: 0 0 4px; }

@@ -43,12 +43,9 @@ export default function AdminLayout({ breadcrumb = ["Home", "Admin Portal"] }) {
           <img src="/assets/logo.jpg" alt="INRFS Logo" className="auth-logo-img" />
           
           <div>
-            {/* <div className="admin-logo-title">INRFS</div> */}
             <div className="admin-logo-sub">INVESTMENT PORTAL</div>
           </div>
         </div>
-
-        {/* <div className="admin-portal-pill">ADMIN PORTAL</div> */}
 
         <nav className="admin-nav">
           {navItems.map(({ to, label, icon: Icon, badge }) => (

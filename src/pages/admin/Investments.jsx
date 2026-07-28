@@ -13,7 +13,6 @@ const initialInvestments = [
 ];
 
 const STATUS_OPTIONS = ["Active", "Pending", "Matured"];
-
 const emptyForm = {
   investor: "",
   investorId: "",

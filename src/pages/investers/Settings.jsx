@@ -9,7 +9,6 @@ export default function Settings() {
   const [newPassword, setNewPassword] = useState("");
 
   const handleUpdatePassword = () => {
-    // TODO: wire up real API call
     if (!currentPassword || !newPassword) return;
     console.log("Updating password...");
     setCurrentPassword("");
