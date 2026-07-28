@@ -40,7 +40,7 @@ export default function AdminLayout({ breadcrumb = ["Home", "Admin Portal"] }) {
     <div className="admin-shell">
       <aside className="admin-sidebar">
         <div className="admin-logo">
-          <img src="/assets/logo.JPG" alt="INRFS Logo" className="auth-logo-img" />
+          <img src="/assets/logo.jpg" alt="INRFS Logo" className="auth-logo-img" />
           
           <div>
             <div className="admin-logo-title">INRFS</div>
