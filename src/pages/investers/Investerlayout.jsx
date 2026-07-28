@@ -52,12 +52,12 @@ export default function InvestorLayout() {
              <img src="/assets/logo.jpg" alt="INRFS Logo" className="auth-logo-img" />
            
             <div>
-              <div className="investor-logo-title">INRFS</div>
+              {/* <div className="investor-logo-title">INRFS</div> */}
               <div className="investor-logo-sub">INVESTMENT PORTAL</div>
             </div>
           </div>
 
-          <div className="investor-portal-pill">INVESTOR PORTAL</div>
+          {/* <div className="investor-portal-pill">INVESTOR PORTAL</div> */}
 
           <nav className="investor-nav">
             {navItems.map(({ to, label, icon: Icon, badge }) => (
