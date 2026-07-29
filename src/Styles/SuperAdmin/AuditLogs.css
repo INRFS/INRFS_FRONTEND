@@ -1,0 +1,140 @@
+.audit-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.audit-page__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.audit-export-btn {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+}
+
+.audit-export-btn:hover {
+  background: #f3f4f6;
+}
+
+.audit-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px 20px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.audit-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  padding: 14px 12px;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.audit-table td {
+  padding: 14px 12px;
+  font-size: 14px;
+  color: #374151;
+  border-bottom: 1px solid #f5f6f8;
+}
+
+.audit-table__ts {
+  color: #9ca3af;
+}
+
+.audit-table__user {
+  font-weight: 600;
+  color: #111827;
+}
+
+.audit-role {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.audit-role--admin { background: #eef2ff; color: #4338ca; }
+.audit-role--branch { background: #fef3c7; color: #b45309; }
+.audit-role--investor { background: #dcfce7; color: #15803d; }
+.audit-role--super { background: #e0e7ff; color: #3730a3; }
+.audit-role--system { background: #f3f4f6; color: #4b5563; }
+
+.audit-status {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.audit-status--success {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.audit-status--failed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.audit-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+}
+
+.audit-pagination__info {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.audit-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audit-pagination__arrow,
+.audit-pagination__num {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.audit-pagination__arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.audit-pagination__num--active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}

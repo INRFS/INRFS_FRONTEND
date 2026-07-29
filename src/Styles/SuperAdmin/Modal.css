@@ -1,0 +1,105 @@
+:root {
+  --sa-blue: #2f5eff;
+  --sa-text: #111827;
+  --sa-text-muted: #6b7280;
+  --sa-border: #e5e7eb;
+  --sa-surface: #ffffff;
+  --sa-radius-lg: 14px;
+  --sa-radius-sm: 8px;
+  --sa-shadow-modal: 0 20px 25px -5px rgba(16, 24, 40, 0.15), 0 10px 10px -5px rgba(16, 24, 40, 0.06);
+}
+
+.sa-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: sa-overlay-in 0.15s ease-out;
+}
+
+.sa-modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--sa-surface);
+  border-radius: var(--sa-radius-lg);
+  box-shadow: var(--sa-shadow-modal);
+  overflow: hidden;
+  animation: sa-modal-in 0.18s ease-out;
+}
+
+.sa-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--sa-border);
+}
+
+.sa-modal-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--sa-text);
+}
+
+.sa-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--sa-radius-sm);
+  background: transparent;
+  color: var(--sa-text-muted);
+  cursor: pointer;
+}
+
+.sa-modal-close:hover {
+  background: #f3f4f6;
+  color: var(--sa-text);
+}
+
+.sa-modal-body {
+  padding: 20px 22px;
+  overflow-y: auto;
+}
+
+.sa-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--sa-border);
+  background: #fafbfc;
+}
+
+@keyframes sa-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sa-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .sa-modal {
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,159 @@
+import React, { useState } from "react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  LayoutGrid,
+  Building2,
+  Shield,
+  Users,
+  KeyRound,
+  FileText,
+  BarChart3,
+  Settings,
+  Bell,
+  User,
+  LogOut,
+  Search,
+} from "lucide-react";
+import "../../Styles/SuperAdmin/SuperAdminLayout.css";
+import Modal from "./Modal";
+
+const navItems = [
+  { to: "/superadmin/dashboard", label: "Dashboard", icon: LayoutGrid },
+  { to: "/superadmin/branches", label: "Branch Management", icon: Building2 },
+  { to: "/superadmin/admins", label: "Admin Management", icon: Shield },
+  { to: "/superadmin/users", label: "User Management", icon: Users },
+  { to: "/superadmin/roles", label: "Roles & Permissions", icon: KeyRound },
+  { to: "/superadmin/audit-logs", label: "Audit Logs", icon: FileText },
+  { to: "/superadmin/reports", label: "Reports", icon: BarChart3 },
+  { to: "/superadmin/system-settings", label: "System Settings", icon: Settings },
+//   { to: "/superadmin/email-settings", label: "Email Settings", icon: Mail },
+//   { to: "/superadmin/sms-settings", label: "SMS Settings", icon: Phone },
+//   { to: "/superadmin/backup-settings", label: "Backup Settings", icon: Database },
+  { to: "/superadmin/notifications", label: "Notifications", icon: Bell },
+  { to: "/superadmin/profile", label: "Profile", icon: User },
+];
+
+export default function SuperAdminLayout({ breadcrumb = ["Home", "Super Admin", "Dashboard"] }) {
+  const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutConfirm(false);
+    navigate("/login");
+  };
+
+  return (
+    <div className="sa-shell">
+      <aside className="sa-sidebar">
+        <div className="sa-logo">
+          <span className="sa-logo-badge">IN</span>
+          <div>
+            <div className="sa-logo-title">INRFS</div>
+            <div className="sa-logo-sub">INVESTMENT PORTAL</div>
+          </div>
+        </div>
+
+        <div className="sa-portal-pill">SUPER ADMIN</div>
+
+        <nav className="sa-nav">
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                "sa-nav-item" + (isActive ? " sa-nav-item-active" : "")
+              }
+            >
+              <Icon size={16} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="sa-sidebar-footer">
+          <div className="sa-user">
+            <span className="sa-user-avatar">S</span>
+            <div>
+              <div className="sa-user-name">Super Admin</div>
+              <div className="sa-user-email">superadmin@inrfs.in</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div className="sa-main">
+        <header className="sa-topbar">
+          <div className="sa-breadcrumb">
+            {breadcrumb.map((crumb, i) => (
+              <React.Fragment key={crumb}>
+                {i > 0 && <span className="sa-breadcrumb-sep">/</span>}
+                <span
+                  className={
+                    i === breadcrumb.length - 1
+                      ? "sa-breadcrumb-current"
+                      : "sa-breadcrumb-link"
+                  }
+                >
+                  {crumb}
+                </span>
+              </React.Fragment>
+            ))}
+          </div>
+
+          <div className="sa-topbar-right">
+            <div className="sa-search">
+              <Search size={15} />
+              <input type="text" placeholder="Search investors, bonds..." />
+            </div>
+            <button className="sa-bell">
+              <Bell size={17} />
+            </button>
+            <div className="sa-profile">
+              <span className="sa-profile-avatar">S</span>
+              <div>
+                <div className="sa-profile-name">Super Admin</div>
+                <div className="sa-profile-role">Super Admin</div>
+              </div>
+            </div>
+            <button className="sa-logout" onClick={handleLogoutClick} title="Logout">
+              <LogOut size={16} />
+            </button>
+          </div>
+        </header>
+
+        <main className="sa-content">
+          <Outlet />
+        </main>
+      </div>
+
+      {showLogoutConfirm && (
+        <Modal
+          title="Log out"
+          onClose={() => setShowLogoutConfirm(false)}
+          footer={
+            <>
+              <button
+                type="button"
+                className="sa-btn sa-btn-ghost"
+                onClick={() => setShowLogoutConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button type="button" className="sa-btn sa-btn-danger" onClick={confirmLogout}>
+                Log out
+              </button>
+            </>
+          }
+        >
+          <p style={{ margin: 0, fontSize: 13.5, color: "#374151" }}>
+            Are you sure you want to log out of the Super Admin portal?
+          </p>
+        </Modal>
+      )}
+    </div>
+  );
+}
