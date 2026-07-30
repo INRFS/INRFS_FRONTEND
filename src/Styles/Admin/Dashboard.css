@@ -344,3 +344,58 @@
   .chart-grid { grid-template-columns: 1fr; }
   .bottom-grid { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 700px) {
+  .dash-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .dash-header-actions {
+    width: 100%;
+  }
+
+  .dash-header-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .panel {
+    padding: 14px 16px;
+  }
+  .bottom-grid .panel:first-child {
+    overflow-x: auto;
+  }
+
+  .activity-table {
+    min-width: 560px;
+  }
+
+  .quick-action {
+    font-size: 11.5px;
+  }
+}
+@media (max-width: 420px) {
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-value {
+    font-size: 19px;
+  }
+
+  .dash-header h1 {
+    font-size: 18px;
+  }
+
+  .kyc-pending-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

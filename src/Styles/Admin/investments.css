@@ -313,6 +313,106 @@
   border-top: 1px solid #eee;
   padding-top: 10px;
 }
+@media (max-width: 800px) {
+  .bond-modal-overlay {
+    padding: 24px 14px;
+  }
+
+  .bond-certificate-printable {
+    padding: 20px;
+  }
+}
+@media (max-width: 640px) {
+  .bond-modal-overlay {
+    padding: 16px 10px;
+    align-items: flex-start;
+  }
+
+  .admin-form-modal,
+  .bond-modal {
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .admin-form-modal-header,
+  .bond-modal-toolbar {
+    padding: 14px 16px;
+  }
+
+  .admin-form-modal-body {
+    padding: 16px;
+  }
+
+  .admin-form-row-split {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .admin-form-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .admin-form-modal-actions button {
+    width: 100%;
+  }
+
+  .bond-modal-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .bond-modal-toolbar-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .bond-certificate-printable {
+    padding: 14px;
+  }
+
+  .bond-certificate {
+    padding: 22px 18px;
+  }
+
+  .bond-cert-title {
+    font-size: 17px;
+  }
+
+  .bond-cert-principal-amount {
+    font-size: 22px;
+  }
+
+  .bond-cert-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px 0;
+  }
+
+  .bond-cert-signatures {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .bond-cert-signature {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .bond-certificate {
+    padding: 18px 14px;
+  }
+
+  .bond-cert-field-value {
+    font-size: 12px;
+  }
+
+  .bond-cert-legal {
+    font-size: 9.5px;
+  }
+}
+
 @media print {
   body * {
     visibility: hidden;

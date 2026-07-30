@@ -77,7 +77,6 @@ export default function UserManagement() {
   return (
     <>
       <div className="sa-page-header">
-        <h1>User Management</h1>
         <button type="button" className="sa-btn sa-btn-primary" onClick={openAdd}>
           <Plus size={16} /> Add User
         </button>

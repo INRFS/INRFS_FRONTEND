@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { formatINR } from "../../shared/Shared";
+import "../../Styles/Admin/Settlement.css";
 
 const bonds = [
   { bondNumber: "BND-2025-001", investor: "Arjun Sharma", principal: 500000, rate: 12, monthsActive: 6 },

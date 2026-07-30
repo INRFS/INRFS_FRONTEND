@@ -254,6 +254,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .im-modal {
@@ -350,4 +351,109 @@
   background: #2f5cf0;
   color: #fff;
   border-color: #2f5cf0;
+}
+@media (max-width: 900px) {
+  .im-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .im-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .im-search {
+    flex: 1 1 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .im-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .im-header-actions {
+    width: 100%;
+  }
+
+  .im-header-actions .btn,
+  .im-header-actions .btn-bulk {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .im-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .im-search {
+    flex: 1 1 auto;
+  }
+
+  .im-select {
+    width: 100%;
+  }
+  .im-table th,
+  .im-table td {
+    padding: 10px 8px;
+  }
+
+  .im-pagination {
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 11.5px;
+  }
+
+  .im-pagination-controls {
+    gap: 4px;
+  }
+
+  .im-modal {
+    width: 100%;
+  }
+
+  .im-modal-header {
+    padding: 16px;
+  }
+
+  .im-modal-form {
+    padding: 16px;
+  }
+
+  .im-form-row-split {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .im-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .im-modal-actions .btn,
+  .im-modal-actions button {
+    width: 100%;
+  }
+}
+@media (max-width: 420px) {
+  .im-header h1 {
+    font-size: 18px;
+  }
+
+  .im-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 10.5px;
+  }
+
+  .im-name {
+    font-size: 12px;
+  }
+
+  .im-btn {
+    padding: 5px 8px;
+    font-size: 10.5px;
+  }
 }

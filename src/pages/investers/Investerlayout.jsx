@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid,
@@ -10,6 +10,8 @@ import {
   // Settings as SettingsIcon,
   LogOut,
   Search,
+  Menu,
+  X,
 } from "lucide-react";
 import { useInvestorData } from "./InvestorDataContext";
 import "../../Styles/Investor/InvestorLayout.css";
@@ -24,6 +26,7 @@ export default function InvestorLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { notifications } = useInvestorData();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const unreadCount = notifications.filter((n) => n.isNew).length;
 
@@ -40,20 +43,40 @@ export default function InvestorLayout() {
   const activeItem = navItems.find((item) => location.pathname.startsWith(item.to));
   const currentLabel = activeItem ? activeItem.label : "Investor Portal";
 
+  // Close the mobile drawer whenever the route changes
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Lock background scroll while the mobile drawer is open
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
   const handleLogout = () => {
     navigate("/login");
   };
 
   return (
     <div className="investor-shell">
-      <aside className="investor-sidebar">
+      <aside className={"investor-sidebar" + (sidebarOpen ? " investor-sidebar-open" : "")}>
         <div>
           <div className="investor-logo">
-             <img src="/assets/logo.jpg" alt="INRFS Logo" className="auth-logo-img" />
-           
+            <img src="/assets/logo.jpg" alt="INRFS Logo" className="auth-logo-img" />
             <div>
               <div className="investor-logo-sub">INVESTMENT PORTAL</div>
             </div>
+            <button
+              type="button"
+              className="investor-sidebar-close"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close menu"
+            >
+              <X size={18} />
+            </button>
           </div>
 
           <nav className="investor-nav">
@@ -87,14 +110,31 @@ export default function InvestorLayout() {
         </div>
       </aside>
 
+      {/* Dims the page behind the drawer on mobile */}
+      <div
+        className={"investor-sidebar-backdrop" + (sidebarOpen ? " investor-sidebar-backdrop-open" : "")}
+        onClick={() => setSidebarOpen(false)}
+      />
+
       <div className="investor-main">
         <header className="investor-topbar">
-          <div className="investor-breadcrumb">
-            <span className="investor-breadcrumb-link">Home</span>
-            <span className="investor-breadcrumb-sep">/</span>
-            <span className="investor-breadcrumb-link">Investor Portal</span>
-            <span className="investor-breadcrumb-sep">/</span>
-            <span className="investor-breadcrumb-current">{currentLabel}</span>
+          <div className="investor-topbar-left">
+            <button
+              type="button"
+              className="investor-menu-toggle"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+
+            <div className="investor-breadcrumb">
+              <span className="investor-breadcrumb-link">Home</span>
+              <span className="investor-breadcrumb-sep">/</span>
+              <span className="investor-breadcrumb-link">Investor Portal</span>
+              <span className="investor-breadcrumb-sep">/</span>
+              <span className="investor-breadcrumb-current">{currentLabel}</span>
+            </div>
           </div>
 
           <div className="investor-topbar-right">
