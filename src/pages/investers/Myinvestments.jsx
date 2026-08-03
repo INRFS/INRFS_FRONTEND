@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Download } from "lucide-react";
+import { Plus, Download } from "lucide-react";
 import { useInvestorData, StatusBadge, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/MyInvestments.css";
 
@@ -38,7 +38,7 @@ export default function MyInvestments() {
               <th>Monthly Int.</th>
               <th>Earned</th>
               <th>Status</th>
-              <th>Actions</th>
+              {/* <th>Actions</th> */}
             </tr>
           </thead>
           <tbody>
@@ -58,7 +58,7 @@ export default function MyInvestments() {
                 <td className="mono amount-positive">{formatINR(inv.monthlyInt)}</td>
                 <td className="mono">{formatINR(inv.earned)}</td>
                 <td><StatusBadge status={inv.status} /></td>
-                <td className="admin-table-actions">
+                {/* <td className="admin-table-actions">
                   <button type="button" title="View" onClick={() => handleViewBond(inv.bond)}>
                     <Eye size={14} />
                   </button>
@@ -70,7 +70,7 @@ export default function MyInvestments() {
                   >
                     <Download size={14} /> Bond
                   </button>
-                </td>
+                </td> */}
               </tr>
             ))}
           </tbody>

@@ -11,6 +11,43 @@
   font-weight: 700; margin: 0 auto 12px;
 }
 
+/* Editable profile fields */
+.profile-info-input {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  width: 100%;
+  max-width: 220px;
+}
+
+.profile-info-input:focus {
+  outline: none;
+  border-color: #03154a;
+  box-shadow: 0 0 0 2px rgba(3, 21, 74, 0.12);
+}
+
+.investor-btn--outline {
+  background: #fff;
+  color: #03154a;
+  border: 1px solid #03154a;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.investor-btn--outline:hover {
+  background: #f3f4f6;
+}
+
 .profile-name { font-size: 15px; font-weight: 700; color: #0f1729; margin: 0; }
 .profile-email { font-size: 12px; color: #94a3b8; margin: 2px 0 12px; }
 .profile-role-pill {

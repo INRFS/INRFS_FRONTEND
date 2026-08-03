@@ -1,8 +1,8 @@
-import React from "react";
-import { Edit2 } from "lucide-react";
+import React, { useState } from "react";
+import { Edit2, X, Save } from "lucide-react";
 import "../../Styles/Investor/Profile.css";
 
-const profile = {
+const initialProfile = {
   name: "Arjun Sharma",
   email: "arjun@inrfs.in",
   mobile: "+91 98765 43210",
@@ -20,10 +20,61 @@ const profile = {
 };
 
 export default function Profile() {
+  const [profile, setProfile] = useState(initialProfile);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(initialProfile);
+
+  const handleEditClick = () => {
+    setDraft(profile);
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setDraft(profile);
+    setIsEditing(false);
+  };
+
+  const handleSave = () => {
+    // Static/mock save — updates local state only, no API call.
+    // Wire up your update-profile endpoint here later.
+    setProfile(draft);
+    setIsEditing(false);
+  };
+
+  const handleFieldChange = (field, value) => {
+    setDraft((d) => ({ ...d, [field]: value }));
+  };
+
+  const handleBankFieldChange = (field, value) => {
+    setDraft((d) => ({ ...d, bank: { ...d.bank, [field]: value } }));
+  };
+
   return (
     <div className="investor-page">
       <div className="investor-page-actions investor-page-actions--end">
-        <button className="investor-btn investor-btn--primary"><Edit2 size={14} /> Edit Profile</button>
+        {isEditing ? (
+          <>
+            <button
+              className="investor-btn investor-btn--outline"
+              onClick={handleCancel}
+            >
+              <X size={14} /> Cancel
+            </button>
+            <button
+              className="investor-btn investor-btn--primary"
+              onClick={handleSave}
+            >
+              <Save size={14} /> Save Changes
+            </button>
+          </>
+        ) : (
+          <button
+            className="investor-btn investor-btn--primary"
+            onClick={handleEditClick}
+          >
+            <Edit2 size={14} /> Edit Profile
+          </button>
+        )}
       </div>
 
       <div className="profile-layout">
@@ -40,15 +91,42 @@ export default function Profile() {
             <div className="profile-info-grid">
               <div className="profile-info-field">
                 <span className="profile-info-label">Full Name</span>
-                <span className="profile-info-value">{profile.name}</span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    value={draft.name}
+                    onChange={(e) => handleFieldChange("name", e.target.value)}
+                  />
+                ) : (
+                  <span className="profile-info-value">{profile.name}</span>
+                )}
               </div>
               <div className="profile-info-field">
                 <span className="profile-info-label">Mobile</span>
-                <span className="profile-info-value">{profile.mobile}</span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    value={draft.mobile}
+                    onChange={(e) => handleFieldChange("mobile", e.target.value)}
+                  />
+                ) : (
+                  <span className="profile-info-value">{profile.mobile}</span>
+                )}
               </div>
               <div className="profile-info-field">
                 <span className="profile-info-label">Email</span>
-                <span className="profile-info-value">{profile.email}</span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="email"
+                    value={draft.email}
+                    onChange={(e) => handleFieldChange("email", e.target.value)}
+                  />
+                ) : (
+                  <span className="profile-info-value">{profile.email}</span>
+                )}
               </div>
               <div className="profile-info-field">
                 <span className="profile-info-label">Role</span>
@@ -70,19 +148,65 @@ export default function Profile() {
             <div className="profile-info-grid">
               <div className="profile-info-field">
                 <span className="profile-info-label">Bank Name</span>
-                <span className="profile-info-value">{profile.bank.name}</span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    value={draft.bank.name}
+                    onChange={(e) => handleBankFieldChange("name", e.target.value)}
+                  />
+                ) : (
+                  <span className="profile-info-value">{profile.bank.name}</span>
+                )}
               </div>
               <div className="profile-info-field">
                 <span className="profile-info-label">Account Number</span>
-                <span className="profile-info-value">{profile.bank.accountNumber}</span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    value={draft.bank.accountNumber}
+                    onChange={(e) =>
+                      handleBankFieldChange("accountNumber", e.target.value)
+                    }
+                  />
+                ) : (
+                  <span className="profile-info-value">
+                    {profile.bank.accountNumber}
+                  </span>
+                )}
               </div>
               <div className="profile-info-field">
                 <span className="profile-info-label">IFSC Code</span>
-                <span className="profile-info-value">{profile.bank.ifsc}</span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    value={draft.bank.ifsc}
+                    onChange={(e) => handleBankFieldChange("ifsc", e.target.value)}
+                  />
+                ) : (
+                  <span className="profile-info-value">{profile.bank.ifsc}</span>
+                )}
               </div>
               <div className="profile-info-field">
                 <span className="profile-info-label">Account Type</span>
-                <span className="profile-info-value">{profile.bank.accountType}</span>
+                {isEditing ? (
+                  <select
+                    className="profile-info-input"
+                    value={draft.bank.accountType}
+                    onChange={(e) =>
+                      handleBankFieldChange("accountType", e.target.value)
+                    }
+                  >
+                    <option value="Savings">Savings</option>
+                    <option value="Current">Current</option>
+                  </select>
+                ) : (
+                  <span className="profile-info-value">
+                    {profile.bank.accountType}
+                  </span>
+                )}
               </div>
             </div>
           </div>
