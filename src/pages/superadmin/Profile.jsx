@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Edit2, X, Save, Check } from "lucide-react";
 import "../../Styles/SuperAdmin/Profile.css";
 
 const INITIAL_PROFILE = {
@@ -42,31 +43,39 @@ export default function Profile() {
   const initial = profile.fullName.charAt(0).toUpperCase();
 
   return (
-    <div className="profile-page">
-      <div className="profile-page__header">
-        <h1 className="profile-page__title">My Profile</h1>
-        <button className="profile-edit-btn" onClick={handleEditToggle}>
-          {isEditing ? "✕ Cancel" : "✎ Edit Profile"}
+    <div className="sa-profile-page">
+      <div className="sa-profile-page__header">
+        <h1 className="sa-profile-page__title">My Profile</h1>
+        <button className="sa-profile-edit-btn" onClick={handleEditToggle}>
+          {isEditing ? (
+            <>
+              <X size={14} /> Cancel
+            </>
+          ) : (
+            <>
+              <Edit2 size={14} /> Edit Profile
+            </>
+          )}
         </button>
       </div>
 
-      <div className="profile-page__grid">
+      <div className="sa-profile-page__grid">
         {/* Avatar card */}
-        <div className="profile-avatar-card">
-          <div className="profile-avatar">{initial}</div>
-          <div className="profile-avatar-card__name">{profile.fullName}</div>
-          <div className="profile-avatar-card__email">{profile.email}</div>
-          <span className="profile-role-badge">{profile.role}</span>
+        <div className="sa-profile-avatar-card">
+          <div className="sa-profile-avatar">{initial}</div>
+          <div className="sa-profile-avatar-card__name">{profile.fullName}</div>
+          <div className="sa-profile-avatar-card__email">{profile.email}</div>
+          <span className="sa-profile-role-badge">{profile.role}</span>
         </div>
 
         {/* Personal info card */}
-        <div className="profile-info-card">
-          <h2 className="profile-info-card__title">Personal Information</h2>
-          <div className="profile-info-card__divider" />
+        <div className="sa-profile-info-card">
+          <h2 className="sa-profile-info-card__title">Personal Information</h2>
+          <div className="sa-profile-info-card__divider" />
 
-          <div className="profile-info-grid">
-            <div className="profile-field">
-              <span className="profile-field__label">FULL NAME</span>
+          <div className="sa-profile-info-grid">
+            <div className="sa-profile-field">
+              <span className="sa-profile-field__label">FULL NAME</span>
               {isEditing ? (
                 <input
                   type="text"
@@ -74,12 +83,12 @@ export default function Profile() {
                   onChange={(e) => handleChange("fullName", e.target.value)}
                 />
               ) : (
-                <span className="profile-field__value">{profile.fullName}</span>
+                <span className="sa-profile-field__value">{profile.fullName}</span>
               )}
             </div>
 
-            <div className="profile-field">
-              <span className="profile-field__label">MOBILE</span>
+            <div className="sa-profile-field">
+              <span className="sa-profile-field__label">MOBILE</span>
               {isEditing ? (
                 <input
                   type="text"
@@ -87,12 +96,12 @@ export default function Profile() {
                   onChange={(e) => handleChange("mobile", e.target.value)}
                 />
               ) : (
-                <span className="profile-field__value">{profile.mobile}</span>
+                <span className="sa-profile-field__value">{profile.mobile}</span>
               )}
             </div>
 
-            <div className="profile-field">
-              <span className="profile-field__label">EMAIL</span>
+            <div className="sa-profile-field">
+              <span className="sa-profile-field__label">EMAIL</span>
               {isEditing ? (
                 <input
                   type="email"
@@ -100,17 +109,17 @@ export default function Profile() {
                   onChange={(e) => handleChange("email", e.target.value)}
                 />
               ) : (
-                <span className="profile-field__value">{profile.email}</span>
+                <span className="sa-profile-field__value">{profile.email}</span>
               )}
             </div>
 
-            <div className="profile-field">
-              <span className="profile-field__label">ROLE</span>
-              <span className="profile-field__value">{profile.role}</span>
+            <div className="sa-profile-field">
+              <span className="sa-profile-field__label">ROLE</span>
+              <span className="sa-profile-field__value">{profile.role}</span>
             </div>
 
-            <div className="profile-field">
-              <span className="profile-field__label">BRANCH</span>
+            <div className="sa-profile-field">
+              <span className="sa-profile-field__label">BRANCH</span>
               {isEditing ? (
                 <input
                   type="text"
@@ -118,27 +127,29 @@ export default function Profile() {
                   onChange={(e) => handleChange("branch", e.target.value)}
                 />
               ) : (
-                <span className="profile-field__value">{profile.branch}</span>
+                <span className="sa-profile-field__value">{profile.branch}</span>
               )}
             </div>
 
-            <div className="profile-field">
-              <span className="profile-field__label">STATUS</span>
-              <span className="profile-field__value">{profile.status}</span>
+            <div className="sa-profile-field">
+              <span className="sa-profile-field__label">STATUS</span>
+              <span className="sa-profile-field__value">{profile.status}</span>
             </div>
           </div>
 
           {isEditing && (
-            <button className="profile-save-btn" onClick={handleSave}>
-              Save Changes
+            <button className="sa-profile-save-btn" onClick={handleSave}>
+              <Save size={14} /> Save Changes
             </button>
           )}
         </div>
       </div>
 
       {showToast && (
-        <div className="profile-toast">
-          <span className="profile-toast__icon">✓</span>
+        <div className="sa-profile-toast">
+          <span className="sa-profile-toast__icon">
+            <Check size={14} />
+          </span>
           Profile updated successfully!
         </div>
       )}

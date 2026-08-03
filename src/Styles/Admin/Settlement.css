@@ -1,1 +1,151 @@
 
+.settlement-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 18px;
+  align-items: start;
+}
+
+.settlement-calculator-card,
+.settlement-details-card {
+  background: #ffffff;
+  border: 1px solid var(--border-light, #e6e9f0);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.settlement-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.settlement-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settlement-field label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dark, #0f1729);
+}
+
+.settlement-field select,
+.settlement-field input {
+  border: 1px solid var(--border-light, #e6e9f0);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 12.5px;
+  outline: none;
+  background: #ffffff;
+  color: var(--text-dark, #0f1729);
+  width: 100%;
+}
+
+.settlement-field select:focus,
+.settlement-field input:focus {
+  border-color: var(--brand-blue, #2f5cf0);
+}
+
+.settlement-breakdown {
+  border-top: 1px solid var(--border-light, #e6e9f0);
+  padding-top: 14px;
+}
+
+.settlement-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 12.5px;
+  color: var(--text-body, #4b5568);
+  gap: 10px;
+}
+
+.settlement-row--total {
+  border-top: 1px solid var(--border-light, #e6e9f0);
+  margin-top: 4px;
+  padding-top: 14px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-dark, #0f1729);
+}
+
+.settlement-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.settlement-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  font-size: 12px;
+  color: var(--text-muted, #6b7280);
+  border-bottom: 1px solid var(--border-light, #e6e9f0);
+  gap: 10px;
+}
+
+.settlement-detail-row:last-child {
+  border-bottom: none;
+}
+
+.settlement-detail-row span:last-child {
+  color: var(--text-dark, #0f1729);
+  font-weight: 700;
+  text-align: right;
+}
+
+
+@media (max-width: 900px) {
+  .settlement-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .settlement-calculator-card,
+  .settlement-details-card {
+    padding: 16px;
+  }
+
+  .settlement-form-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .settlement-row,
+  .settlement-detail-row {
+    font-size: 12px;
+  }
+
+  .settlement-row--total {
+    font-size: 13.5px;
+  }
+
+  .settlement-actions {
+    justify-content: stretch;
+  }
+
+  .settlement-actions .admin-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .settlement-row,
+  .settlement-detail-row {
+    flex-wrap: wrap;
+  }
+
+  .settlement-detail-row span:last-child {
+    text-align: left;
+  }
+}

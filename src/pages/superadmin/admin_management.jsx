@@ -8,13 +8,13 @@ const BRANCHES = ["Mumbai HQ", "Delhi North", "Bangalore", "Chennai", "Pune"];
 const ROLES = ["Admin", "Branch Manager"];
 
 const INITIAL_ADMINS = [
-  { id: 1, name: "Ravi Mehta", email: "ravi@inrfs.in", branch: "Mumbai HQ", role: "Admin", status: "Active" },
-  { id: 2, name: "Suresh Kumar", email: "suresh@inrfs.in", branch: "Delhi North", role: "Admin", status: "Active" },
-  { id: 3, name: "Anita Rao", email: "anita@inrfs.in", branch: "Bangalore", role: "Admin", status: "Active" },
-  { id: 4, name: "Mohan Das", email: "mohan@inrfs.in", branch: "Chennai", role: "Branch Manager", status: "Active" },
+  { id: 1, name: "Ravi Mehta", email: "ravi@inrfs.in", mobile: "+91 98765 43210", branch: "Mumbai HQ", role: "Admin", status: "Active" },
+  { id: 2, name: "Suresh Kumar", email: "suresh@inrfs.in", mobile: "+91 98765 43211", branch: "Delhi North", role: "Admin", status: "Active" },
+  { id: 3, name: "Anita Rao", email: "anita@inrfs.in", mobile: "+91 98765 43212", branch: "Bangalore", role: "Admin", status: "Active" },
+  { id: 4, name: "Mohan Das", email: "mohan@inrfs.in", mobile: "+91 98765 43213", branch: "Chennai", role: "Branch Manager", status: "Active" },
 ];
 
-const emptyForm = { name: "", email: "", branch: BRANCHES[0], role: ROLES[0], status: "Active" };
+const emptyForm = { name: "", email: "", mobile: "", branch: BRANCHES[0], role: ROLES[0], status: "Active" };
 
 export default function AdminManagement() {
   const [admins, setAdmins] = useState(INITIAL_ADMINS);
@@ -29,7 +29,7 @@ export default function AdminManagement() {
     const q = search.trim().toLowerCase();
     if (!q) return admins;
     return admins.filter((a) =>
-      [a.name, a.email, a.branch, a.role].some((v) => v.toLowerCase().includes(q))
+      [a.name, a.email, a.mobile, a.branch, a.role].some((v) => v.toLowerCase().includes(q))
     );
   }, [admins, search]);
 
@@ -40,7 +40,7 @@ export default function AdminManagement() {
   };
   const openEdit = (row) => {
     setActiveRow(row);
-    setForm({ name: row.name, email: row.email, branch: row.branch, role: row.role, status: row.status });
+    setForm({ name: row.name, email: row.email, mobile: row.mobile, branch: row.branch, role: row.role, status: row.status });
     setErrors({});
     setModalMode("edit");
   };
@@ -53,6 +53,8 @@ export default function AdminManagement() {
     if (!form.name.trim()) e.name = "Name is required.";
     if (!form.email.trim()) e.email = "Email is required.";
     else if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Enter a valid email.";
+    if (!form.mobile.trim()) e.mobile = "Mobile number is required.";
+    else if (!/^\+?\d[\d\s-]{7,14}$/.test(form.mobile.trim())) e.mobile = "Enter a valid mobile number.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -60,11 +62,11 @@ export default function AdminManagement() {
   const handleSubmit = () => {
     if (!validate()) return;
     if (modalMode === "add") {
-      const newAdmin = { id: Date.now(), ...form, name: form.name.trim(), email: form.email.trim() };
+      const newAdmin = { id: Date.now(), ...form, name: form.name.trim(), email: form.email.trim(), mobile: form.mobile.trim() };
       setAdmins((prev) => [newAdmin, ...prev]);
       showToast(`"${newAdmin.name}" added as ${newAdmin.role}.`);
     } else if (modalMode === "edit" && activeRow) {
-      setAdmins((prev) => prev.map((a) => (a.id === activeRow.id ? { ...a, ...form, name: form.name.trim(), email: form.email.trim() } : a)));
+      setAdmins((prev) => prev.map((a) => (a.id === activeRow.id ? { ...a, ...form, name: form.name.trim(), email: form.email.trim(), mobile: form.mobile.trim() } : a)));
       showToast(`"${form.name}" updated.`);
     }
     closeModal();
@@ -99,6 +101,7 @@ export default function AdminManagement() {
               <tr>
                 <th>Admin</th>
                 <th>Email</th>
+                <th>Mobile</th>
                 <th>Branch</th>
                 <th>Role</th>
                 <th>Status</th>
@@ -110,6 +113,7 @@ export default function AdminManagement() {
                 <tr key={row.id}>
                   <td className="sa-cell-strong">{row.name}</td>
                   <td>{row.email}</td>
+                  <td>{row.mobile}</td>
                   <td>{row.branch}</td>
                   <td>{row.role}</td>
                   <td><span className={`sa-badge ${row.status === "Active" ? "sa-badge-green" : "sa-badge-red"}`}>{row.status}</span></td>
@@ -154,6 +158,11 @@ export default function AdminManagement() {
             {errors.email && <div className="sa-field-error">{errors.email}</div>}
           </div>
           <div className="sa-field">
+            <label>Mobile</label>
+            <input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="+91 98765 43210" />
+            {errors.mobile && <div className="sa-field-error">{errors.mobile}</div>}
+          </div>
+          <div className="sa-field">
             <label>Branch</label>
             <select value={form.branch} onChange={(e) => setForm({ ...form, branch: e.target.value })}>
               {BRANCHES.map((b) => <option key={b}>{b}</option>)}
@@ -179,6 +188,7 @@ export default function AdminManagement() {
         <Modal title="Admin Details" onClose={closeModal} footer={<button type="button" className="sa-btn sa-btn-primary" onClick={closeModal}>Close</button>}>
           <div className="sa-view-row"><span>Name</span><span>{activeRow.name}</span></div>
           <div className="sa-view-row"><span>Email</span><span>{activeRow.email}</span></div>
+          <div className="sa-view-row"><span>Mobile</span><span>{activeRow.mobile}</span></div>
           <div className="sa-view-row"><span>Branch</span><span>{activeRow.branch}</span></div>
           <div className="sa-view-row"><span>Role</span><span>{activeRow.role}</span></div>
           <div className="sa-view-row"><span>Status</span><span>{activeRow.status}</span></div>

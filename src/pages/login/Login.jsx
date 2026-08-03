@@ -7,7 +7,6 @@ import {
   Globe,
   User,
   ShieldCheck,
-  Building2,
   Phone,
   ChevronLeft,
   ArrowRight,
@@ -28,7 +27,7 @@ const roles = [
   { id: "investor", icon: User, title: "Investor", desc: "Access your portfolio" },
   { id: "admin", icon: ShieldCheck, title: "Admin", desc: "Manage Investors" },
   { id: "superadmin", icon: Lock, title: "Super Admin", desc: "Full system access" },
-  { id: "branchmanager", icon: Building2, title: "Branch Manager", desc: "Branch operations" },
+  // { id: "branchmanager", icon: Building2, title: "Branch Manager", desc: "Branch operations" },
 ];
 
 const roleRedirects = {

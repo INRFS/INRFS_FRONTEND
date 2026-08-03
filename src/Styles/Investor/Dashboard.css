@@ -1,13 +1,13 @@
-.dash-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.dash-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .dash-greeting { font-size: 18px; font-weight: 700; color: #0f1729; margin: 0; }
-.dash-header-actions { display: flex; gap: 10px; }
+.dash-header-actions { display: flex; gap: 10px; flex-shrink: 0; }
 
 .dash-stats-grid {
   display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px;
 }
 @media (max-width: 1200px) { .dash-stats-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 700px) { .dash-stats-grid { grid-template-columns: repeat(2, 1fr); } }
-
+@media (max-width: 420px) { .dash-stats-grid { grid-template-columns: 1fr; gap: 10px; } }
 
 .dash-stat-card { background: #fff; border-radius: 12px; padding: 14px; border: 1px solid #eef1f7; }
 .dash-stat-card__top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -40,7 +40,7 @@
 .dash-recent-card, .dash-quick-actions, .dash-notif-card {
   background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #eef1f7;
 }
-.dash-recent-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.dash-recent-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; flex-wrap: wrap; }
 .dash-side-col { display: flex; flex-direction: column; gap: 16px; }
 
 .dash-notif-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
@@ -52,3 +52,70 @@
 .dash-notif-title { font-size: 12.5px; font-weight: 600; color: #1e293b; margin: 0; }
 .dash-notif-body { font-size: 11.5px; color: #64748b; margin: 2px 0; }
 .dash-notif-time { font-size: 10.5px; color: #94a3b8; margin: 0; }
+
+@media (max-width: 900px) {
+  .dash-chart-card,
+  .dash-recent-card,
+  .dash-quick-actions,
+  .dash-notif-card {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 700px) {
+  .dash-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dash-header-actions {
+    width: 100%;
+  }
+
+  .dash-header-actions .investor-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .dash-donut-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dash-donut-legend {
+    width: 100%;
+  }
+  .dash-recent-card {
+    overflow-x: auto;
+  }
+
+  .dash-recent-card .data-table {
+    min-width: 560px;
+  }
+
+  .dash-recent-card__header {
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 420px) {
+  .dash-greeting {
+    font-size: 16px;
+  }
+
+  .dash-stat-card {
+    padding: 12px;
+  }
+
+  .dash-stat-card__value {
+    font-size: 18px;
+  }
+
+  .dash-header-actions {
+    flex-direction: column;
+  }
+
+  .dash-header-actions .investor-btn {
+    width: 100%;
+  }
+}

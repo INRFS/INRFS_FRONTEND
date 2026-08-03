@@ -5,14 +5,16 @@ import {
   Building2,
   Shield,
   Users,
-  KeyRound,
-  FileText,
+  // KeyRound,
+  // FileText,
   BarChart3,
   Settings,
   Bell,
   User,
   LogOut,
   Search,
+  Menu,
+  X,
 } from "lucide-react";
 import "../../Styles/SuperAdmin/SuperAdminLayout.css";
 import Modal from "./Modal";
@@ -22,8 +24,8 @@ const navItems = [
   { to: "/superadmin/branches", label: "Branch Management", icon: Building2 },
   { to: "/superadmin/admins", label: "Admin Management", icon: Shield },
   { to: "/superadmin/users", label: "User Management", icon: Users },
-  { to: "/superadmin/roles", label: "Roles & Permissions", icon: KeyRound },
-  { to: "/superadmin/audit-logs", label: "Audit Logs", icon: FileText },
+  // { to: "/superadmin/roles", label: "Roles & Permissions", icon: KeyRound },
+  // { to: "/superadmin/audit-logs", label: "Audit Logs", icon: FileText },
   { to: "/superadmin/reports", label: "Reports", icon: BarChart3 },
   { to: "/superadmin/system-settings", label: "System Settings", icon: Settings },
 //   { to: "/superadmin/email-settings", label: "Email Settings", icon: Mail },
@@ -36,6 +38,7 @@ const navItems = [
 export default function SuperAdminLayout({ breadcrumb = ["Home", "Super Admin", "Dashboard"] }) {
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
@@ -46,24 +49,31 @@ export default function SuperAdminLayout({ breadcrumb = ["Home", "Super Admin", 
     navigate("/login");
   };
 
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
     <div className="sa-shell">
-      <aside className="sa-sidebar">
-        <div className="sa-logo">
-          <span className="sa-logo-badge">IN</span>
-          <div>
-            <div className="sa-logo-title">INRFS</div>
-            <div className="sa-logo-sub">INVESTMENT PORTAL</div>
-          </div>
-        </div>
-
-        <div className="sa-portal-pill">SUPER ADMIN</div>
+      <aside className={"sa-sidebar" + (sidebarOpen ? " sa-sidebar-open" : "")}>
+<div className="sa-logo">
+  <img src="/assets/logo2.jpg" alt="INRFS" className="sa-logo-badge" />
+  <div>
+    <div className="sa-logo-sub">INVESTMENT PORTAL</div>
+  </div>
+  <button
+    className="sa-sidebar-close"
+    onClick={closeSidebar}
+    aria-label="Close menu"
+  >
+    <X size={16} />
+  </button>
+</div>
 
         <nav className="sa-nav">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
+              onClick={closeSidebar}
               className={({ isActive }) =>
                 "sa-nav-item" + (isActive ? " sa-nav-item-active" : "")
               }
@@ -82,26 +92,46 @@ export default function SuperAdminLayout({ breadcrumb = ["Home", "Super Admin", 
               <div className="sa-user-email">superadmin@inrfs.in</div>
             </div>
           </div>
+          <button className="sa-sidebar-logout" onClick={handleLogoutClick}>
+            <LogOut size={16} />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
+      <div
+        className={
+          "sa-sidebar-backdrop" + (sidebarOpen ? " sa-sidebar-backdrop-open" : "")
+        }
+        onClick={closeSidebar}
+      />
+
       <div className="sa-main">
         <header className="sa-topbar">
-          <div className="sa-breadcrumb">
-            {breadcrumb.map((crumb, i) => (
-              <React.Fragment key={crumb}>
-                {i > 0 && <span className="sa-breadcrumb-sep">/</span>}
-                <span
-                  className={
-                    i === breadcrumb.length - 1
-                      ? "sa-breadcrumb-current"
-                      : "sa-breadcrumb-link"
-                  }
-                >
-                  {crumb}
-                </span>
-              </React.Fragment>
-            ))}
+          <div className="sa-topbar-left">
+            <button
+              className="sa-menu-toggle"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={18} />
+            </button>
+            <div className="sa-breadcrumb">
+              {breadcrumb.map((crumb, i) => (
+                <React.Fragment key={crumb}>
+                  {i > 0 && <span className="sa-breadcrumb-sep">/</span>}
+                  <span
+                    className={
+                      i === breadcrumb.length - 1
+                        ? "sa-breadcrumb-current"
+                        : "sa-breadcrumb-link"
+                    }
+                  >
+                    {crumb}
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
 
           <div className="sa-topbar-right">
@@ -119,9 +149,6 @@ export default function SuperAdminLayout({ breadcrumb = ["Home", "Super Admin", 
                 <div className="sa-profile-role">Super Admin</div>
               </div>
             </div>
-            <button className="sa-logout" onClick={handleLogoutClick} title="Logout">
-              <LogOut size={16} />
-            </button>
           </div>
         </header>
 

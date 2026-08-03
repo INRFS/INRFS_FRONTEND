@@ -138,3 +138,84 @@
   border-color: #2563eb;
   color: #fff;
 }
+
+@media (max-width: 640px) {
+  .audit-page__header {
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+
+  .audit-page__title {
+    font-size: 19px;
+    font-weight: 600;
+  }
+
+  .audit-export-btn {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+
+  .audit-card {
+    padding: 6px 0 14px;
+    border-radius: 10px;
+  }
+
+  .audit-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .audit-table {
+    min-width: 640px;
+  }
+
+  .audit-table th {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 10px 10px;
+  }
+
+  .audit-table td {
+    font-size: 12.5px;
+    font-weight: 400;
+    padding: 10px 10px;
+  }
+
+  .audit-table__user {
+    font-weight: 500;
+    color: #374151;
+  }
+
+  .audit-role,
+  .audit-status {
+    font-size: 11px;
+    font-weight: 400;
+    padding: 3px 8px;
+  }
+
+  .audit-pagination {
+    padding-top: 12px;
+    padding-left: 16px;
+    padding-right: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .audit-pagination__info {
+    font-size: 12px;
+    order: 2;
+    flex-basis: 100%;
+  }
+
+  .audit-pagination__controls {
+    order: 1;
+    gap: 4px;
+  }
+
+  .audit-pagination__arrow,
+  .audit-pagination__num {
+    width: 28px;
+    height: 28px;
+    font-size: 12.5px;
+  }
+}

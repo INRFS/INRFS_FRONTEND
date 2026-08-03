@@ -126,6 +126,9 @@
 }
 
 .roles-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -133,10 +136,19 @@
   height: 32px;
   cursor: pointer;
   color: #6b7280;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .roles-icon-btn:hover {
   background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.roles-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .roles-select {
@@ -175,4 +187,97 @@
   height: 16px;
   accent-color: #2563eb;
   cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .roles-page__header {
+    margin-bottom: 14px;
+  }
+
+  .roles-page__title {
+    font-size: 19px;
+    font-weight: 600;
+  }
+
+  .roles-page__grid {
+    gap: 12px;
+  }
+
+  .roles-card {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .roles-card__header {
+    margin-bottom: 12px;
+  }
+
+  .roles-card__title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+  }
+
+  .roles-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .roles-btn--save {
+    padding: 11px;
+    font-size: 14px;
+    margin-top: 14px;
+  }
+
+  .roles-list {
+    gap: 10px;
+  }
+
+  .roles-list__item {
+    align-items: flex-start;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .roles-list__name {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+  }
+
+  .roles-list__badges {
+    gap: 6px;
+  }
+
+  .roles-badge {
+    font-size: 11px;
+    font-weight: 400;
+    padding: 3px 8px;
+  }
+
+  .roles-icon-btn {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  .roles-select {
+    width: 100%;
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .roles-matrix {
+    gap: 8px 16px;
+  }
+
+  .roles-checkbox {
+    font-size: 13px;
+    font-weight: 400;
+    color: #4b5563;
+    padding: 6px 0;
+  }
 }
