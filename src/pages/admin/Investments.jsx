@@ -1,15 +1,48 @@
 import React, { useState, useRef } from "react";
-import { Plus, Eye, Zap, RefreshCw, Download, X, Printer, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, Eye, Zap, RefreshCw, Download, X, Printer, Loader2, CheckCircle2, Clock, Pencil } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { StatusBadge, formatINR } from "../../shared/Shared";
 import "../../Styles/Admin/investments.css";
+
 const initialInvestments = [
   { bondNumber: "BND-2025-001", investor: "Arjun Sharma", investorId: "INV001", pan: "ABCDE1234F", mobile: "9876543210", amount: 500000, rate: 12, invested: "15 Jan 2025", matures: "15 Jan 2026", status: "Active" },
   { bondNumber: "BND-2025-002", investor: "Rahul Kumar", investorId: "INV003", pan: "BCDEF2345G", mobile: "9876543212", amount: 875000, rate: 13, invested: "18 Jan 2025", matures: "18 Jul 2025", status: "Matured" },
   { bondNumber: "BND-2025-003", investor: "Neha Gupta", investorId: "INV006", pan: "CDEFG3456H", mobile: "9876543215", amount: 600000, rate: 11.5, invested: "22 Jan 2025", matures: "22 Jan 2026", status: "Active" },
-  { bondNumber: "BND-2025-004", investor: "Priya Patel", investorId: "INV002", pan: "DEFGH4567I", mobile: "9876543211", amount: 250000, rate: 12, invested: "25 Jan 2025", matures: "25 Jul 2025", status: "Pending" },
-  { bondNumber: "BND-2025-005", investor: "Vikram Singh", investorId: "INV005", pan: "EFGHI5678J", mobile: "9876543214", amount: 325000, rate: 12.5, invested: "28 Jan 2025", matures: "28 Jan 2026", status: "Active" },
+  {
+    bondNumber: null,
+    investor: "Priya Patel",
+    investorId: null,
+    pan: "—",
+    mobile: "9876543211",
+    branch: "Delhi North",
+    amount: 250000,
+    tenureMonths: 12,
+    initialRate: 3,
+    rate: 3,
+    submittedOn: "22 Jul 2025, 10:30 AM",
+    txnRef: "UTR887654321",
+    invested: "22 Jul 2025",
+    matures: null,
+    status: "Pending",
+  },
+  {
+    bondNumber: null,
+    investor: "Vikram Singh",
+    investorId: null,
+    pan: "—",
+    mobile: "9876543214",
+    branch: "Mumbai HQ",
+    amount: 325000,
+    tenureMonths: 6,
+    initialRate: 3,
+    rate: 3,
+    submittedOn: "21 Jul 2025, 3:15 PM",
+    txnRef: "UTR776543210",
+    invested: "21 Jul 2025",
+    matures: null,
+    status: "Pending",
+  },
 ];
 
 const STATUS_OPTIONS = ["Active", "Pending", "Matured"];
@@ -28,10 +61,20 @@ const emptyForm = {
 function nextBondNumber(list) {
   const year = new Date().getFullYear();
   const max = list.reduce((acc, inv) => {
+    if (!inv.bondNumber) return acc;
     const num = parseInt(inv.bondNumber.split("-").pop(), 10);
     return Number.isNaN(num) ? acc : Math.max(acc, num);
   }, 0);
   return `BND-${year}-${String(max + 1).padStart(3, "0")}`;
+}
+
+function nextInvestorId(list) {
+  const max = list.reduce((acc, inv) => {
+    if (!inv.investorId) return acc;
+    const num = parseInt(inv.investorId.replace(/\D/g, ""), 10);
+    return Number.isNaN(num) ? acc : Math.max(acc, num);
+  }, 0);
+  return `INV${String(max + 1).padStart(3, "0")}`;
 }
 
 function formatDateDisplay(isoDate) {
@@ -42,7 +85,6 @@ function formatDateDisplay(isoDate) {
 }
 
 function parseDisplayDate(displayStr) {
-  // Parses "15 Jan 2025" style strings back into a Date object
   const parsed = new Date(displayStr);
   if (!Number.isNaN(parsed.getTime())) return parsed;
   return new Date();
@@ -304,7 +346,7 @@ function AddInvestmentModal({ existing, onClose, onSave }) {
     onSave({
       bondNumber: nextBondNumber(existing),
       investor: form.investor.trim(),
-      investorId: form.investorId.trim() || "—",
+      investorId: form.investorId.trim() || nextInvestorId(existing),
       pan: form.pan.trim() || "—",
       mobile: form.mobile.trim() || "—",
       amount: Number(form.amount),
@@ -334,7 +376,7 @@ function AddInvestmentModal({ existing, onClose, onSave }) {
 
           <div className="admin-form-row-split">
             <div className="admin-form-row">
-              <label>Investor ID</label>
+              <label>Investor ID (leave blank to auto-generate)</label>
               <input type="text" value={form.investorId} onChange={handleChange("investorId")} placeholder="e.g. INV007" />
             </div>
             <div className="admin-form-row">
@@ -398,7 +440,6 @@ function AddInvestmentModal({ existing, onClose, onSave }) {
   );
 }
 
-// Read-only "View Investment" modal — opened from the eye icon
 function ViewInvestmentModal({ investment, onClose }) {
   return (
     <div className="bond-modal-overlay" onClick={onClose}>
@@ -469,8 +510,6 @@ function ViewInvestmentModal({ investment, onClose }) {
   );
 }
 
-// "Renew / Increase Tenure" modal — opened from the refresh icon.
-// Styled to match the Review & Approve action used elsewhere.
 function RenewTenureModal({ investment, onClose, onApprove }) {
   const [extraMonths, setExtraMonths] = useState(3);
   const [newRate, setNewRate] = useState(investment.rate);
@@ -566,21 +605,169 @@ function RenewTenureModal({ investment, onClose, onApprove }) {
   );
 }
 
+function ReviewApproveModal({ investment, onClose, onApprove, onReject }) {
+  const [rate, setRate] = useState(investment.initialRate ?? 3);
+  const monthlyInterest = Math.round((investment.amount * Number(rate || 0)) / 100);
+  const quickRates = [2, 2.5, 3, 3.5, 4];
+
+  return (
+    <div className="bond-modal-overlay" onClick={onClose}>
+      <div className="im-review-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-form-modal-header">
+          <h2>Review &amp; Approve Investment</h2>
+          <button className="admin-icon-btn" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="im-review-body">
+          <div className="im-review-details">
+            <p className="im-review-details__title">Investment Details</p>
+            <div className="im-review-grid">
+              <div>
+                <span className="im-review-label">Investor</span>
+                <span className="im-review-value">{investment.investor}</span>
+              </div>
+              <div>
+                <span className="im-review-label">Investor ID</span>
+                <span className="im-review-value mono">Will be generated on approval</span>
+              </div>
+              <div>
+                <span className="im-review-label">Branch</span>
+                <span className="im-review-value">{investment.branch}</span>
+              </div>
+              <div>
+                <span className="im-review-label">Amount</span>
+                <span className="im-review-value">{formatINR(investment.amount)}</span>
+              </div>
+              <div>
+                <span className="im-review-label">Tenure</span>
+                <span className="im-review-value">{investment.tenureMonths} months</span>
+              </div>
+              <div>
+                <span className="im-review-label">Transaction Ref</span>
+                <span className="im-review-value mono">{investment.txnRef}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="im-rate-box">
+            <p className="im-rate-box__title">Set Final Interest Rate</p>
+            <p className="im-rate-box__hint">
+              Investor submitted at {investment.initialRate}% per month. You can adjust the rate before approving.
+            </p>
+
+            <div className="im-rate-input-row">
+              <div className="im-rate-input-field">
+                <label>Interest Rate (% per month)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={rate}
+                  onChange={(e) => setRate(e.target.value)}
+                />
+              </div>
+              <div className="im-rate-preview">
+                <span>Monthly Interest</span>
+                <strong>{formatINR(monthlyInterest)}</strong>
+              </div>
+            </div>
+
+            <div className="im-rate-quick-row">
+              {quickRates.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  className={`im-rate-quick-btn${Number(rate) === r ? " im-rate-quick-btn--active" : ""}`}
+                  onClick={() => setRate(r)}
+                >
+                  {r}%
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="im-info-box">
+            Approving will: <strong>generate an investor ID, activate the investment, assign a bond number,</strong> and{" "}
+            <strong>generate the digital bond certificate at {rate}% per month.</strong> The investor
+            will be notified automatically.
+          </div>
+        </div>
+
+        <div className="admin-form-modal-actions im-review-actions">
+          <button className="admin-btn admin-btn--outline" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="admin-btn admin-btn--reject-solid" onClick={() => onReject(investment.txnRef)}>
+            <X size={14} /> Reject
+          </button>
+          <button
+            className="admin-btn admin-btn--approve"
+            onClick={() => onApprove(investment.txnRef, rate)}
+          >
+            <CheckCircle2 size={14} /> Approve &amp; Generate Bond
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RejectConfirmModal({ investment, onClose, onConfirm }) {
+  return (
+    <div className="bond-modal-overlay" onClick={onClose}>
+      <div className="admin-form-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-form-modal-header">
+          <h2>Reject Investment Request</h2>
+          <button className="admin-icon-btn" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="admin-form-modal-body">
+          <p className="im-confirm-text">
+            Are you sure you want to reject the investment request from{" "}
+            <strong>{investment.investor}</strong> for{" "}
+            <strong>{formatINR(investment.amount)}</strong>? This cannot be undone.
+          </p>
+
+          <div className="admin-form-modal-actions">
+            <button className="admin-btn admin-btn--outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button
+              className="admin-btn admin-btn--reject-solid"
+              onClick={() => onConfirm(investment.txnRef)}
+            >
+              <X size={14} /> Confirm Reject
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Investments() {
   const [investments, setInvestments] = useState(initialInvestments);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("pending");
   const [showAddModal, setShowAddModal] = useState(false);
   const [bondInvestment, setBondInvestment] = useState(null);
   const [viewInvestment, setViewInvestment] = useState(null);
   const [renewInvestment, setRenewInvestment] = useState(null);
+  const [reviewInvestment, setReviewInvestment] = useState(null);
+  const [rejectInvestment, setRejectInvestment] = useState(null);
+
+  const pendingInvestments = investments.filter((inv) => inv.status === "Pending");
 
   const filteredInvestments = investments.filter((inv) => {
     const q = searchTerm.trim().toLowerCase();
     if (!q) return true;
     return (
-      inv.bondNumber.toLowerCase().includes(q) ||
+      (inv.bondNumber || "").toLowerCase().includes(q) ||
       inv.investor.toLowerCase().includes(q) ||
-      inv.investorId.toLowerCase().includes(q)
+      (inv.investorId || "").toLowerCase().includes(q)
     );
   });
 
@@ -597,81 +784,193 @@ export default function Investments() {
           : inv
       )
     );
-    // remarks could be sent to an activity/audit log here if needed
     setRenewInvestment(null);
+  };
+
+  // Investor ID and Bond Number are BOTH generated here, only on approval.
+  const handleApproveInvestment = (txnRef, monthlyRatePercent) => {
+    setInvestments((prev) => {
+      const bondNumber = nextBondNumber(prev);
+      const investorId = nextInvestorId(prev);
+      const investedDate = new Date();
+      return prev.map((inv) => {
+        if (inv.txnRef !== txnRef) return inv;
+        const annualRate = Number(monthlyRatePercent) * 12;
+        const maturityDate = addMonths(investedDate, inv.tenureMonths || 12);
+        return {
+          ...inv,
+          investorId,
+          bondNumber,
+          rate: annualRate,
+          invested: formatDateDisplay(investedDate.toISOString()),
+          matures: formatDateDisplay(maturityDate.toISOString()),
+          status: "Active",
+        };
+      });
+    });
+    setReviewInvestment(null);
+  };
+
+  const handleRejectInvestment = (txnRef) => {
+    setInvestments((prev) =>
+      prev.map((inv) => (inv.txnRef === txnRef ? { ...inv, status: "Rejected" } : inv))
+    );
+    setReviewInvestment(null);
+    setRejectInvestment(null);
   };
 
   return (
     <div className="admin-page">
-      <div className="admin-page-actions">
-        <input
-          className="admin-search-input"
-          placeholder="Search bonds..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <button className="admin-btn admin-btn--primary" onClick={() => setShowAddModal(true)}>
-          <Plus size={14} /> Add Investment
+      <div className="im-page-header">
+        <div>
+          <h1>Investment Management</h1>
+          <p>Review pending requests and manage active investments</p>
+        </div>
+        <div className="im-page-header-actions">
+          <span className="im-pending-pill">{pendingInvestments.length} Pending Approval</span>
+          <button className="admin-btn admin-btn--primary" onClick={() => setShowAddModal(true)}>
+            <Plus size={14} /> Add Investment
+          </button>
+        </div>
+      </div>
+
+      <div className="im-tabs">
+        <button
+          className={`im-tab${activeTab === "pending" ? " im-tab--active" : ""}`}
+          onClick={() => setActiveTab("pending")}
+        >
+          Pending Approval <span className="im-tab-count">{pendingInvestments.length}</span>
+        </button>
+        <button
+          className={`im-tab${activeTab === "all" ? " im-tab--active" : ""}`}
+          onClick={() => setActiveTab("all")}
+        >
+          All Investments
         </button>
       </div>
 
-      <div className="admin-table-card">
-        <div className="admin-table-card__header">
-          <button className="admin-btn admin-btn--outline"><Download size={14} /> Export</button>
-        </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Bond Number</th>
-              <th>Investor</th>
-              <th>Amount</th>
-              <th>Rate</th>
-              <th>Invested</th>
-              <th>Matures</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredInvestments.length === 0 && (
+      {activeTab === "pending" ? (
+        <div className="admin-table-card">
+          <table className="data-table im-pending-table">
+            <thead>
               <tr>
-                <td colSpan={8} className="admin-no-results">No bonds match your search.</td>
+                <th>Investor</th>
+                <th>Investor ID</th>
+                <th>Branch</th>
+                <th>Amount</th>
+                <th>Tenure</th>
+                <th>Initial Rate</th>
+                <th>Submitted On</th>
+                <th>Txn Ref</th>
+                <th>Actions</th>
               </tr>
-            )}
-            {filteredInvestments.map((inv) => (
-              <tr key={inv.bondNumber}>
-                <td className="mono link">{inv.bondNumber}</td>
-                <td>{inv.investor}</td>
-                <td className="mono">{formatINR(inv.amount)}</td>
-                <td><span className="rate-pill">{inv.rate}%</span></td>
-                <td>{inv.invested}</td>
-                <td>{inv.matures}</td>
-                <td><StatusBadge status={inv.status} /></td>
-                <td className="admin-table-actions">
-                  <button title="View" onClick={() => setViewInvestment(inv)}>
-                    <Eye size={14} />
-                  </button>
-                  {inv.status === "Pending" ? (
-                    <span className="admin-pending-note" title="Bond certificate is available once the investment is approved">
-                      Pending
-                    </span>
-                  ) : (
-                    <button title="Bond" className="admin-icon-btn--primary" onClick={() => setBondInvestment(inv)}>
-                      <Zap size={14} /> Bond
-                    </button>
-                  )}
-                  <button title="Renew / Increase Tenure" className="admin-icon-btn--accent" onClick={() => setRenewInvestment(inv)}>
-                    <RefreshCw size={14} />
-                  </button>
-                </td>
+            </thead>
+            <tbody>
+              {pendingInvestments.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="admin-no-results">
+                    No pending investment requests.
+                  </td>
+                </tr>
+              )}
+              {pendingInvestments.map((inv) => (
+                <tr key={inv.txnRef}>
+                  <td className="im-investor-name">{inv.investor}</td>
+                  <td><span className="im-muted">Pending</span></td>
+                  <td>{inv.branch}</td>
+                  <td className="mono">{formatINR(inv.amount)}</td>
+                  <td>{inv.tenureMonths} months</td>
+                  <td><span className="im-rate-pill">{inv.initialRate}% p.m.</span></td>
+                  <td className="im-muted">{inv.submittedOn}</td>
+                  <td className="mono">{inv.txnRef}</td>
+                  <td>
+                    <div className="im-actions">
+                      <button className="im-approve-btn" onClick={() => setReviewInvestment(inv)}>
+                        <Pencil size={12} /> Review &amp; Approve
+                      </button>
+                      <button
+                        className="im-reject-btn"
+                        title="Reject"
+                        onClick={() => setRejectInvestment(inv)}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="admin-table-card">
+          <div className="admin-table-card__header">
+            <input
+              className="admin-search-input"
+              placeholder="Search bonds..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button className="admin-btn admin-btn--outline"><Download size={14} /> Export</button>
+          </div>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Bond Number</th>
+                <th>Investor</th>
+                <th>Investor ID</th>
+                <th>Amount</th>
+                <th>Rate</th>
+                <th>Invested</th>
+                <th>Matures</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="admin-table-footer">
-          Showing {filteredInvestments.length === 0 ? 0 : 1}-{filteredInvestments.length} of {investments.length} records
-        </p>
-      </div>
+            </thead>
+            <tbody>
+              {filteredInvestments.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="admin-no-results">No bonds match your search.</td>
+                </tr>
+              )}
+              {filteredInvestments.map((inv) => (
+                <tr key={inv.txnRef || inv.investorId}>
+                  <td className="mono link">{inv.bondNumber || "—"}</td>
+                  <td>{inv.investor}</td>
+                  <td className="mono">{inv.investorId || "—"}</td>
+                  <td className="mono">{formatINR(inv.amount)}</td>
+                  <td><span className="rate-pill">{inv.rate}%</span></td>
+                  <td>{inv.invested}</td>
+                  <td>{inv.matures || "—"}</td>
+                  <td><StatusBadge status={inv.status} /></td>
+                  <td className="admin-table-actions">
+                    {inv.status === "Pending" ? (
+                      <span className="admin-pending-note">
+                        <Clock size={12} /> Awaiting Approval
+                      </span>
+                    ) : (
+                      <>
+                        <button title="View" onClick={() => setViewInvestment(inv)}>
+                          <Eye size={14} />
+                        </button>
+                        <button title="Bond" className="admin-icon-btn--primary" onClick={() => setBondInvestment(inv)}>
+                          <Zap size={14} /> Bond
+                        </button>
+                        <button title="Renew / Increase Tenure" className="admin-icon-btn--accent" onClick={() => setRenewInvestment(inv)}>
+                          <RefreshCw size={14} />
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="admin-table-footer">
+            Showing {filteredInvestments.length === 0 ? 0 : 1}-{filteredInvestments.length} of {investments.length} records
+          </p>
+        </div>
+      )}
 
       {showAddModal && (
         <AddInvestmentModal
@@ -694,6 +993,23 @@ export default function Investments() {
           investment={renewInvestment}
           onClose={() => setRenewInvestment(null)}
           onApprove={handleApproveRenewal}
+        />
+      )}
+
+      {reviewInvestment && (
+        <ReviewApproveModal
+          investment={reviewInvestment}
+          onClose={() => setReviewInvestment(null)}
+          onApprove={handleApproveInvestment}
+          onReject={handleRejectInvestment}
+        />
+      )}
+
+      {rejectInvestment && (
+        <RejectConfirmModal
+          investment={rejectInvestment}
+          onClose={() => setRejectInvestment(null)}
+          onConfirm={handleRejectInvestment}
         />
       )}
     </div>

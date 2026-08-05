@@ -539,9 +539,28 @@
 }
 
 /* ================= Pending Approval table ================= */
+
+.admin-table-card {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.im-pending-table {
+  width: 100%;
+  min-width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
 .im-pending-table th,
 .im-pending-table td {
   white-space: nowrap;
+}
+
+.im-pending-table th:last-child,
+.im-pending-table td:last-child {
+  width: 1%;
+  padding-right: 16px;
 }
 
 .im-investor-name {
@@ -571,26 +590,28 @@
   font-size: 12px;
 }
 
-/* Row actions: green pill + red circle */
+/* Row actions: green pill + red circle (Pending Approval tab, font size reduced) */
 .im-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .im-approve-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: #16a34a;
   color: #ffffff;
   border: none;
   border-radius: 999px;
-  padding: 7px 13px;
-  font-size: 12px;
+  padding: 6px 11px;
+  font-size: 10.5px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: background 0.15s ease;
 }
 .im-approve-btn:hover {
@@ -601,8 +622,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 25px;
+  height: 25px;
   background: #ef4444;
   color: #ffffff;
   border: none;
@@ -624,6 +645,181 @@
 }
 .im-confirm-text strong {
   color: #111827;
+}
+
+/* ================= Review & Approve modal — reduced font sizes ================= */
+.im-review-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 520px;
+  max-width: 92vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.im-review-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.im-review-details {
+  background: #f9fafb;
+  border: 1px solid #eef0f4;
+  border-radius: 8px;
+  padding: 11px 13px;
+}
+
+.im-review-details__title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px;
+}
+
+.im-review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+
+.im-review-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.im-review-label {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.im-review-value {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.im-rate-box {
+  background: #eef2ff;
+  border: 1px solid #dbe4ff;
+  border-radius: 8px;
+  padding: 11px 13px;
+}
+
+.im-rate-box__title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0 0 3px;
+}
+
+.im-rate-box__hint {
+  font-size: 10px;
+  color: #4b5563;
+  margin: 0 0 10px;
+}
+
+.im-rate-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 9px;
+}
+
+.im-rate-input-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.im-rate-input-field label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.im-rate-input-field input {
+  padding: 6px 8px;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.im-rate-preview {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  background: #ffffff;
+  border: 1px solid #dbe4ff;
+  border-radius: 6px;
+  padding: 6px 13px;
+  min-width: 104px;
+}
+
+.im-rate-preview span {
+  font-size: 9.5px;
+  color: #6b7280;
+}
+
+.im-rate-preview strong {
+  font-size: 14px;
+  color: #16a34a;
+}
+
+.im-rate-quick-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.im-rate-quick-btn {
+  border: 1px solid #c7d2fe;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.im-rate-quick-btn:hover {
+  border-color: #2563eb;
+}
+.im-rate-quick-btn--active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.im-info-box {
+  background: #ecfdf3;
+  border: 1px solid #b7ecc9;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: #166534;
+}
+.im-info-box strong {
+  color: #14532d;
+}
+
+.im-review-actions {
+  padding: 12px 14px;
+  border-top: 1px solid #eef0f4;
+}
+
+.im-review-actions .admin-btn {
+  font-size: 11px;
+  padding: 6px 11px;
 }
 
 /* ================= Responsive ================= */
@@ -654,7 +850,8 @@
   }
 
   .admin-form-modal,
-  .bond-modal {
+  .bond-modal,
+  .im-review-modal {
     width: 100%;
     max-width: 100vw;
   }
@@ -679,6 +876,16 @@
 
   .admin-form-modal-actions button {
     width: 100%;
+  }
+
+  .im-review-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .im-review-actions .admin-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .bond-modal-toolbar {

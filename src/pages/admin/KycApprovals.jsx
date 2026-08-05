@@ -1,24 +1,16 @@
 import React, { useState } from "react";
-import { FileText, X } from "lucide-react";
+import { X } from "lucide-react";
 import { StatusBadge } from "../../shared/Shared";
 import "../../Styles/Admin/Kycapprovals.css";
 
 const initialApplications = [
-  { id: "INV001", name: "Arjun Sharma", status: "Approved", mobile: "9876543210", email: "arjun@email.com", branch: "Mumbai HQ" },
-  { id: "INV002", name: "Priya Patel", status: "Pending", mobile: "9876511111", email: "priya@email.com", branch: "Delhi Branch" },
-  { id: "INV003", name: "Rahul Kumar", status: "Approved", mobile: "9876522222", email: "rahul@email.com", branch: "Mumbai HQ" },
-  { id: "INV004", name: "Sunita Verma", status: "Rejected", mobile: "9876533333", email: "sunita@email.com", branch: "Pune Branch" },
-  { id: "INV005", name: "Vikram Singh", status: "Pending", mobile: "9876544444", email: "vikram@email.com", branch: "Bangalore Branch" },
-  { id: "INV006", name: "Neha Gupta", status: "Approved", mobile: "9876555555", email: "neha@email.com", branch: "Mumbai HQ" },
+  { id: "INV001", name: "Arjun Sharma", status: "Approved", mobile: "9876543210", email: "arjun@email.com", branch: "Mumbai HQ", dob: "1990-04-12", aadhaar: "XXXX XXXX 4321", address: "204, Silver Oak Residency, Andheri West", city: "Mumbai", state: "Maharashtra", pin: "400058" },
+  { id: "INV002", name: "Priya Patel", status: "Pending", mobile: "9876511111", email: "priya@email.com", branch: "Delhi Branch", dob: "1988-11-03", aadhaar: "XXXX XXXX 5566", address: "12, Rajouri Garden", city: "Delhi", state: "Delhi", pin: "110027" },
+  { id: "INV003", name: "Rahul Kumar", status: "Approved", mobile: "9876522222", email: "rahul@email.com", branch: "Mumbai HQ", dob: "1992-07-21", aadhaar: "XXXX XXXX 7788", address: "45, Whitefield Main Road", city: "Bangalore", state: "Karnataka", pin: "560066" },
+  { id: "INV004", name: "Sunita Verma", status: "Rejected", mobile: "9876533333", email: "sunita@email.com", branch: "Pune Branch", dob: "1985-02-14", aadhaar: "XXXX XXXX 9900", address: "78, Koregaon Park", city: "Pune", state: "Maharashtra", pin: "411001" },
+  { id: "INV005", name: "Vikram Singh", status: "Pending", mobile: "9876544444", email: "vikram@email.com", branch: "Bangalore Branch", dob: "1991-09-30", aadhaar: "XXXX XXXX 1122", address: "9, MG Road", city: "Bangalore", state: "Karnataka", pin: "560001" },
+  { id: "INV006", name: "Neha Gupta", status: "Approved", mobile: "9876555555", email: "neha@email.com", branch: "Mumbai HQ", dob: "1993-06-05", aadhaar: "XXXX XXXX 3344", address: "22, Bandra West", city: "Mumbai", state: "Maharashtra", pin: "400050" },
 ];
-
-const documentsByStatus = {
-  "Aadhaar Card (Front)": "Verified",
-  "Aadhaar Card (Back)": "Verified",
-  "PAN Card": "Verified",
-  "Passport Photo": "Pending",
-  "Bank Passbook": "Pending",
-};
 
 export default function KycApprovals() {
   const [applications, setApplications] = useState(initialApplications);
@@ -26,7 +18,7 @@ export default function KycApprovals() {
 
   const [selectedId, setSelectedId] = useState(pendingApplications[0]?.id ?? null);
   const [remarks, setRemarks] = useState("");
-  const [confirmAction, setConfirmAction] = useState(null); // "approve" | "reject" | null
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const selected = applications.find((a) => a.id === selectedId) ?? null;
 
@@ -106,20 +98,33 @@ export default function KycApprovals() {
               <span className="kyc-field__value">{selected.email}</span>
             </div>
             <div className="kyc-field">
+              <span className="kyc-field__label">Date of Birth</span>
+              <span className="kyc-field__value">{selected.dob}</span>
+            </div>
+            <div className="kyc-field">
+              <span className="kyc-field__label">Aadhaar Number</span>
+              <span className="kyc-field__value">{selected.aadhaar}</span>
+            </div>
+            <div className="kyc-field">
               <span className="kyc-field__label">Branch</span>
               <span className="kyc-field__value">{selected.branch}</span>
             </div>
-          </div>
-
-          <p className="admin-section__title">Documents</p>
-          <div className="kyc-doc-list">
-            {Object.entries(documentsByStatus).map(([doc, status]) => (
-              <div key={doc} className="kyc-doc-row">
-                <span className="kyc-doc-icon"><FileText size={16} /></span>
-                <span className="kyc-doc-name">{doc}</span>
-                <StatusBadge status={status} />
-              </div>
-            ))}
+            <div className="kyc-field kyc-field--full">
+              <span className="kyc-field__label">Address</span>
+              <span className="kyc-field__value">{selected.address}</span>
+            </div>
+            <div className="kyc-field">
+              <span className="kyc-field__label">City</span>
+              <span className="kyc-field__value">{selected.city}</span>
+            </div>
+            <div className="kyc-field">
+              <span className="kyc-field__label">State</span>
+              <span className="kyc-field__value">{selected.state}</span>
+            </div>
+            <div className="kyc-field">
+              <span className="kyc-field__label">PIN Code</span>
+              <span className="kyc-field__value">{selected.pin}</span>
+            </div>
           </div>
 
           <p className="admin-section__title">Remarks</p>
