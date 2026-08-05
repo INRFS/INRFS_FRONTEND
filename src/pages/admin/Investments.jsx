@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Plus, Eye, Zap, RefreshCw, Download, X, Printer, Loader2 } from "lucide-react";
+import { Plus, Eye, Zap, RefreshCw, Download, X, Printer, Loader2, CheckCircle2 } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { StatusBadge, formatINR } from "../../shared/Shared";
@@ -39,6 +39,19 @@ function formatDateDisplay(isoDate) {
   const d = new Date(isoDate);
   if (Number.isNaN(d.getTime())) return isoDate;
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function parseDisplayDate(displayStr) {
+  // Parses "15 Jan 2025" style strings back into a Date object
+  const parsed = new Date(displayStr);
+  if (!Number.isNaN(parsed.getTime())) return parsed;
+  return new Date();
+}
+
+function addMonths(date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + Number(months));
+  return d;
 }
 
 function monthsBetween(startStr, endStr) {
@@ -385,11 +398,181 @@ function AddInvestmentModal({ existing, onClose, onSave }) {
   );
 }
 
+// Read-only "View Investment" modal — opened from the eye icon
+function ViewInvestmentModal({ investment, onClose }) {
+  return (
+    <div className="bond-modal-overlay" onClick={onClose}>
+      <div className="admin-form-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-form-modal-header">
+          <h2>Investment Details</h2>
+          <button className="admin-icon-btn" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="admin-form-modal-body">
+          <div className="admin-form-row">
+            <label>Bond Number</label>
+            <span className="mono">{investment.bondNumber}</span>
+          </div>
+          <div className="admin-form-row">
+            <label>Investor Name</label>
+            <span>{investment.investor}</span>
+          </div>
+          <div className="admin-form-row-split">
+            <div className="admin-form-row">
+              <label>Investor ID</label>
+              <span className="mono">{investment.investorId}</span>
+            </div>
+            <div className="admin-form-row">
+              <label>PAN Number</label>
+              <span className="mono">{investment.pan}</span>
+            </div>
+          </div>
+          <div className="admin-form-row">
+            <label>Mobile</label>
+            <span>+91 {investment.mobile}</span>
+          </div>
+          <div className="admin-form-row-split">
+            <div className="admin-form-row">
+              <label>Investment Amount</label>
+              <span className="mono">{formatINR(investment.amount)}</span>
+            </div>
+            <div className="admin-form-row">
+              <label>Interest Rate</label>
+              <span>{investment.rate}% p.a.</span>
+            </div>
+          </div>
+          <div className="admin-form-row-split">
+            <div className="admin-form-row">
+              <label>Investment Date</label>
+              <span>{investment.invested}</span>
+            </div>
+            <div className="admin-form-row">
+              <label>Maturity Date</label>
+              <span>{investment.matures}</span>
+            </div>
+          </div>
+          <div className="admin-form-row">
+            <label>Status</label>
+            <span><StatusBadge status={investment.status} /></span>
+          </div>
+
+          <div className="admin-form-modal-actions">
+            <button type="button" className="admin-btn admin-btn--outline" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// "Renew / Increase Tenure" modal — opened from the refresh icon.
+// Styled to match the Review & Approve action used elsewhere.
+function RenewTenureModal({ investment, onClose, onApprove }) {
+  const [extraMonths, setExtraMonths] = useState(3);
+  const [newRate, setNewRate] = useState(investment.rate);
+  const [remarks, setRemarks] = useState("");
+
+  const currentMaturity = parseDisplayDate(investment.matures);
+  const newMaturity = addMonths(currentMaturity, extraMonths);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onApprove({
+      bondNumber: investment.bondNumber,
+      newMatures: formatDateDisplay(newMaturity.toISOString()),
+      newRate: Number(newRate),
+      remarks: remarks.trim(),
+    });
+  };
+
+  return (
+    <div className="bond-modal-overlay" onClick={onClose}>
+      <div className="admin-form-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-form-modal-header">
+          <h2>Renew / Increase Tenure</h2>
+          <button className="admin-icon-btn" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="admin-form-modal-body">
+          <div className="admin-form-row">
+            <label>Investor</label>
+            <span>{investment.investor} <span className="mono">({investment.investorId})</span></span>
+          </div>
+
+          <div className="admin-form-row-split">
+            <div className="admin-form-row">
+              <label>Current Tenure Ends</label>
+              <span>{investment.matures}</span>
+            </div>
+            <div className="admin-form-row">
+              <label>Current Rate</label>
+              <span>{investment.rate}% p.a.</span>
+            </div>
+          </div>
+
+          <div className="admin-form-row-split">
+            <div className="admin-form-row">
+              <label>Extend By (months)</label>
+              <input
+                type="number"
+                min="1"
+                value={extraMonths}
+                onChange={(e) => setExtraMonths(e.target.value)}
+              />
+            </div>
+            <div className="admin-form-row">
+              <label>New Rate (% p.a.)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={newRate}
+                onChange={(e) => setNewRate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="admin-form-row">
+            <label>New Maturity Date</label>
+            <span className="mono">{formatDateDisplay(newMaturity.toISOString())}</span>
+          </div>
+
+          <div className="admin-form-row">
+            <label>Remarks (optional)</label>
+            <textarea
+              className="kyc-remarks"
+              placeholder="Add remarks..."
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+            />
+          </div>
+
+          <div className="admin-form-modal-actions">
+            <button type="button" className="admin-btn admin-btn--outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="admin-btn admin-btn--approve">
+              <CheckCircle2 size={14} /> Review &amp; Approve
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Investments() {
   const [investments, setInvestments] = useState(initialInvestments);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [bondInvestment, setBondInvestment] = useState(null);
+  const [viewInvestment, setViewInvestment] = useState(null);
+  const [renewInvestment, setRenewInvestment] = useState(null);
 
   const filteredInvestments = investments.filter((inv) => {
     const q = searchTerm.trim().toLowerCase();
@@ -404,6 +587,18 @@ export default function Investments() {
   const handleAddInvestment = (newInvestment) => {
     setInvestments((prev) => [newInvestment, ...prev]);
     setShowAddModal(false);
+  };
+
+  const handleApproveRenewal = ({ bondNumber, newMatures, newRate, remarks }) => {
+    setInvestments((prev) =>
+      prev.map((inv) =>
+        inv.bondNumber === bondNumber
+          ? { ...inv, matures: newMatures, rate: newRate, status: "Active" }
+          : inv
+      )
+    );
+    // remarks could be sent to an activity/audit log here if needed
+    setRenewInvestment(null);
   };
 
   return (
@@ -453,11 +648,21 @@ export default function Investments() {
                 <td>{inv.matures}</td>
                 <td><StatusBadge status={inv.status} /></td>
                 <td className="admin-table-actions">
-                  <button title="View"><Eye size={14} /></button>
-                  <button title="Bond" className="admin-icon-btn--primary" onClick={() => setBondInvestment(inv)}>
-                    <Zap size={14} /> Bond
+                  <button title="View" onClick={() => setViewInvestment(inv)}>
+                    <Eye size={14} />
                   </button>
-                  <button title="Renew" className="admin-icon-btn--accent"><RefreshCw size={14} /></button>
+                  {inv.status === "Pending" ? (
+                    <span className="admin-pending-note" title="Bond certificate is available once the investment is approved">
+                      Pending
+                    </span>
+                  ) : (
+                    <button title="Bond" className="admin-icon-btn--primary" onClick={() => setBondInvestment(inv)}>
+                      <Zap size={14} /> Bond
+                    </button>
+                  )}
+                  <button title="Renew / Increase Tenure" className="admin-icon-btn--accent" onClick={() => setRenewInvestment(inv)}>
+                    <RefreshCw size={14} />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -478,6 +683,18 @@ export default function Investments() {
 
       {bondInvestment && (
         <BondCertificate investment={bondInvestment} onClose={() => setBondInvestment(null)} />
+      )}
+
+      {viewInvestment && (
+        <ViewInvestmentModal investment={viewInvestment} onClose={() => setViewInvestment(null)} />
+      )}
+
+      {renewInvestment && (
+        <RenewTenureModal
+          investment={renewInvestment}
+          onClose={() => setRenewInvestment(null)}
+          onApprove={handleApproveRenewal}
+        />
       )}
     </div>
   );

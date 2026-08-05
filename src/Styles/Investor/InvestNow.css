@@ -1,7 +1,9 @@
 .invest-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; align-items: start; }
 @media (max-width: 900px) { .invest-layout { grid-template-columns: 1fr; } }
 
-.invest-form-card, .invest-summary-card {
+.invest-side-col { display: flex; flex-direction: column; gap: 16px; }
+
+.invest-form-card, .invest-summary-card, .invest-workflow-card {
   background: #fff; border-radius: 12px; padding: 22px; border: 1px solid #eef1f7;
 }
 
@@ -15,6 +17,15 @@
 .invest-step--active .invest-step__num { background: #2f5cf0; color: #fff; }
 .invest-step__label { font-size: 11px; }
 .invest-step__connector { flex: 1; height: 1px; background: #e2e8f0; margin: 0 10px 22px; }
+
+.invest-rate-banner {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: #fef9ec; border: 1px solid #f7e4a8; border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 20px; color: #92640a;
+}
+.invest-rate-banner svg { flex-shrink: 0; margin-top: 2px; color: #d69e2e; }
+.invest-rate-banner p { margin: 0; font-size: 12.5px; line-height: 1.5; }
+.invest-rate-banner strong { color: #7c5109; }
 
 .invest-field-label { font-size: 13px; font-weight: 600; color: #334155; margin: 16px 0 8px; display: block; }
 .invest-required { color: #ef4444; }
@@ -30,62 +41,11 @@
   padding: 7px 12px; border-radius: 8px; border: 1px solid #e2e8f0;
   background: #fff; font-size: 12.5px; cursor: pointer; color: #334155;
 }
-/* UPI payment box */
-.invest-upi-box {
-  background: #f5f7fb;
-  border-radius: 10px;
-  padding: 24px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-.invest-upi-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f1729;
-  margin: 0 0 4px;
-}
-.invest-upi-id {
-  font-size: 12.5px;
-  color: #94a3b8;
-  margin: 0 0 14px;
-}
-.invest-upi-amount {
-  font-size: 26px;
-  font-weight: 800;
-  color: #2f5cf0;
-  margin: 0;
-}
-
-/* Upload box */
-.invest-upload-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1.5px dashed #cbd5e1;
-  border-radius: 10px;
-  padding: 34px 16px;
-  color: #64748b;
-  font-size: 12.5px;
-  cursor: pointer;
-  text-align: center;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-.invest-upload-box:hover {
-  border-color: #2f5cf0;
-  background: #f5f8ff;
-}
-.invest-upload-input-hidden {
-  display: none;
-}
-
-.invest-confirmation-icon {
-  color: #16a34a;
-}
 .invest-chip--active { background: #2f5cf0; color: #fff; border-color: #2f5cf0; }
 
-.invest-tenure-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.invest-tenure-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+@media (max-width: 700px) { .invest-tenure-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 420px) { .invest-tenure-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { .invest-tenure-grid { grid-template-columns: repeat(2, 1fr); } }
 .invest-tenure-card {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -95,138 +55,95 @@
 .invest-tenure-card--active { border-color: #2f5cf0; background: #f5f8ff; }
 .invest-tenure-card__months { font-size: 20px; font-weight: 700; color: #0f1729; }
 .invest-tenure-card__unit { font-size: 11px; color: #94a3b8; }
-.invest-tenure-card__rate { font-size: 12px; color: #16a34a; font-weight: 600; margin-top: 4px; }
 
 .invest-form-actions { display: flex; justify-content: space-between; margin-top: 24px; gap: 10px; }
 .invest-form-actions--center { justify-content: center; gap: 12px; }
+
+/* UPI payment box */
+.invest-upi-box {
+  background: #f5f7fb;
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.invest-upi-title { font-size: 14px; font-weight: 700; color: #0f1729; margin: 0 0 4px; }
+.invest-upi-id { font-size: 12.5px; color: #94a3b8; margin: 0 0 14px; }
+.invest-upi-amount { font-size: 26px; font-weight: 800; color: #2f5cf0; margin: 0; }
+
+/* Review step */
+.invest-review-heading { font-size: 15px; font-weight: 700; color: #0f1729; margin: 0 0 14px; }
+.invest-review-card {
+  background: #f8fafc; border-radius: 10px; padding: 4px 16px; border: 1px solid #eef1f7;
+}
+.invest-review-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 13px 0; border-bottom: 1px solid #eef1f7; font-size: 13px; color: #475569;
+}
+.invest-review-row--last { border-bottom: none; }
+.invest-review-row span:last-child { color: #0f1729; font-weight: 600; }
+
+.invest-review-note {
+  background: #fef9ec; border: 1px solid #f7e4a8; border-radius: 10px;
+  padding: 14px 16px; margin-top: 16px; font-size: 12.5px; line-height: 1.5; color: #92640a;
+}
+.invest-review-note strong { color: #7c5109; }
+
+.invest-confirmation-icon { color: #16a34a; display: inline-flex; margin-bottom: 10px; }
+.invest-confirmation-step { text-align: center; padding: 30px 10px; }
+.invest-confirmation-title { font-size: 18px; font-weight: 700; color: #0f1729; margin: 4px 0; }
+.invest-confirmation-sub { font-size: 13px; color: #64748b; max-width: 420px; margin: 0 auto; }
 
 .invest-summary-row {
   display: flex; justify-content: space-between; padding: 10px 0;
   border-bottom: 1px solid #f1f4f9; font-size: 13px; color: #475569;
 }
 .invest-summary-row--total {
-  font-weight: 700; color: #0f1729; border-bottom: none; padding-top: 14px; font-size: 14px;
+  font-weight: 700; color: #16a34a; border-bottom: none; padding-top: 14px; font-size: 14px;
 }
 
-.invest-payment-options { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
-.invest-payment-option {
-  display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0;
-  border-radius: 8px; padding: 12px; font-size: 13px; cursor: pointer;
+/* Investment Workflow card */
+.invest-workflow-card { background: #fef9ec; border: 1px solid #f7e4a8; }
+.invest-workflow-title { font-size: 14px; font-weight: 700; color: #7c5109; margin: 0 0 16px; }
+.invest-workflow-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.invest-workflow-row:last-child { margin-bottom: 0; }
+.invest-workflow-num {
+  width: 22px; height: 22px; border-radius: 50%; background: #d69e2e; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
 }
-
-.invest-payment-option--active { border-color: #2f5cf0; background: #f5f8ff; }
-.invest-payment-note { font-size: 13px; color: #64748b; margin-top: 16px; }
-
-.invest-confirmation-step { text-align: center; padding: 30px 10px; }
-.invest-confirmation-icon { color: #16a34a; display: inline-flex; margin-bottom: 10px; }
-.invest-confirmation-title { font-size: 18px; font-weight: 700; color: #0f1729; margin: 4px 0; }
-.invest-confirmation-sub { font-size: 13px; color: #64748b; max-width: 420px; margin: 0 auto; }
-
+.invest-workflow-row__title { font-size: 13px; font-weight: 700; color: #7c5109; margin: 0; }
+.invest-workflow-row__desc { font-size: 11.5px; color: #92640a; margin: 2px 0 0; }
 
 @media (max-width: 900px) {
-  .invest-form-card, .invest-summary-card {
-    padding: 18px;
-  }
-
-  .invest-summary-card {
-    margin-top: 0;
-  }
+  .invest-form-card, .invest-summary-card, .invest-workflow-card { padding: 18px; }
+  .invest-summary-card { margin-top: 0; }
 }
 @media (max-width: 600px) {
-  .invest-form-card, .invest-summary-card {
-    padding: 16px;
-    border-radius: 10px;
-  }
-
-  .invest-stepper {
-    margin-bottom: 20px;
-  }
-
-  .invest-step__num {
-    width: 26px;
-    height: 26px;
-    font-size: 12px;
-  }
-
-  .invest-step__label {
-    display: none;
-  }
-
-  .invest-step__connector {
-    margin: 0 6px;
-  }
-
-  .invest-amount-input input {
-    font-size: 14px;
-  }
-
-  .invest-quick-amounts {
-    gap: 6px;
-  }
-
-  .invest-chip {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
-
-  .invest-upi-box {
-    padding: 18px;
-  }
-
-  .invest-upi-amount {
-    font-size: 22px;
-  }
-
-  .invest-upload-box {
-    padding: 24px 12px;
-  }
-  .invest-form-actions {
-    flex-direction: row;
-    gap: 8px;
-  }
-
+  .invest-form-card, .invest-summary-card, .invest-workflow-card { padding: 16px; border-radius: 10px; }
+  .invest-stepper { margin-bottom: 20px; }
+  .invest-step__num { width: 26px; height: 26px; font-size: 12px; }
+  .invest-step__label { display: none; }
+  .invest-step__connector { margin: 0 6px; }
+  .invest-amount-input input { font-size: 14px; }
+  .invest-quick-amounts { gap: 6px; }
+  .invest-chip { padding: 6px 10px; font-size: 12px; }
+  .invest-upi-box { padding: 18px; }
+  .invest-upi-amount { font-size: 22px; }
+  .invest-form-actions { flex-direction: row; gap: 8px; }
   .invest-form-actions .investor-btn {
-    flex: 1;
-    justify-content: center;
-    padding: 10px 8px;
-    font-size: 12.5px;
-    gap: 4px;
-    white-space: nowrap;
+    flex: 1; justify-content: center; padding: 10px 8px; font-size: 12.5px; gap: 4px; white-space: nowrap;
   }
-
-  .invest-form-actions--center {
-    flex-direction: row;
-  }
-
-  .invest-payment-option {
-    padding: 10px;
-    font-size: 12.5px;
-  }
-
-  .invest-confirmation-step {
-    padding: 20px 6px;
-  }
-
-  .invest-confirmation-title {
-    font-size: 16px;
-  }
+  .invest-form-actions--center { flex-direction: row; }
+  .invest-confirmation-step { padding: 20px 6px; }
+  .invest-confirmation-title { font-size: 16px; }
+  .invest-review-row { padding: 11px 0; font-size: 12.5px; }
+  .invest-rate-banner { padding: 12px 14px; }
 }
 
 @media (max-width: 420px) {
-  .invest-tenure-card {
-    padding: 10px 6px;
-  }
-
-  .invest-tenure-card__months {
-    font-size: 17px;
-  }
-
-  .invest-summary-row {
-    font-size: 12.5px;
-  }
-
-  .invest-form-actions .investor-btn {
-    font-size: 11.5px;
-    padding: 10px 6px;
-  }
+  .invest-tenure-card { padding: 10px 6px; }
+  .invest-tenure-card__months { font-size: 17px; }
+  .invest-summary-row { font-size: 12.5px; }
+  .invest-form-actions .investor-btn { font-size: 11.5px; padding: 10px 6px; }
 }

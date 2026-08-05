@@ -1,7 +1,17 @@
 import React, { useState } from "react";
-import PersonalInfoStep from "./Personalinfo";
-import ReviewSubmitStep from "./ReviewSubmit";
-import { CheckCircle2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  Phone,
+  Mail,
+  Calendar,
+  MapPin,
+  Upload,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
 import "../../Styles/login/Register.css";
 
 const steps = [
@@ -9,9 +19,403 @@ const steps = [
   { id: 2, label: "Review & Submit" },
 ];
 
+const reviewRows = [
+  { key: "fullName", label: "Full Name" },
+  { key: "mobile", label: "Mobile Number" },
+  { key: "email", label: "Email Address" },
+  { key: "dob", label: "Date of Birth" },
+  { key: "aadhaar", label: "Aadhaar Number" },
+  { key: "address", label: "Address" },
+  { key: "city", label: "City" },
+  { key: "state", label: "State" },
+  { key: "pin", label: "PIN Code" },
+];
+
+function PersonalInfoStep({ formData, setFormData, onNext }) {
+  const update = (field) => (e) =>
+    setFormData((prev) => ({
+      ...prev,
+      [field]: e.target.value,
+    }));
+
+  const handleFileChange = (field) => (e) => {
+    const file = e.target.files[0];
+
+    setFormData((prev) => ({
+      ...prev,
+      [field]: file,
+    }));
+  };
+
+  return (
+    <>
+      <div className="reg-form-grid">
+        <div className="reg-field">
+          <label>
+            Full Name <span className="req">*</span>
+          </label>
+
+          <input
+            type="text"
+            placeholder="As per Aadhaar card"
+            value={formData.fullName}
+            onChange={update("fullName")}
+          />
+        </div>
+
+        <div className="reg-field">
+          <label>
+            Mobile Number <span className="req">*</span>
+          </label>
+
+          <div className="reg-input-icon">
+            <Phone size={15} />
+            <input
+              type="tel"
+              placeholder="+91 XXXXX XXXXX"
+              value={formData.mobile}
+              onChange={update("mobile")}
+            />
+          </div>
+        </div>
+
+        <div className="reg-field">
+          <label>Email Address</label>
+
+          <div className="reg-input-icon">
+            <Mail size={15} />
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={formData.email}
+              onChange={update("email")}
+            />
+          </div>
+        </div>
+
+        <div className="reg-field">
+          <label>
+            Date of Birth <span className="req">*</span>
+          </label>
+
+          <div className="reg-input-icon">
+            <Calendar size={15} />
+            <input
+              type="date"
+              value={formData.dob}
+              onChange={update("dob")}
+            />
+          </div>
+        </div>
+
+        <div className="reg-field">
+          <label>
+            Aadhaar Number <span className="req">*</span>
+          </label>
+
+          <input
+            type="text"
+            maxLength={12}
+            placeholder="XXXX XXXX XXXX"
+            value={formData.aadhaar}
+            onChange={update("aadhaar")}
+          />
+        </div>
+
+        <div className="reg-field">
+          <label>
+            Aadhaar Photo <span className="req">*</span>
+          </label>
+
+          <label className="reg-upload-box">
+            <Upload size={22} />
+            <span>
+              {formData.aadhaarPhoto
+                ? formData.aadhaarPhoto.name
+                : "Choose Aadhaar Photo"}
+            </span>
+
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileChange("aadhaarPhoto")}
+              hidden
+            />
+          </label>
+
+          {formData.aadhaarPhoto &&
+            formData.aadhaarPhoto.type.startsWith("image/") && (
+              <img
+                src={URL.createObjectURL(formData.aadhaarPhoto)}
+                alt="Aadhaar"
+                className="preview-image"
+              />
+            )}
+        </div>
+
+        <div className="reg-field">
+          <label>
+            Passport Size Photo <span className="req">*</span>
+          </label>
+
+          <label className="reg-upload-box">
+            <Upload size={22} />
+            <span>
+              {formData.passportPhoto
+                ? formData.passportPhoto.name
+                : "Choose Passport Photo"}
+            </span>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange("passportPhoto")}
+              hidden
+            />
+          </label>
+
+          {formData.passportPhoto && (
+            <img
+              src={URL.createObjectURL(formData.passportPhoto)}
+              alt="Passport"
+              className="preview-image"
+            />
+          )}
+        </div>
+
+        <div className="reg-field reg-field-full">
+          <label>
+            Address <span className="req">*</span>
+          </label>
+
+          <div className="reg-input-icon">
+            <MapPin size={15} />
+            <input
+              type="text"
+              placeholder="Street address"
+              value={formData.address}
+              onChange={update("address")}
+            />
+          </div>
+        </div>
+
+        <div className="reg-field">
+          <label>City</label>
+
+          <input
+            type="text"
+            placeholder="City"
+            value={formData.city}
+            onChange={update("city")}
+          />
+        </div>
+
+        <div className="reg-field">
+          <label>State</label>
+
+          <select value={formData.state} onChange={update("state")}>
+            <option value="">Select State</option>
+            <option>Telangana</option>
+            <option>Andhra Pradesh</option>
+            <option>Chennai</option>
+          </select>
+        </div>
+
+        <div className="reg-field">
+          <label>PIN Code</label>
+
+          <input
+            type="text"
+            maxLength={6}
+            placeholder="500001"
+            value={formData.pin}
+            onChange={update("pin")}
+          />
+        </div>
+      </div>
+
+      <div className="reg-actions">
+        <button
+          type="button"
+          className="btn btn-outline"
+          onClick={() => (window.location.href = "/login")}
+        >
+          <ChevronLeft size={15} />
+          Back to Login
+        </button>
+
+        <button type="button" className="btn btn-primary" onClick={onNext}>
+          Next Step
+          <ChevronRight size={15} />
+        </button>
+      </div>
+    </>
+  );
+}
+
+function ReviewSubmitStep({ formData, agreed, setAgreed, onBack }) {
+  const navigate = useNavigate();
+
+  const [submitting, setSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const handleSubmit = () => {
+    if (!agreed || submitting) return;
+
+    setSubmitting(true);
+
+    // Replace with API later
+    setTimeout(() => {
+      setSubmitting(false);
+      setShowSuccessModal(true);
+    }, 1000);
+  };
+
+  const handleModalClose = () => {
+    setShowSuccessModal(false);
+    navigate("/login");
+  };
+
+  return (
+    <>
+      <div className="reg-review-box">
+        <div className="reg-review-heading">
+          <CheckCircle2 size={18} className="reg-review-heading-icon" />
+          Review Your Application
+        </div>
+
+        {reviewRows.map(({ key, label }) => (
+          <div className="reg-review-row" key={key}>
+            <span>{label}</span>
+            <strong>{formData[key] || "—"}</strong>
+          </div>
+        ))}
+
+        <div className="reg-review-row">
+          <span>Aadhaar Document</span>
+
+          <strong>
+            {formData.aadhaarPhoto
+              ? formData.aadhaarPhoto.name
+              : "Not Uploaded"}
+          </strong>
+        </div>
+
+        {formData.aadhaarPhoto &&
+          formData.aadhaarPhoto.type.startsWith("image/") && (
+            <div className="reg-upload-preview">
+              <img
+                src={URL.createObjectURL(formData.aadhaarPhoto)}
+                alt="Aadhaar"
+                className="preview-image"
+              />
+            </div>
+          )}
+
+        <div className="reg-review-row">
+          <span>Passport Photo</span>
+
+          <strong>
+            {formData.passportPhoto
+              ? formData.passportPhoto.name
+              : "Not Uploaded"}
+          </strong>
+        </div>
+
+        {formData.passportPhoto && (
+          <div className="reg-upload-preview">
+            <img
+              src={URL.createObjectURL(formData.passportPhoto)}
+              alt="Passport"
+              className="preview-image"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="reg-warning">
+        <AlertTriangle size={16} />
+
+        <p>
+          By submitting this application you certify that the information
+          and uploaded documents are correct. Providing incorrect
+          information may lead to rejection of your registration.
+        </p>
+      </div>
+
+      <label className="reg-agree">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+        />
+
+        <span>
+          I agree to the <a href="#terms">Terms & Conditions</a> and{" "}
+          <a href="#kyc">KYC Policy</a>.
+        </span>
+      </label>
+
+      <div className="reg-actions">
+        <button
+          type="button"
+          className="btn btn-outline"
+          onClick={onBack}
+          disabled={submitting}
+        >
+          <ChevronLeft size={15} />
+          Previous
+        </button>
+
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={!agreed || submitting}
+          onClick={handleSubmit}
+        >
+          {submitting ? (
+            <>
+              <Loader2 size={15} className="reg-spin" />
+              Submitting...
+            </>
+          ) : (
+            <>
+              Submit Application
+              <ChevronRight size={15} />
+            </>
+          )}
+        </button>
+      </div>
+
+      {showSuccessModal && (
+        <div className="reg-modal-overlay">
+          <div className="reg-modal">
+            <div className="reg-modal-icon">
+              <CheckCircle2 size={55} />
+            </div>
+
+            <h2>Registration Successful</h2>
+
+            <p>Your registration has been submitted successfully.</p>
+
+            <p>
+              Your account is currently
+              <strong> Pending Admin Approval.</strong>
+            </p>
+
+            <button className="reg-modal-btn" onClick={handleModalClose}>
+              Go to Login
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function Register() {
   const [currentStep, setCurrentStep] = useState(1);
+
   const [formData, setFormData] = useState({
     fullName: "",
     mobile: "",
@@ -22,11 +426,21 @@ export default function Register() {
     city: "",
     state: "",
     pin: "",
+
+    // Uploads
+    aadhaarPhoto: null,
+    passportPhoto: null,
   });
+
   const [agreed, setAgreed] = useState(false);
 
-  const goNext = () => setCurrentStep((s) => Math.min(s + 1, steps.length));
-  const goBack = () => setCurrentStep((s) => Math.max(s - 1, 1));
+  const goNext = () => {
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+  };
+
+  const goBack = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
 
   return (
     <div className="reg-page">
@@ -35,22 +449,23 @@ export default function Register() {
           <span className="reg-logo-badge">IN</span>
           <span className="reg-logo-text">INRFS</span>
         </div>
+
         <h1>Investor Registration</h1>
+
         <p>Complete your KYC to start investing</p>
 
         <div className="reg-stepper">
-          {steps.map((step, i) => (
+          {steps.map((step, index) => (
             <React.Fragment key={step.id}>
               <div className="reg-step">
                 <div
-                  className={
-                    "reg-step-circle" +
-                    (currentStep === step.id
-                      ? " reg-step-active"
+                  className={`reg-step-circle ${
+                    currentStep === step.id
+                      ? "reg-step-active"
                       : currentStep > step.id
-                      ? " reg-step-done"
-                      : "")
-                  }
+                      ? "reg-step-done"
+                      : ""
+                  }`}
                 >
                   {currentStep > step.id ? (
                     <CheckCircle2 size={16} />
@@ -58,21 +473,21 @@ export default function Register() {
                     step.id
                   )}
                 </div>
+
                 <span
-                  className={
-                    "reg-step-label" +
-                    (currentStep >= step.id ? " reg-step-label-active" : "")
-                  }
+                  className={`reg-step-label ${
+                    currentStep >= step.id ? "reg-step-label-active" : ""
+                  }`}
                 >
                   {step.label}
                 </span>
               </div>
-              {i < steps.length - 1 && (
+
+              {index < steps.length - 1 && (
                 <div
-                  className={
-                    "reg-step-line" +
-                    (currentStep > step.id ? " reg-step-line-done" : "")
-                  }
+                  className={`reg-step-line ${
+                    currentStep > step.id ? "reg-step-line-done" : ""
+                  }`}
                 />
               )}
             </React.Fragment>

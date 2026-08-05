@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { formatINR } from "../../shared/Shared";
+import { CheckCircle2, X, AlertTriangle, Lock } from "lucide-react";
 import "../../Styles/Admin/Settlement.css";
 
 const bonds = [
@@ -11,8 +12,11 @@ const bonds = [
 export default function Settlement() {
   const [selectedBond, setSelectedBond] = useState(bonds[0].bondNumber);
   const [settlementDate, setSettlementDate] = useState("2025-07-22");
+  const [settledBonds, setSettledBonds] = useState(new Set());
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const bond = bonds.find((b) => b.bondNumber === selectedBond);
+  const isSettled = settledBonds.has(selectedBond);
 
   const { interestEarned, penalty, netSettlement } = useMemo(() => {
     const interest = Math.round((bond.principal * (bond.rate / 100) * bond.monthsActive) / 12);
@@ -23,6 +27,20 @@ export default function Settlement() {
       netSettlement: bond.principal + interest - penaltyAmount,
     };
   }, [bond]);
+
+  const openConfirm = () => {
+    if (isSettled) return;
+    setShowConfirm(true);
+  };
+
+  const closeConfirm = () => {
+    setShowConfirm(false);
+  };
+
+  const confirmApprove = () => {
+    setSettledBonds((prev) => new Set(prev).add(selectedBond));
+    setShowConfirm(false);
+  };
 
   return (
     <div className="admin-page settlement-layout">
@@ -35,7 +53,7 @@ export default function Settlement() {
             <select value={selectedBond} onChange={(e) => setSelectedBond(e.target.value)}>
               {bonds.map((b) => (
                 <option key={b.bondNumber} value={b.bondNumber}>
-                  {b.bondNumber} — {b.investor}
+                  {b.bondNumber} — {b.investor}{settledBonds.has(b.bondNumber) ? " (Settled)" : ""}
                 </option>
               ))}
             </select>
@@ -66,7 +84,15 @@ export default function Settlement() {
         </div>
 
         <div className="settlement-actions">
-          <button className="admin-btn admin-btn--success">Approve Settlement</button>
+          {isSettled ? (
+            <span className="settlement-settled-badge">
+              <Lock size={14} /> Settlement Approved
+            </span>
+          ) : (
+            <button className="admin-btn admin-btn--success" onClick={openConfirm}>
+              Approve Settlement
+            </button>
+          )}
         </div>
       </div>
 
@@ -93,6 +119,37 @@ export default function Settlement() {
           <span className="mono">{bond.monthsActive}</span>
         </div>
       </div>
+
+      {showConfirm && (
+        <div className="settlement-modal-overlay" onClick={closeConfirm}>
+          <div className="settlement-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="settlement-modal-header">
+              <div className="settlement-modal-header__title">
+                <AlertTriangle size={18} />
+                <h3>Approve Settlement</h3>
+              </div>
+              <button className="settlement-modal-close-btn" onClick={closeConfirm}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="settlement-modal-body">
+              <p>
+                Approve settlement of <strong>{formatINR(netSettlement)}</strong> for{" "}
+                <strong>{bond.investor}</strong> on bond <strong>{bond.bondNumber}</strong>,
+                effective {settlementDate}? This cannot be undone.
+              </p>
+            </div>
+            <div className="settlement-modal-footer">
+              <button className="admin-btn admin-btn--outline" onClick={closeConfirm}>
+                Cancel
+              </button>
+              <button className="admin-btn admin-btn--success" onClick={confirmApprove}>
+                <CheckCircle2 size={14} /> Confirm Approval
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

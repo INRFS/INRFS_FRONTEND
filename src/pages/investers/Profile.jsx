@@ -6,6 +6,7 @@ const initialProfile = {
   name: "Arjun Sharma",
   email: "arjun@inrfs.in",
   mobile: "+91 98765 43210",
+  address: "204, Silver Oak Residency, Andheri West, Mumbai, Maharashtra 400058",
   role: "Investor Portal",
   branch: "Mumbai HQ",
   status: "Active",
@@ -35,8 +36,6 @@ export default function Profile() {
   };
 
   const handleSave = () => {
-    // Static/mock save — updates local state only, no API call.
-    // Wire up your update-profile endpoint here later.
     setProfile(draft);
     setIsEditing(false);
   };
@@ -126,6 +125,19 @@ export default function Profile() {
                   />
                 ) : (
                   <span className="profile-info-value">{profile.email}</span>
+                )}
+              </div>
+              <div className="profile-info-field" style={{ gridColumn: "1 / -1" }}>
+                <span className="profile-info-label">Address</span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    value={draft.address}
+                    onChange={(e) => handleFieldChange("address", e.target.value)}
+                  />
+                ) : (
+                  <span className="profile-info-value">{profile.address}</span>
                 )}
               </div>
               <div className="profile-info-field">

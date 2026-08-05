@@ -1,17 +1,77 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Download, Plus, Search, Eye, Pencil, Trash2, X } from "lucide-react";
 import "../../Styles/Admin/InvestorManagement.css";
 
 const initialInvestors = [
-  { id: "INV001", name: "Arjun Sharma", email: "arjun@email.com", mobile: "9876543210", branch: "Mumbai HQ", registered: "12 Jan 2025", kyc: "Approved", status: "Active", investment: "₹5,00,000" },
-  { id: "INV002", name: "Priya Patel", email: "priya@email.com", mobile: "9876543211", branch: "Delhi North", registered: "14 Jan 2025", kyc: "Pending", status: "Pending", investment: "₹2,50,000" },
-  { id: "INV003", name: "Rahul Kumar", email: "rahul@email.com", mobile: "9876543212", branch: "Bangalore", registered: "16 Jan 2025", kyc: "Approved", status: "Active", investment: "₹8,75,000" },
-  { id: "INV004", name: "Sunita Verma", email: "sunita@email.com", mobile: "9876543213", branch: "Chennai", registered: "18 Jan 2025", kyc: "Rejected", status: "Suspended", investment: "₹1,50,000" },
-  { id: "INV005", name: "Vikram Singh", email: "vikram@email.com", mobile: "9876543214", branch: "Pune", registered: "20 Jan 2025", kyc: "Pending", status: "Pending", investment: "₹3,25,000" },
-  { id: "INV006", name: "Neha Gupta", email: "neha@email.com", mobile: "9876543215", branch: "Mumbai HQ", registered: "22 Jan 2025", kyc: "Approved", status: "Active", investment: "₹6,00,000" },
+  {
+    id: "INV001",
+    name: "Arjun Sharma",
+    email: "arjun@email.com",
+    mobile: "9876543210",
+    registered: "12 Jan 2025",
+    kyc: "Approved",
+    status: "Active",
+    investment: "₹5,00,000",
+    bank: { accountHolder: "Arjun Sharma", accountNumber: "500123456789", ifsc: "HDFC0001234", bankName: "HDFC Bank" },
+  },
+  {
+    id: "INV002",
+    name: "Priya Patel",
+    email: "priya@email.com",
+    mobile: "9876543211",
+    registered: "14 Jan 2025",
+    kyc: "Pending",
+    status: "Pending",
+    investment: "₹2,50,000",
+    bank: { accountHolder: "Priya Patel", accountNumber: "500223456790", ifsc: "ICIC0002345", bankName: "ICICI Bank" },
+  },
+  {
+    id: "INV003",
+    name: "Rahul Kumar",
+    email: "rahul@email.com",
+    mobile: "9876543212",
+    registered: "16 Jan 2025",
+    kyc: "Approved",
+    status: "Active",
+    investment: "₹8,75,000",
+    bank: { accountHolder: "Rahul Kumar", accountNumber: "500323456791", ifsc: "SBIN0003456", bankName: "State Bank of India" },
+  },
+  {
+    id: "INV004",
+    name: "Sunita Verma",
+    email: "sunita@email.com",
+    mobile: "9876543213",
+    registered: "18 Jan 2025",
+    kyc: "Rejected",
+    status: "Suspended",
+    investment: "₹1,50,000",
+    bank: { accountHolder: "Sunita Verma", accountNumber: "500423456792", ifsc: "AXIS0004567", bankName: "Axis Bank" },
+  },
+  {
+    id: "INV005",
+    name: "Vikram Singh",
+    email: "vikram@email.com",
+    mobile: "9876543214",
+    registered: "20 Jan 2025",
+    kyc: "Pending",
+    status: "Pending",
+    investment: "₹3,25,000",
+    bank: { accountHolder: "Vikram Singh", accountNumber: "500523456793", ifsc: "PUNB0005678", bankName: "Punjab National Bank" },
+  },
+  {
+    id: "INV006",
+    name: "Neha Gupta",
+    email: "neha@email.com",
+    mobile: "9876543215",
+    registered: "22 Jan 2025",
+    kyc: "Approved",
+    status: "Active",
+    investment: "₹6,00,000",
+    bank: { accountHolder: "Neha Gupta", accountNumber: "500623456794", ifsc: "HDFC0006789", bankName: "HDFC Bank" },
+  },
 ];
 
-const BRANCHES = ["Mumbai HQ", "Delhi North", "Bangalore", "Chennai", "Pune"];
 const KYC_OPTIONS = ["Approved", "Pending", "Rejected"];
 const STATUS_OPTIONS = ["Active", "Pending", "Suspended"];
 
@@ -19,10 +79,12 @@ const emptyForm = {
   name: "",
   email: "",
   mobile: "",
-  branch: BRANCHES[0],
   kyc: "Pending",
   status: "Pending",
   investment: "",
+  bankName: "",
+  accountNumber: "",
+  ifsc: "",
 };
 
 function initials(name) {
@@ -52,14 +114,17 @@ function formatToday() {
 }
 
 export default function InvestorManagement() {
+  const navigate = useNavigate();
   const [investors, setInvestors] = useState(initialInvestors);
   const [selected, setSelected] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [branchFilter, setBranchFilter] = useState("All Branches");
   const [kycFilter, setKycFilter] = useState("All KYC Status");
+  const [statusFilter, setStatusFilter] = useState("Pending");
+
+  const [viewInvestor, setViewInvestor] = useState(null);
 
   const filteredInvestors = investors.filter((inv) => {
     const q = searchTerm.trim().toLowerCase();
@@ -69,9 +134,9 @@ export default function InvestorManagement() {
       inv.id.toLowerCase().includes(q) ||
       inv.mobile.includes(q) ||
       inv.email.toLowerCase().includes(q);
-    const matchesBranch = branchFilter === "All Branches" || inv.branch === branchFilter;
     const matchesKyc = kycFilter === "All KYC Status" || inv.kyc === kycFilter;
-    return matchesSearch && matchesBranch && matchesKyc;
+    const matchesStatus = statusFilter === "All Status" || inv.status === statusFilter;
+    return matchesSearch && matchesKyc && matchesStatus;
   });
 
   const toggleAll = (e) => {
@@ -106,6 +171,9 @@ export default function InvestorManagement() {
     if (!form.mobile.trim()) errs.mobile = "Mobile number is required";
     else if (!/^\d{10}$/.test(form.mobile.trim())) errs.mobile = "Enter a 10-digit mobile number";
     if (!form.investment.trim()) errs.investment = "Investment amount is required";
+    if (!form.bankName.trim()) errs.bankName = "Bank name is required";
+    if (!form.accountNumber.trim()) errs.accountNumber = "Account number is required";
+    if (!form.ifsc.trim()) errs.ifsc = "IFSC code is required";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -119,15 +187,34 @@ export default function InvestorManagement() {
       name: form.name.trim(),
       email: form.email.trim(),
       mobile: form.mobile.trim(),
-      branch: form.branch,
       registered: formatToday(),
       kyc: form.kyc,
       status: form.status,
       investment: formatInvestment(form.investment),
+      bank: {
+        accountHolder: form.name.trim(),
+        accountNumber: form.accountNumber.trim(),
+        ifsc: form.ifsc.trim(),
+        bankName: form.bankName.trim(),
+      },
     };
 
     setInvestors((prev) => [newInvestor, ...prev]);
     setShowAddModal(false);
+  };
+
+  const openView = (inv) => {
+    setViewInvestor(inv);
+  };
+
+  const closeView = () => {
+    setViewInvestor(null);
+  };
+
+  // Approve/Reject no longer happen in a popup here — they navigate
+  // to the KYC Approvals page, where the actual decision is made.
+  const goToKycApprovals = (inv) => {
+    navigate(`/admin/kyc-approvals?investorId=${inv.id}`);
   };
 
   return (
@@ -159,16 +246,6 @@ export default function InvestorManagement() {
         </div>
         <select
           className="im-select"
-          value={branchFilter}
-          onChange={(e) => setBranchFilter(e.target.value)}
-        >
-          <option>All Branches</option>
-          {BRANCHES.map((b) => (
-            <option key={b}>{b}</option>
-          ))}
-        </select>
-        <select
-          className="im-select"
           value={kycFilter}
           onChange={(e) => setKycFilter(e.target.value)}
         >
@@ -177,7 +254,16 @@ export default function InvestorManagement() {
             <option key={k}>{k}</option>
           ))}
         </select>
-        <button className="btn btn-bulk">Bulk Approve</button>
+        <select
+          className="im-select"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option>All Status</option>
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s}>{s}</option>
+          ))}
+        </select>
       </div>
 
       <div className="im-table-wrap">
@@ -196,7 +282,6 @@ export default function InvestorManagement() {
               <th>INVESTOR ID</th>
               <th>INVESTOR NAME</th>
               <th>MOBILE</th>
-              <th>BRANCH</th>
               <th>REGISTERED</th>
               <th>KYC</th>
               <th>STATUS</th>
@@ -207,7 +292,7 @@ export default function InvestorManagement() {
           <tbody>
             {filteredInvestors.length === 0 && (
               <tr>
-                <td colSpan={10} className="im-no-results">
+                <td colSpan={9} className="im-no-results">
                   No investors match your search or filters.
                 </td>
               </tr>
@@ -234,7 +319,6 @@ export default function InvestorManagement() {
                   </div>
                 </td>
                 <td>{inv.mobile}</td>
-                <td className="im-branch">{inv.branch}</td>
                 <td className="im-muted">{inv.registered}</td>
                 <td>
                   <span className={`im-badge im-badge-${inv.kyc.toLowerCase()}`}>{inv.kyc}</span>
@@ -247,16 +331,19 @@ export default function InvestorManagement() {
                   <div className="im-actions">
                     {inv.status === "Pending" && (
                       <>
-                        <button className="im-btn im-btn-approve">Approve</button>
-                        <button className="im-btn im-btn-reject">Reject</button>
+                        <button className="im-btn im-btn-approve" onClick={() => goToKycApprovals(inv)}>
+                          Approve
+                        </button>
+                        <button className="im-btn im-btn-reject" onClick={() => goToKycApprovals(inv)}>
+                          Reject
+                        </button>
                       </>
                     )}
-                    <button className="im-icon-btn">
+                    <button className="im-icon-btn" onClick={() => openView(inv)}>
                       <Eye size={14} />
                     </button>
                     <button className="im-icon-btn">
                       <Pencil size={14} />
-                  
                     </button>
                     <button className="im-icon-btn im-icon-btn-danger">
                       <Trash2 size={14} />
@@ -325,17 +412,6 @@ export default function InvestorManagement() {
                 {errors.mobile && <span className="im-error">{errors.mobile}</span>}
               </div>
 
-              <div className="im-form-row">
-                <label>Branch</label>
-                <select value={form.branch} onChange={handleChange("branch")}>
-                  {BRANCHES.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="im-form-row-split">
                 <div className="im-form-row">
                   <label>KYC Status</label>
@@ -371,6 +447,41 @@ export default function InvestorManagement() {
                 {errors.investment && <span className="im-error">{errors.investment}</span>}
               </div>
 
+              <div className="im-form-row">
+                <label>Bank Name</label>
+                <input
+                  type="text"
+                  value={form.bankName}
+                  onChange={handleChange("bankName")}
+                  placeholder="e.g. HDFC Bank"
+                />
+                {errors.bankName && <span className="im-error">{errors.bankName}</span>}
+              </div>
+
+              <div className="im-form-row-split">
+                <div className="im-form-row">
+                  <label>Account Number</label>
+                  <input
+                    type="text"
+                    value={form.accountNumber}
+                    onChange={handleChange("accountNumber")}
+                    placeholder="e.g. 500123456789"
+                  />
+                  {errors.accountNumber && <span className="im-error">{errors.accountNumber}</span>}
+                </div>
+
+                <div className="im-form-row">
+                  <label>IFSC Code</label>
+                  <input
+                    type="text"
+                    value={form.ifsc}
+                    onChange={handleChange("ifsc")}
+                    placeholder="e.g. HDFC0001234"
+                  />
+                  {errors.ifsc && <span className="im-error">{errors.ifsc}</span>}
+                </div>
+              </div>
+
               <div className="im-modal-actions">
                 <button type="button" className="btn btn-outline" onClick={closeAddModal}>
                   Cancel
@@ -380,6 +491,78 @@ export default function InvestorManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewInvestor && (
+        <div className="im-modal-overlay" onClick={closeView}>
+          <div className="im-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="im-modal-header">
+              <h2>Investor Details</h2>
+              <button className="im-icon-btn" onClick={closeView}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="im-modal-form">
+              <div className="im-form-row">
+                <label>Investor ID</label>
+                <span className="im-id">{viewInvestor.id}</span>
+              </div>
+              <div className="im-form-row">
+                <label>Full Name</label>
+                <span>{viewInvestor.name}</span>
+              </div>
+              <div className="im-form-row">
+                <label>Email</label>
+                <span>{viewInvestor.email}</span>
+              </div>
+              <div className="im-form-row">
+                <label>Mobile</label>
+                <span>{viewInvestor.mobile}</span>
+              </div>
+              <div className="im-form-row-split">
+                <div className="im-form-row">
+                  <label>KYC Status</label>
+                  <span className={`im-badge im-badge-${viewInvestor.kyc.toLowerCase()}`}>{viewInvestor.kyc}</span>
+                </div>
+                <div className="im-form-row">
+                  <label>Account Status</label>
+                  <span className={`im-badge im-badge-${viewInvestor.status.toLowerCase()}`}>{viewInvestor.status}</span>
+                </div>
+              </div>
+              <div className="im-form-row">
+                <label>Investment Amount</label>
+                <span className="im-investment">{viewInvestor.investment}</span>
+              </div>
+
+              <p className="im-modal-section-title">Bank Details</p>
+              <div className="im-form-row">
+                <label>Account Holder</label>
+                <span>{viewInvestor.bank.accountHolder}</span>
+              </div>
+              <div className="im-form-row">
+                <label>Bank Name</label>
+                <span>{viewInvestor.bank.bankName}</span>
+              </div>
+              <div className="im-form-row-split">
+                <div className="im-form-row">
+                  <label>Account Number</label>
+                  <span>{viewInvestor.bank.accountNumber}</span>
+                </div>
+                <div className="im-form-row">
+                  <label>IFSC Code</label>
+                  <span>{viewInvestor.bank.ifsc}</span>
+                </div>
+              </div>
+
+              <div className="im-modal-actions">
+                <button type="button" className="btn btn-outline" onClick={closeView}>
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

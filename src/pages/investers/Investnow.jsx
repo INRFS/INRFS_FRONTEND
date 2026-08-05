@@ -1,20 +1,45 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2, UploadCloud } from "lucide-react";
+import { CheckCircle2, AlertTriangle, ClipboardCheck, ShieldCheck, FileCheck2 } from "lucide-react";
 import { useInvestorData, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/InvestNow.css";
 
 const quickAmounts = [100000, 500000, 1000000, 2500000];
 
 const tenureOptions = [
-  { months: 6, rate: 11 },
-  { months: 12, rate: 12 },
-  { months: 24, rate: 12.5 },
-  { months: 36, rate: 13 },
+  { months: 3 },
+  { months: 6 },
+  { months: 12 },
+  { months: 24 },
+  { months: 36 },
 ];
 
+const INITIAL_RATE = 3;
 
 const UPI_ID = "inrfs@ybl";
+
+const workflowSteps = [
+  {
+    icon: ClipboardCheck,
+    title: "Submit Request",
+    desc: "Investor submits with payment proof",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Admin Review",
+    desc: "Branch admin reviews & sets final rate",
+  },
+  {
+    icon: CheckCircle2,
+    title: "Approval",
+    desc: "Admin approves → status becomes Active",
+  },
+  {
+    icon: FileCheck2,
+    title: "Bond Generated",
+    desc: "Digital bond certificate is issued",
+  },
+];
 
 export default function InvestNow() {
   const navigate = useNavigate();
@@ -24,38 +49,31 @@ export default function InvestNow() {
   const [amount, setAmount] = useState(500000);
   const [tenure, setTenure] = useState(12);
   const [processing, setProcessing] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [createdBond, setCreatedBond] = useState(null);
 
   const [utr, setUtr] = useState("");
-  const [screenshot, setScreenshot] = useState(null);
-  const [screenshotName, setScreenshotName] = useState("");
-
-  const selectedTenure = tenureOptions.find((t) => t.months === tenure);
 
   const { monthlyInterest, totalInterest, maturityAmount } = useMemo(() => {
-    const monthly = Math.round((amount * (selectedTenure.rate / 100)) / 12);
+    const monthly = Math.round((amount * (INITIAL_RATE / 100)));
     const total = monthly * tenure;
-    return { monthlyInterest: monthly, totalInterest: total, maturityAmount: amount + total };
-  }, [amount, tenure, selectedTenure]);
+    return {
+      monthlyInterest: monthly,
+      totalInterest: total,
+      maturityAmount: amount + total,
+    };
+  }, [amount, tenure]);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setScreenshot(file);
-      setScreenshotName(file.name);
-    }
-  };
-
-  const canSubmit = utr.trim().length > 0 && screenshot;
+  const canSubmit = utr.trim().length > 0;
 
   const handleSubmitInvestment = () => {
     if (!canSubmit) return;
     setProcessing(true);
     setTimeout(() => {
-      const inv = addInvestment({ amount, rateValue: selectedTenure.rate, tenure, utr, status: "pending" });
+      const inv = addInvestment({ amount, rateValue: INITIAL_RATE, tenure, utr, status: "pending" });
       setCreatedBond(inv);
       setProcessing(false);
-      setStep(3);
+      setSubmitted(true);
     }, 900);
   };
 
@@ -67,7 +85,9 @@ export default function InvestNow() {
 
   return (
     <div className="investor-page">
-      <p className="investor-page-subtitle">Start a new investment and earn competitive returns</p>
+      <p className="investor-page-subtitle">
+        Start a new investment. The initial rate is {INITIAL_RATE}% per month, subject to admin approval.
+      </p>
 
       <div className="invest-layout">
         <div className="invest-form-card">
@@ -87,6 +107,15 @@ export default function InvestNow() {
 
           {step === 1 && (
             <>
+              <div className="invest-rate-banner">
+                <AlertTriangle size={18} />
+                <p>
+                  <strong>Initial interest rate: {INITIAL_RATE}% per month.</strong> Your branch admin will
+                  review and may adjust the rate before final approval. Your investment becomes active only
+                  after admin approval.
+                </p>
+              </div>
+
               <label className="invest-field-label" htmlFor="amount">
                 Investment Amount (₹) <span className="invest-required">*</span>
               </label>
@@ -124,7 +153,6 @@ export default function InvestNow() {
                   >
                     <span className="invest-tenure-card__months">{t.months}</span>
                     <span className="invest-tenure-card__unit">Months</span>
-                    <span className="invest-tenure-card__rate">{t.rate}% p.a.</span>
                   </button>
                 ))}
               </div>
@@ -165,37 +193,70 @@ export default function InvestNow() {
                 />
               </div>
 
-              <label className="invest-field-label" htmlFor="screenshot">
-                Upload Payment Screenshot <span className="invest-required">*</span>
-              </label>
-              <label htmlFor="screenshot" className="invest-upload-box">
-                <UploadCloud size={22} />
-                <span>{screenshotName || "Click to upload payment screenshot"}</span>
-              </label>
-              <input
-                id="screenshot"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="invest-upload-input-hidden"
-              />
-
               <div className="invest-form-actions">
                 <button className="investor-btn investor-btn--outline" onClick={() => setStep(1)}>
                   &lt; Back
                 </button>
                 <button
                   className="investor-btn investor-btn--primary"
-                  onClick={handleSubmitInvestment}
-                  disabled={!canSubmit || processing}
+                  onClick={() => setStep(3)}
+                  disabled={!canSubmit}
                 >
-                  {processing ? "Submitting..." : "Submit Investment"} &gt;
+                  Continue to Review &gt;
                 </button>
               </div>
             </div>
           )}
 
-          {step === 3 && createdBond && (
+          {step === 3 && !submitted && (
+            <div className="invest-review-step">
+              <p className="invest-review-heading">Review Your Investment</p>
+
+              <div className="invest-review-card">
+                <div className="invest-review-row">
+                  <span>Principal Amount</span>
+                  <span className="mono">{formatINR(amount)}</span>
+                </div>
+                <div className="invest-review-row">
+                  <span>Initial Rate</span>
+                  <span className="mono">{INITIAL_RATE}% per month</span>
+                </div>
+                <div className="invest-review-row">
+                  <span>Tenure</span>
+                  <span className="mono">{tenure} months</span>
+                </div>
+                <div className="invest-review-row">
+                  <span>Expected Monthly Interest</span>
+                  <span className="mono">{formatINR(monthlyInterest)}</span>
+                </div>
+                <div className="invest-review-row invest-review-row--last">
+                  <span>Transaction Ref</span>
+                  <span className="mono">{utr || "—"}</span>
+                </div>
+              </div>
+
+              <div className="invest-review-note">
+                After you submit, your branch admin will review this request. They may adjust the interest
+                rate. Your investment will be <strong>activated</strong> and a bond certificate generated only
+                after admin approval.
+              </div>
+
+              <div className="invest-form-actions">
+                <button className="investor-btn investor-btn--outline" onClick={() => setStep(2)}>
+                  &lt; Back
+                </button>
+                <button
+                  className="investor-btn investor-btn--primary"
+                  onClick={handleSubmitInvestment}
+                  disabled={processing}
+                >
+                  {processing ? "Submitting..." : "Submit Investment Request"} &gt;
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && submitted && createdBond && (
             <div className="invest-confirmation-step">
               <span className="invest-confirmation-icon">
                 <CheckCircle2 size={40} />
@@ -216,31 +277,46 @@ export default function InvestNow() {
           )}
         </div>
 
-        <div className="invest-summary-card">
-          <p className="investor-section__title">Investment Summary</p>
-          <div className="invest-summary-row">
-            <span>Principal Amount</span>
-            <span className="mono">{formatINR(amount)}</span>
+        <div className="invest-side-col">
+          <div className="invest-summary-card">
+            <p className="investor-section__title">Investment Summary</p>
+            <div className="invest-summary-row">
+              <span>Principal</span>
+              <span className="mono">{formatINR(amount)}</span>
+            </div>
+            <div className="invest-summary-row">
+              <span>Initial Rate</span>
+              <span className="mono">{INITIAL_RATE}% per month</span>
+            </div>
+            <div className="invest-summary-row">
+              <span>Tenure</span>
+              <span className="mono">{tenure} months</span>
+            </div>
+            <div className="invest-summary-row">
+              <span>Expected Monthly</span>
+              <span className="mono">{formatINR(monthlyInterest)}</span>
+            </div>
+            <div className="invest-summary-row">
+              <span>Total Interest (est.)</span>
+              <span className="mono">{formatINR(totalInterest)}</span>
+            </div>
+            <div className="invest-summary-row invest-summary-row--total">
+              <span>Maturity Amount (est.)</span>
+              <span className="mono">{formatINR(maturityAmount)}</span>
+            </div>
           </div>
-          <div className="invest-summary-row">
-            <span>Annual Interest Rate</span>
-            <span className="mono">{selectedTenure.rate}% per annum</span>
-          </div>
-          <div className="invest-summary-row">
-            <span>Tenure</span>
-            <span className="mono">{tenure} months</span>
-          </div>
-          <div className="invest-summary-row">
-            <span>Monthly Interest</span>
-            <span className="mono">{formatINR(monthlyInterest)}</span>
-          </div>
-          <div className="invest-summary-row">
-            <span>Total Interest</span>
-            <span className="mono">{formatINR(totalInterest)}</span>
-          </div>
-          <div className="invest-summary-row invest-summary-row--total">
-            <span>Maturity Amount</span>
-            <span className="mono">{formatINR(maturityAmount)}</span>
+
+          <div className="invest-workflow-card">
+            <p className="invest-workflow-title">Investment Workflow</p>
+            {workflowSteps.map((w, i) => (
+              <div className="invest-workflow-row" key={w.title}>
+                <span className="invest-workflow-num">{i + 1}</span>
+                <div>
+                  <p className="invest-workflow-row__title">{w.title}</p>
+                  <p className="invest-workflow-row__desc">{w.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
