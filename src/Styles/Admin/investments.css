@@ -6,7 +6,7 @@
   align-items: flex-start;
   justify-content: center;
   overflow-y: auto;
-  padding: 40px 20px;
+  padding: 32px 16px;
   z-index: 1000;
 }
 .spin {
@@ -18,10 +18,19 @@
   to { transform: rotate(360deg); }
 }
 
+.admin-pending-note {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
 .admin-form-modal {
   background: #fff;
   border-radius: 10px;
-  width: 520px;
+  width: 460px;
   max-width: 90vw;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
@@ -30,70 +39,198 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
+  padding: 14px 16px;
   border-bottom: 1px solid #eee;
 }
 
 .admin-form-modal-header h2 {
-  font-size: 18px;
+  font-size: 16px;
   margin: 0;
 }
 
 .admin-form-modal-body {
-  padding: 20px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 11px;
 }
 
 .admin-form-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   flex: 1;
 }
 
 .admin-form-row label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #333;
 }
 
 .admin-form-row input,
 .admin-form-row select {
-  padding: 8px 10px;
+  padding: 7px 9px;
   border: 1px solid #ddd;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .admin-form-row-split {
   display: flex;
-  gap: 14px;
+  gap: 12px;
 }
 
 .admin-form-error {
-  font-size: 12px;
+  font-size: 11px;
   color: #d33;
 }
 
 .admin-form-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 6px;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .admin-no-results {
   text-align: center;
-  padding: 24px;
+  padding: 20px;
   color: #888;
-  font-size: 14px;
+  font-size: 13px;
 }
+
+/* ---- Buttons used inside modals (Add / View / Renew) ---- */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.admin-btn--outline {
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+.admin-btn--outline:hover {
+  background: #f9fafb;
+}
+
+.admin-btn--primary {
+  background: #2563eb;
+  color: #ffffff;
+}
+.admin-btn--primary:hover {
+  background: #1d4ed8;
+}
+.admin-btn--primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Review & Approve button (modal footer variant) */
+.admin-btn--approve {
+  background: #16a34a;
+  color: #ffffff;
+}
+.admin-btn--approve:hover {
+  background: #15803d;
+}
+
+.admin-btn--reject {
+  background: #ffffff;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+.admin-btn--reject:hover {
+  background: #fef2f2;
+}
+
+/* Close (X) icon button in modal headers */
+.admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.admin-icon-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* Table row action icons (All Investments tab) */
+.admin-icon-btn--primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eef2ff;
+  color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.admin-icon-btn--primary:hover {
+  background: #e0e7ff;
+}
+
+.admin-icon-btn--accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff7ed;
+  color: #ea580c;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 7px;
+  cursor: pointer;
+}
+.admin-icon-btn--accent:hover {
+  background: #ffedd5;
+}
+
+/* Monospace values (IDs, PAN, bond numbers) inside modals */
+.mono {
+  font-family: monospace;
+}
+
+/* Remarks textarea inside the Renew / Increase Tenure modal */
+.admin-form-modal-body textarea.kyc-remarks {
+  width: 100%;
+  min-height: 56px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+.admin-form-modal-body textarea.kyc-remarks:focus {
+  border-color: #2563eb;
+}
+
+/* ================= Bond Certificate modal ================= */
 .bond-modal {
   background: #f4f6fb;
   border-radius: 10px;
-  width: 720px;
+  width: 640px;
   max-width: 95vw;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
@@ -103,18 +240,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: 10px 16px;
   background: #fff;
   border-bottom: 1px solid #eee;
 }
 
 .bond-modal-toolbar-right {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .bond-certificate-printable {
-  padding: 30px;
+  padding: 24px;
   display: flex;
   justify-content: center;
 }
@@ -124,21 +261,21 @@
   border: 2px solid #e7c873;
   border-radius: 10px;
   width: 100%;
-  max-width: 560px;
-  padding: 30px 34px;
+  max-width: 500px;
+  padding: 24px 28px;
   position: relative;
 }
 
 .bond-cert-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 9px;
+  margin-bottom: 8px;
 }
 
 .bond-cert-logo {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   background: #1e3a8a;
   color: #fff;
   border-radius: 6px;
@@ -146,46 +283,46 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .bond-cert-brand {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
   color: #1e3a8a;
 }
 
 .bond-cert-brand-sub {
-  font-size: 10px;
+  font-size: 9px;
   color: #888;
 }
 
 .bond-cert-title {
   text-align: center;
-  font-size: 20px;
+  font-size: 18px;
   color: #1e3a8a;
   letter-spacing: 1px;
-  margin: 14px 0 4px;
+  margin: 12px 0 4px;
 }
 
 .bond-cert-subtitle {
   text-align: center;
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 1px;
   color: #999;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .bond-cert-number {
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #1e3a8a;
   background: #eef2ff;
   border-radius: 4px;
   width: fit-content;
-  margin: 0 auto 18px;
-  padding: 3px 10px;
+  margin: 0 auto 16px;
+  padding: 3px 9px;
 }
 
 .bond-cert-principal {
@@ -193,46 +330,46 @@
   border-radius: 8px;
   color: #fff;
   text-align: center;
-  padding: 16px;
-  margin-bottom: 20px;
+  padding: 14px;
+  margin-bottom: 18px;
 }
 
 .bond-cert-principal-label {
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 1px;
   opacity: 0.8;
 }
 
 .bond-cert-principal-amount {
-  font-size: 26px;
+  font-size: 23px;
   font-weight: 700;
-  margin: 4px 0;
+  margin: 3px 0;
 }
 
 .bond-cert-principal-words {
-  font-size: 11px;
+  font-size: 10px;
   opacity: 0.85;
 }
 
 .bond-cert-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px 24px;
+  gap: 12px 20px;
   border-top: 1px dashed #ddd;
   border-bottom: 1px dashed #ddd;
-  padding: 18px 0;
-  margin-bottom: 18px;
+  padding: 15px 0;
+  margin-bottom: 15px;
 }
 
 .bond-cert-field-label {
-  font-size: 9px;
+  font-size: 8.5px;
   letter-spacing: 0.5px;
   color: #999;
   margin-bottom: 2px;
 }
 
 .bond-cert-field-value {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #222;
   font-family: monospace;
@@ -240,91 +377,279 @@
 
 .bond-cert-qr {
   text-align: center;
-  margin-bottom: 18px;
+  margin-bottom: 15px;
 }
 
 .bond-cert-qr-box {
-  width: 70px;
-  height: 70px;
-  margin: 0 auto 6px;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 5px;
   background:
-    linear-gradient(90deg, #1e3a8a 25%, transparent 25%) 0 0/10px 10px,
-    linear-gradient(#1e3a8a 25%, transparent 25%) 0 0/10px 10px;
+    linear-gradient(90deg, #1e3a8a 25%, transparent 25%) 0 0/9px 9px,
+    linear-gradient(#1e3a8a 25%, transparent 25%) 0 0/9px 9px;
   border: 3px solid #1e3a8a;
   border-radius: 4px;
 }
 
 .bond-cert-qr-label {
-  font-size: 10px;
+  font-size: 9px;
   color: #999;
 }
 
 .bond-cert-qr-link {
-  font-size: 10px;
+  font-size: 9px;
   color: #2563eb;
 }
 
 .bond-cert-legal {
-  font-size: 10px;
+  font-size: 9px;
   color: #777;
   background: #f7f5ee;
   border-radius: 6px;
-  padding: 10px 12px;
+  padding: 9px 10px;
   line-height: 1.5;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .bond-cert-signatures {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .bond-cert-signature {
   text-align: center;
-  font-size: 10px;
+  font-size: 9px;
   color: #777;
   width: 40%;
 }
 
 .bond-cert-signature-line {
   border-top: 1px solid #999;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .bond-cert-seal {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   border: 2px dashed #1e3a8a;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 8px;
+  font-size: 7px;
   color: #1e3a8a;
   font-weight: 700;
 }
 
 .bond-cert-footer {
   text-align: center;
-  font-size: 9px;
+  font-size: 8px;
   color: #aaa;
   border-top: 1px solid #eee;
-  padding-top: 10px;
+  padding-top: 8px;
 }
+
+/* ================= Page header: title/subtitle + pending pill + Add button ================= */
+.im-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.im-page-header h1 {
+  font-size: 19px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 3px;
+}
+
+.im-page-header p {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.im-page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.im-pending-pill {
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 13px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ================= Tabs: Pending Approval / All Investments ================= */
+.im-tabs {
+  display: inline-flex;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 3px;
+  margin-bottom: 14px;
+}
+
+.im-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.im-tab:hover {
+  color: #4b5563;
+}
+
+.im-tab--active {
+  background: #eef2ff;
+  color: #2563eb;
+}
+
+.im-tab-count {
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 1px 6px;
+  background: #d1d5db;
+  color: #4b5563;
+}
+
+.im-tab--active .im-tab-count {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* ================= Pending Approval table ================= */
+.im-pending-table th,
+.im-pending-table td {
+  white-space: nowrap;
+}
+
+.im-investor-name {
+  font-weight: 700;
+  color: #111827;
+  font-size: 12.5px;
+}
+
+.im-id {
+  color: #2563eb;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.im-rate-pill {
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.im-muted {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* Row actions: green pill + red circle */
+.im-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.im-approve-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+.im-approve-btn:hover {
+  background: #15803d;
+}
+
+.im-reject-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.im-reject-btn:hover {
+  background: #dc2626;
+}
+
+/* Confirm modal text (Approve/Reject investment) */
+.im-confirm-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #374151;
+  margin: 0 0 4px;
+}
+.im-confirm-text strong {
+  color: #111827;
+}
+
+/* ================= Responsive ================= */
 @media (max-width: 800px) {
   .bond-modal-overlay {
-    padding: 24px 14px;
+    padding: 20px 12px;
   }
 
   .bond-certificate-printable {
-    padding: 20px;
+    padding: 16px;
   }
 }
+
+@media (max-width: 720px) {
+  .im-page-header {
+    flex-direction: column;
+  }
+  .im-page-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 @media (max-width: 640px) {
   .bond-modal-overlay {
-    padding: 16px 10px;
+    padding: 14px 8px;
     align-items: flex-start;
   }
 
@@ -336,16 +661,16 @@
 
   .admin-form-modal-header,
   .bond-modal-toolbar {
-    padding: 14px 16px;
+    padding: 12px 14px;
   }
 
   .admin-form-modal-body {
-    padding: 16px;
+    padding: 14px;
   }
 
   .admin-form-row-split {
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
 
   .admin-form-modal-actions {
@@ -358,7 +683,7 @@
 
   .bond-modal-toolbar {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 7px;
   }
 
   .bond-modal-toolbar-right {
@@ -367,31 +692,31 @@
   }
 
   .bond-certificate-printable {
-    padding: 14px;
+    padding: 12px;
   }
 
   .bond-certificate {
-    padding: 22px 18px;
+    padding: 18px 15px;
   }
 
   .bond-cert-title {
-    font-size: 17px;
+    font-size: 15px;
   }
 
   .bond-cert-principal-amount {
-    font-size: 22px;
+    font-size: 19px;
   }
 
   .bond-cert-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 14px 0;
+    gap: 10px;
+    padding: 12px 0;
   }
 
   .bond-cert-signatures {
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
   }
 
   .bond-cert-signature {
@@ -401,15 +726,15 @@
 
 @media (max-width: 380px) {
   .bond-certificate {
-    padding: 18px 14px;
+    padding: 15px 12px;
   }
 
   .bond-cert-field-value {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .bond-cert-legal {
-    font-size: 9.5px;
+    font-size: 8.5px;
   }
 }
 

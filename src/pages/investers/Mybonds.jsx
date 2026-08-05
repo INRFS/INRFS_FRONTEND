@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Download } from "lucide-react";
+import { Plus, Eye, Download, Clock, Lock } from "lucide-react";
 import { useInvestorData, StatusBadge, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/MyBonds.css";
 
@@ -8,7 +8,8 @@ export default function MyBonds() {
   const navigate = useNavigate();
   const { investments } = useInvestorData();
 
-  
+  const hasPending = investments.some((inv) => inv.status === "Pending Approval");
+
   const handleViewBond = (bondNumber) => {
     navigate(`/investor/bond-certificate/${encodeURIComponent(bondNumber)}`);
   };
@@ -20,6 +21,16 @@ export default function MyBonds() {
           <Plus size={14} /> New Investment
         </button>
       </div>
+
+      {hasPending && (
+        <div className="pending-approval-banner">
+          <Clock size={18} />
+          <p>
+            <strong>Pending approval</strong> — Your investment request has been sent to the branch admin.
+            Bond certificate will be generated once the admin approves and activates your investment.
+          </p>
+        </div>
+      )}
 
       <div className="investor-table-card">
         <div className="investor-table-card__header">
@@ -42,37 +53,51 @@ export default function MyBonds() {
             </tr>
           </thead>
           <tbody>
-            {investments.map((b) => (
-              <tr key={b.id} className={b.id === investments[0].id ? "row-flash" : ""}>
-                <td
-                  className="mono link"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => handleViewBond(b.bond)}
-                >
-                  {b.bond}
-                </td>
-                <td className="mono">{formatINR(b.amount)}</td>
-                <td><span className="rate-pill">{b.rate}</span></td>
-                <td>{b.invested}</td>
-                <td>{b.matures}</td>
-                <td className="mono amount-positive">{formatINR(b.monthlyInt)}</td>
-                <td className="mono">{formatINR(b.earned)}</td>
-                <td><StatusBadge status={b.status} /></td>
-                <td className="admin-table-actions">
-                  <button type="button" title="View" onClick={() => handleViewBond(b.bond)}>
-                    <Eye size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    title="Bond"
-                    className="admin-icon-btn--primary"
-                    onClick={() => handleViewBond(b.bond)}
-                  >
-                    <Download size={14} /> Bond
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {investments.map((b) => {
+              const isPending = b.status === "Pending Approval";
+              return (
+                <tr key={b.id}>
+                  {isPending ? (
+                    <td className="mono pending-bond-cell">Pending...</td>
+                  ) : (
+                    <td
+                      className="mono link"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => handleViewBond(b.bond)}
+                    >
+                      {b.bond}
+                    </td>
+                  )}
+                  <td className="mono">{formatINR(b.amount)}</td>
+                  <td>
+                    <span className={`rate-pill${isPending ? " rate-pill--initial" : ""}`}>
+                      {b.rate}{isPending ? " (initial)" : ""}
+                    </span>
+                  </td>
+                  <td>{b.invested}</td>
+                  <td>{isPending ? "—" : b.matures}</td>
+                  <td className="mono amount-positive">{formatINR(b.monthlyInt)}</td>
+                  <td className="mono">{formatINR(b.earned)}</td>
+                  <td><StatusBadge status={b.status} /></td>
+                  <td className="investor-table-actions">
+                    {isPending ? (
+                      <span className="pending-actions-lock">
+                        <Lock size={12} /> Pending Approval
+                      </span>
+                    ) : (
+                      <>
+                        <button type="button" title="View" className="icon-btn icon-btn--view" onClick={() => handleViewBond(b.bond)}>
+                          <Eye size={14} />
+                        </button>
+                        <button type="button" title="Download Bond" className="icon-btn icon-btn--settle" onClick={() => handleViewBond(b.bond)}>
+                          <Download size={14} />
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         <p className="admin-table-footer">Showing 1–{investments.length} of {investments.length} records</p>

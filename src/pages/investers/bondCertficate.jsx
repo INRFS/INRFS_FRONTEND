@@ -84,7 +84,6 @@ export default function BondCertificate() {
 
       const imgData = canvas.toDataURL("image/png");
 
-      // A4 in points: 595.28 x 841.89
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "pt",
@@ -133,7 +132,7 @@ export default function BondCertificate() {
 
   const investorName = investment.investorName || "Arjun Sharma";
   const investorId = investment.investorId || "INV001";
-  const pan = investment.pan || "ABCDE1234F";
+  const aadhar = investment.aadhar || "1234 5678 9012";
   const mobile = investment.mobile || "+91 98765 43210";
 
   return (
@@ -256,8 +255,8 @@ export default function BondCertificate() {
             </div>
 
             <div>
-              <p className="bond-cert-field-label">PAN NUMBER</p>
-              <p className="bond-cert-field-value mono">{pan}</p>
+              <p className="bond-cert-field-label">AADHAR NUMBER</p>
+              <p className="bond-cert-field-value mono">{aadhar}</p>
             </div>
             <div>
               <p className="bond-cert-field-label">MOBILE</p>
