@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download, Plus, Search, Eye, Pencil, Trash2, X } from "lucide-react";
+import { Download, Plus, Search, Eye, X } from "lucide-react";
 import "../../Styles/Admin/InvestorManagement.css";
 
 const initialInvestors = [
@@ -211,8 +211,6 @@ export default function InvestorManagement() {
     setViewInvestor(null);
   };
 
-  // Approve/Reject no longer happen in a popup here — they navigate
-  // to the KYC Approvals page, where the actual decision is made.
   const goToKycApprovals = (inv) => {
     navigate(`/admin/kyc-approvals?investorId=${inv.id}`);
   };
@@ -341,12 +339,6 @@ export default function InvestorManagement() {
                     )}
                     <button className="im-icon-btn" onClick={() => openView(inv)}>
                       <Eye size={14} />
-                    </button>
-                    <button className="im-icon-btn">
-                      <Pencil size={14} />
-                    </button>
-                    <button className="im-icon-btn im-icon-btn-danger">
-                      <Trash2 size={14} />
                     </button>
                   </div>
                 </td>

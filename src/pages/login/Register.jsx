@@ -5,7 +5,7 @@ import {
   Mail,
   Calendar,
   MapPin,
-  Upload,
+  Building2,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
@@ -19,6 +19,8 @@ const steps = [
   { id: 2, label: "Review & Submit" },
 ];
 
+const BRANCHES = ["Vijayawada", "Hyderabad", "Bengaluru", "Chennai"];
+
 const reviewRows = [
   { key: "fullName", label: "Full Name" },
   { key: "mobile", label: "Mobile Number" },
@@ -29,6 +31,7 @@ const reviewRows = [
   { key: "city", label: "City" },
   { key: "state", label: "State" },
   { key: "pin", label: "PIN Code" },
+  { key: "branch", label: "Branch" },
 ];
 
 function PersonalInfoStep({ formData, setFormData, onNext }) {
@@ -37,15 +40,6 @@ function PersonalInfoStep({ formData, setFormData, onNext }) {
       ...prev,
       [field]: e.target.value,
     }));
-
-  const handleFileChange = (field) => (e) => {
-    const file = e.target.files[0];
-
-    setFormData((prev) => ({
-      ...prev,
-      [field]: file,
-    }));
-  };
 
   return (
     <>
@@ -122,67 +116,6 @@ function PersonalInfoStep({ formData, setFormData, onNext }) {
           />
         </div>
 
-        <div className="reg-field">
-          <label>
-            Aadhaar Photo <span className="req">*</span>
-          </label>
-
-          <label className="reg-upload-box">
-            <Upload size={22} />
-            <span>
-              {formData.aadhaarPhoto
-                ? formData.aadhaarPhoto.name
-                : "Choose Aadhaar Photo"}
-            </span>
-
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              onChange={handleFileChange("aadhaarPhoto")}
-              hidden
-            />
-          </label>
-
-          {formData.aadhaarPhoto &&
-            formData.aadhaarPhoto.type.startsWith("image/") && (
-              <img
-                src={URL.createObjectURL(formData.aadhaarPhoto)}
-                alt="Aadhaar"
-                className="preview-image"
-              />
-            )}
-        </div>
-
-        <div className="reg-field">
-          <label>
-            Passport Size Photo <span className="req">*</span>
-          </label>
-
-          <label className="reg-upload-box">
-            <Upload size={22} />
-            <span>
-              {formData.passportPhoto
-                ? formData.passportPhoto.name
-                : "Choose Passport Photo"}
-            </span>
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange("passportPhoto")}
-              hidden
-            />
-          </label>
-
-          {formData.passportPhoto && (
-            <img
-              src={URL.createObjectURL(formData.passportPhoto)}
-              alt="Passport"
-              className="preview-image"
-            />
-          )}
-        </div>
-
         <div className="reg-field reg-field-full">
           <label>
             Address <span className="req">*</span>
@@ -232,6 +165,22 @@ function PersonalInfoStep({ formData, setFormData, onNext }) {
             onChange={update("pin")}
           />
         </div>
+
+        <div className="reg-field">
+  <label>
+    Branch <span className="req">*</span>
+  </label>
+
+  <select value={formData.branch} onChange={update("branch")}>
+    <option value="">Select Branch</option>
+    {BRANCHES.map((b) => (
+      <option key={b} value={b}>
+        {b}
+      </option>
+    ))}
+  </select>
+</div>
+        
       </div>
 
       <div className="reg-actions">
@@ -264,7 +213,6 @@ function ReviewSubmitStep({ formData, agreed, setAgreed, onBack }) {
 
     setSubmitting(true);
 
-    // Replace with API later
     setTimeout(() => {
       setSubmitting(false);
       setShowSuccessModal(true);
@@ -290,47 +238,6 @@ function ReviewSubmitStep({ formData, agreed, setAgreed, onBack }) {
             <strong>{formData[key] || "—"}</strong>
           </div>
         ))}
-
-        <div className="reg-review-row">
-          <span>Aadhaar Document</span>
-
-          <strong>
-            {formData.aadhaarPhoto
-              ? formData.aadhaarPhoto.name
-              : "Not Uploaded"}
-          </strong>
-        </div>
-
-        {formData.aadhaarPhoto &&
-          formData.aadhaarPhoto.type.startsWith("image/") && (
-            <div className="reg-upload-preview">
-              <img
-                src={URL.createObjectURL(formData.aadhaarPhoto)}
-                alt="Aadhaar"
-                className="preview-image"
-              />
-            </div>
-          )}
-
-        <div className="reg-review-row">
-          <span>Passport Photo</span>
-
-          <strong>
-            {formData.passportPhoto
-              ? formData.passportPhoto.name
-              : "Not Uploaded"}
-          </strong>
-        </div>
-
-        {formData.passportPhoto && (
-          <div className="reg-upload-preview">
-            <img
-              src={URL.createObjectURL(formData.passportPhoto)}
-              alt="Passport"
-              className="preview-image"
-            />
-          </div>
-        )}
       </div>
 
       <div className="reg-warning">
@@ -338,7 +245,7 @@ function ReviewSubmitStep({ formData, agreed, setAgreed, onBack }) {
 
         <p>
           By submitting this application you certify that the information
-          and uploaded documents are correct. Providing incorrect
+          provided is correct. Providing incorrect
           information may lead to rejection of your registration.
         </p>
       </div>
@@ -426,10 +333,7 @@ export default function Register() {
     city: "",
     state: "",
     pin: "",
-
-    // Uploads
-    aadhaarPhoto: null,
-    passportPhoto: null,
+    branch: "",
   });
 
   const [agreed, setAgreed] = useState(false);
