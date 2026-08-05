@@ -5,7 +5,6 @@ import {
   Mail,
   Calendar,
   MapPin,
-  Building2,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
