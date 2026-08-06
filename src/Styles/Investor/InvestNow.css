@@ -107,40 +107,6 @@
 .invest-upi-id { font-size: 12.5px; color: #94a3b8; margin: 0 0 14px; }
 .invest-upi-amount { font-size: 26px; font-weight: 800; color: #2f5cf0; margin: 0; }
 
-/* Payout account details — boxed, visually distinct from the payment-bank picker above */
-.invest-payout-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 24px;
-}
-.invest-payout-card__header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding-bottom: 16px;
-  border-bottom: 1px dashed #dbe2ea;
-}
-.invest-payout-card__icon {
-  width: 32px; height: 32px; border-radius: 8px; background: #e8edfb; color: #2f5cf0;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.invest-payout-card__title { font-size: 13.5px; font-weight: 700; color: #0f1729; margin: 0 0 3px; }
-.invest-payout-card__hint { font-size: 11.5px; color: #64748b; margin: 0; line-height: 1.4; }
-
-.invest-bank-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px;
-}
-.invest-bank-field { min-width: 0; }
-.invest-bank-field--full { grid-column: 1 / -1; }
-.invest-bank-field .invest-field-label { margin: 0 0 8px; }
-@media (max-width: 600px) {
-  .invest-bank-grid { grid-template-columns: 1fr; }
-  .invest-payout-card { padding: 16px; }
-}
-
 /* Review step */
 .invest-review-stepwrap { display: block; }
 .invest-review-heading { font-size: 15px; font-weight: 700; color: #0f1729; margin: 0 0 14px; }
@@ -187,6 +153,32 @@
 .invest-workflow-row__title { font-size: 13px; font-weight: 700; color: #7c5109; margin: 0; }
 .invest-workflow-row__desc { font-size: 11.5px; color: #92640a; margin: 2px 0 0; }
 
+/* Bank details confirmation modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 41, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.modal-box {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 26px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(15, 23, 41, 0.2);
+}
+.modal-box svg { color: #2f5cf0; margin-bottom: 10px; }
+.modal-title { font-size: 17px; font-weight: 700; color: #0f1729; margin: 6px 0 8px; }
+.modal-desc { font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 22px; }
+.modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.modal-actions .investor-btn { flex: 1; min-width: 150px; justify-content: center; }
+
 @media (max-width: 900px) {
   .invest-form-card, .invest-summary-card, .invest-workflow-card { padding: 18px; }
   .invest-summary-card { margin-top: 0; }
@@ -211,6 +203,9 @@
   .invest-confirmation-title { font-size: 16px; }
   .invest-review-row { padding: 11px 0; font-size: 12.5px; }
   .invest-rate-banner { padding: 12px 14px; }
+  .modal-box { padding: 22px 18px; }
+  .modal-actions { flex-direction: column; }
+  .modal-actions .investor-btn { width: 100%; }
 }
 
 @media (max-width: 420px) {
