@@ -6,13 +6,13 @@ import { StatusBadge, formatINR } from "../../shared/Shared";
 import "../../Styles/Admin/investments.css";
 
 const initialInvestments = [
-  { bondNumber: "BND-2025-001", investor: "Arjun Sharma", investorId: "INV001", pan: "ABCDE1234F", mobile: "9876543210", amount: 500000, rate: 12, invested: "15 Jan 2025", matures: "15 Jan 2026", status: "Active" },
-  { bondNumber: "BND-2025-002", investor: "Rahul Kumar", investorId: "INV003", pan: "BCDEF2345G", mobile: "9876543212", amount: 875000, rate: 13, invested: "18 Jan 2025", matures: "18 Jul 2025", status: "Matured" },
-  { bondNumber: "BND-2025-003", investor: "Neha Gupta", investorId: "INV006", pan: "CDEFG3456H", mobile: "9876543215", amount: 600000, rate: 11.5, invested: "22 Jan 2025", matures: "22 Jan 2026", status: "Active" },
+  { bondNumber: "BND-2025-001", investor: "Arjun Sharma", investmentId: "INV001", pan: "ABCDE1234F", mobile: "9876543210", amount: 500000, rate: 12, invested: "15 Jan 2025", matures: "15 Jan 2026", status: "Active" },
+  { bondNumber: "BND-2025-002", investor: "Rahul Kumar", investmentId: "INV003", pan: "BCDEF2345G", mobile: "9876543212", amount: 875000, rate: 13, invested: "18 Jan 2025", matures: "18 Jul 2025", status: "Matured" },
+  { bondNumber: "BND-2025-003", investor: "Neha Gupta", investmentId: "INV006", pan: "CDEFG3456H", mobile: "9876543215", amount: 600000, rate: 11.5, invested: "22 Jan 2025", matures: "22 Jan 2026", status: "Active" },
   {
     bondNumber: null,
     investor: "Priya Patel",
-    investorId: null,
+    investmentId: null,
     pan: "—",
     mobile: "9876543211",
     branch: "Delhi North",
@@ -29,7 +29,7 @@ const initialInvestments = [
   {
     bondNumber: null,
     investor: "Vikram Singh",
-    investorId: null,
+    investmentId: null,
     pan: "—",
     mobile: "9876543214",
     branch: "Mumbai HQ",
@@ -48,7 +48,7 @@ const initialInvestments = [
 const STATUS_OPTIONS = ["Active", "Pending", "Matured"];
 const emptyForm = {
   investor: "",
-  investorId: "",
+  investmentId: "",
   pan: "",
   mobile: "",
   amount: "",
@@ -68,10 +68,10 @@ function nextBondNumber(list) {
   return `BND-${year}-${String(max + 1).padStart(3, "0")}`;
 }
 
-function nextInvestorId(list) {
+function nextInvestmentId(list) {
   const max = list.reduce((acc, inv) => {
-    if (!inv.investorId) return acc;
-    const num = parseInt(inv.investorId.replace(/\D/g, ""), 10);
+    if (!inv.investmentId) return acc;
+    const num = parseInt(inv.investmentId.replace(/\D/g, ""), 10);
     return Number.isNaN(num) ? acc : Math.max(acc, num);
   }, 0);
   return `INV${String(max + 1).padStart(3, "0")}`;
@@ -243,8 +243,8 @@ function BondCertificate({ investment, onClose }) {
                 <div className="bond-cert-field-value">{investment.investor}</div>
               </div>
               <div>
-                <div className="bond-cert-field-label">INVESTOR ID</div>
-                <div className="bond-cert-field-value">{investment.investorId}</div>
+                <div className="bond-cert-field-label">INVESTMENT ID</div>
+                <div className="bond-cert-field-value">{investment.investmentId}</div>
               </div>
               <div>
                 <div className="bond-cert-field-label">PAN NUMBER</div>
@@ -346,7 +346,7 @@ function AddInvestmentModal({ existing, onClose, onSave }) {
     onSave({
       bondNumber: nextBondNumber(existing),
       investor: form.investor.trim(),
-      investorId: form.investorId.trim() || nextInvestorId(existing),
+      investmentId: form.investmentId.trim() || nextInvestmentId(existing),
       pan: form.pan.trim() || "—",
       mobile: form.mobile.trim() || "—",
       amount: Number(form.amount),
@@ -376,8 +376,8 @@ function AddInvestmentModal({ existing, onClose, onSave }) {
 
           <div className="admin-form-row-split">
             <div className="admin-form-row">
-              <label>Investor ID (leave blank to auto-generate)</label>
-              <input type="text" value={form.investorId} onChange={handleChange("investorId")} placeholder="e.g. INV007" />
+              <label>Investment ID (leave blank to auto-generate)</label>
+              <input type="text" value={form.investmentId} onChange={handleChange("investmentId")} placeholder="e.g. INV007" />
             </div>
             <div className="admin-form-row">
               <label>PAN Number</label>
@@ -462,8 +462,8 @@ function ViewInvestmentModal({ investment, onClose }) {
           </div>
           <div className="admin-form-row-split">
             <div className="admin-form-row">
-              <label>Investor ID</label>
-              <span className="mono">{investment.investorId}</span>
+              <label>Investment ID</label>
+              <span className="mono">{investment.investmentId}</span>
             </div>
             <div className="admin-form-row">
               <label>PAN Number</label>
@@ -541,7 +541,7 @@ function RenewTenureModal({ investment, onClose, onApprove }) {
         <form onSubmit={handleSubmit} className="admin-form-modal-body">
           <div className="admin-form-row">
             <label>Investor</label>
-            <span>{investment.investor} <span className="mono">({investment.investorId})</span></span>
+            <span>{investment.investor} <span className="mono">({investment.investmentId})</span></span>
           </div>
 
           <div className="admin-form-row-split">
@@ -629,7 +629,7 @@ function ReviewApproveModal({ investment, onClose, onApprove, onReject }) {
                 <span className="im-review-value">{investment.investor}</span>
               </div>
               <div>
-                <span className="im-review-label">Investor ID</span>
+                <span className="im-review-label">Investment ID</span>
                 <span className="im-review-value mono">Will be generated on approval</span>
               </div>
               <div>
@@ -688,7 +688,7 @@ function ReviewApproveModal({ investment, onClose, onApprove, onReject }) {
           </div>
 
           <div className="im-info-box">
-            Approving will: <strong>generate an investor ID, activate the investment, assign a bond number,</strong> and{" "}
+            Approving will: <strong>generate an investment ID, activate the investment, assign a bond number,</strong> and{" "}
             <strong>generate the digital bond certificate at {rate}% per month.</strong> The investor
             will be notified automatically.
           </div>
@@ -767,7 +767,7 @@ export default function Investments() {
     return (
       (inv.bondNumber || "").toLowerCase().includes(q) ||
       inv.investor.toLowerCase().includes(q) ||
-      (inv.investorId || "").toLowerCase().includes(q)
+      (inv.investmentId || "").toLowerCase().includes(q)
     );
   });
 
@@ -787,11 +787,11 @@ export default function Investments() {
     setRenewInvestment(null);
   };
 
-  // Investor ID and Bond Number are BOTH generated here, only on approval.
+  // Investment ID and Bond Number are BOTH generated here, only on approval.
   const handleApproveInvestment = (txnRef, monthlyRatePercent) => {
     setInvestments((prev) => {
       const bondNumber = nextBondNumber(prev);
-      const investorId = nextInvestorId(prev);
+      const investmentId = nextInvestmentId(prev);
       const investedDate = new Date();
       return prev.map((inv) => {
         if (inv.txnRef !== txnRef) return inv;
@@ -799,7 +799,7 @@ export default function Investments() {
         const maturityDate = addMonths(investedDate, inv.tenureMonths || 12);
         return {
           ...inv,
-          investorId,
+          investmentId,
           bondNumber,
           rate: annualRate,
           invested: formatDateDisplay(investedDate.toISOString()),
@@ -855,7 +855,7 @@ export default function Investments() {
             <thead>
               <tr>
                 <th>Investor</th>
-                <th>Investor ID</th>
+                <th>Investment ID</th>
                 <th>Branch</th>
                 <th>Amount</th>
                 <th>Tenure</th>
@@ -918,7 +918,7 @@ export default function Investments() {
               <tr>
                 <th>Bond Number</th>
                 <th>Investor</th>
-                <th>Investor ID</th>
+                <th>Investment ID</th>
                 <th>Amount</th>
                 <th>Rate</th>
                 <th>Invested</th>
@@ -934,10 +934,10 @@ export default function Investments() {
                 </tr>
               )}
               {filteredInvestments.map((inv) => (
-                <tr key={inv.txnRef || inv.investorId}>
+                <tr key={inv.txnRef || inv.investmentId}>
                   <td className="mono link">{inv.bondNumber || "—"}</td>
                   <td>{inv.investor}</td>
-                  <td className="mono">{inv.investorId || "—"}</td>
+                  <td className="mono">{inv.investmentId || "—"}</td>
                   <td className="mono">{formatINR(inv.amount)}</td>
                   <td><span className="rate-pill">{inv.rate}%</span></td>
                   <td>{inv.invested}</td>

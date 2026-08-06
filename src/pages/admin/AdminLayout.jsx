@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import {
   LayoutGrid,
   Users,
-  FileText,
+  // FileText,
   TrendingUp,
   DollarSign,
   Activity,
@@ -21,7 +21,7 @@ import "../../Styles/Admin/AdminLayout.css";
 const navItems = [
   { to: "/admin/dashboard", label: "Dashboard", icon: LayoutGrid },
   { to: "/admin/investors", label: "Investor Mgmt", icon: Users },
-  { to: "/admin/kyc-approvals", label: "KYC Approvals", icon: FileText, badge: 5 },
+  // { to: "/admin/kyc-approvals", label: "KYC Approvals", icon: FileText, badge: 5 },
   { to: "/admin/investments", label: "Investments", icon: TrendingUp },
   { to: "/admin/monthly-interest", label: "Monthly Interest", icon: DollarSign },
   { to: "/admin/settlement", label: "Settlement", icon: Activity },
