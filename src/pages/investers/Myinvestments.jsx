@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Download, Eye, RefreshCw, Activity, X, CheckCircle2, AlertCircle, Clock, Lock, TrendingUp } from "lucide-react";
+import { Plus, Download, Eye, RefreshCw, XCircle, X, CheckCircle2, AlertCircle, Clock, Lock, TrendingUp, Send } from "lucide-react";
 import { useInvestorData, StatusBadge, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/MyInvestments.css";
 
-const EXTENSION_OPTIONS = ["3 Months", "6 Months", "9 Months", "12 Months", "24 Months", "36 Months"];
+const EXTENSION_OPTIONS = ["3 Months", "6 Months", "12 Months", "36 Months"];
 
 export default function MyInvestments() {
   const navigate = useNavigate();
   const { investments, requestTenureExtension, requestSettlement } = useInvestorData();
 
+  const [activeTab, setActiveTab] = useState("all");
+
+  const [viewModal, setViewModal] = useState(null);
+
   const [extendModal, setExtendModal] = useState(null);
   const [extensionPeriod, setExtensionPeriod] = useState(EXTENSION_OPTIONS[1]);
 
-  const [settlementModal, setSettlementModal] = useState(null);
+  const [preCloseModal, setPreCloseModal] = useState(null);
+  const [preCloseReason, setPreCloseReason] = useState("");
 
   const [toast, setToast] = useState(null);
 
@@ -23,20 +28,28 @@ export default function MyInvestments() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  const hasPending = investments.some((inv) => inv.status === "Pending Approval");
+  const pendingInvestments = investments.filter((inv) => inv.status === "Pending Approval");
+  const nonPendingInvestments = investments.filter((inv) => inv.status !== "Pending Approval");
+  const hasPending = pendingInvestments.length > 0;
+  const visibleInvestments = activeTab === "pending" ? pendingInvestments : nonPendingInvestments;
 
   const handleViewBond = (bondNumber) => {
     navigate(`/investor/bond-certificate/${encodeURIComponent(bondNumber)}`);
   };
+
+  const openViewModal = (inv) => setViewModal(inv);
 
   const openExtendModal = (inv) => {
     setExtensionPeriod(EXTENSION_OPTIONS[1]);
     setExtendModal(inv);
   };
 
-  const openSettlementModal = (inv) => {
-    setSettlementModal(inv);
+  const openPreCloseModal = (inv) => {
+    setPreCloseReason("");
+    setPreCloseModal(inv);
   };
+
+  const extensionMonths = parseInt(extensionPeriod, 10);
 
   const submitExtendRequest = async () => {
     if (!extendModal) return;
@@ -59,32 +72,25 @@ export default function MyInvestments() {
     }
   };
 
-  const submitSettlementRequest = async () => {
-    if (!settlementModal) return;
-    const bondNumber = settlementModal.bond;
-    setSettlementModal(null);
+  const submitPreCloseRequest = async () => {
+    if (!preCloseModal) return;
+    const bondNumber = preCloseModal.bond;
+    const reason = preCloseReason.trim();
+    setPreCloseModal(null);
     try {
       if (typeof requestSettlement === "function") {
-        await requestSettlement(bondNumber);
+        await requestSettlement(bondNumber, reason);
       }
       setToast({
         type: "success",
-        message: `Settlement request for ${bondNumber} sent to admin for approval.`,
+        message: `Pre-close request for ${bondNumber} sent to admin for approval.`,
       });
     } catch (err) {
       setToast({
         type: "error",
-        message: err?.message || `Could not send settlement request for ${bondNumber}. Please try again.`,
+        message: err?.message || `Could not send pre-close request for ${bondNumber}. Please try again.`,
       });
     }
-  };
-
-  const getSettlementBreakdown = (inv) => {
-    const principal = inv.amount;
-    const interest = inv.interestEarned ?? inv.earned ?? 0;
-    const penalty = inv.earlyPenalty ?? 0;
-    const net = principal + interest - penalty;
-    return { principal, interest, penalty, net };
   };
 
   return (
@@ -105,11 +111,30 @@ export default function MyInvestments() {
         </div>
       )}
 
+      <div className="investments-tab-bar">
+        <button
+          type="button"
+          className={`investments-tab${activeTab === "all" ? " investments-tab--active" : ""}`}
+          onClick={() => setActiveTab("all")}
+        >
+          All Investments
+          <span className="investments-tab__badge investments-tab__badge--neutral">{nonPendingInvestments.length}</span>
+        </button>
+        <button
+          type="button"
+          className={`investments-tab${activeTab === "pending" ? " investments-tab--active" : ""}`}
+          onClick={() => setActiveTab("pending")}
+        >
+          Pending Investments
+          <span className="investments-tab__badge">{pendingInvestments.length}</span>
+        </button>
+      </div>
+
       <div className="investor-table-card">
         <div className="investor-table-card__header">
           <div className="investor-table-card__title">
             <TrendingUp size={16} />
-            <span>My Investments</span>
+            <span>{activeTab === "pending" ? "Pending Investments" : "My Investments"}</span>
           </div>
           <div className="investor-table-card__controls">
             <input className="investor-search-input" placeholder="Search bonds..." />
@@ -127,36 +152,33 @@ export default function MyInvestments() {
               <th>Matures On</th>
               <th>Monthly Int.</th>
               <th>Earned</th>
+              <th>UTR</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {investments.map((inv) => {
+            {visibleInvestments.map((inv) => {
               const isPending = inv.status === "Pending Approval";
+              const isActive = inv.status === "Active";
               return (
                 <tr key={inv.id}>
                   {isPending ? (
                     <td className="mono pending-bond-cell">Pending...</td>
                   ) : (
-                    <td
-                      className="mono link"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => handleViewBond(inv.bond)}
-                    >
-                      {inv.bond}
-                    </td>
+                    <td className="mono">{inv.bond}</td>
                   )}
                   <td className="mono">{formatINR(inv.amount)}</td>
                   <td>
                     <span className={`rate-pill${isPending ? " rate-pill--initial" : ""}`}>
-                      {inv.rate}{isPending ? " (initial)" : ""}
+                      {inv.rate.includes("(initial)") ? inv.rate : `${inv.rate}${isPending ? " (initial)" : ""}`}
                     </span>
                   </td>
                   <td>{inv.invested}</td>
                   <td>{isPending ? "—" : inv.matures}</td>
                   <td className="mono amount-positive">{formatINR(inv.monthlyInt)}</td>
                   <td className="mono">{formatINR(inv.earned)}</td>
+                  <td className="mono utr-cell">{inv.utr || "—"}</td>
                   <td><StatusBadge status={inv.status} /></td>
                   <td className="investor-table-actions">
                     {isPending ? (
@@ -165,15 +187,22 @@ export default function MyInvestments() {
                       </span>
                     ) : (
                       <>
-                        <button type="button" title="View" className="icon-btn icon-btn--view" onClick={() => handleViewBond(inv.bond)}>
+                        <button type="button" title="View" className="action-btn action-btn--view" onClick={() => openViewModal(inv)}>
                           <Eye size={14} />
                         </button>
-                        <button type="button" title="Request Tenure Extension" className="icon-btn icon-btn--extend" onClick={() => openExtendModal(inv)}>
-                          <RefreshCw size={14} />
+                        <button type="button" title="Download Bond" className="action-btn action-btn--bond" onClick={() => handleViewBond(inv.bond)}>
+                          <Download size={13} /> Bond
                         </button>
-                        <button type="button" title="Request Settlement" className="icon-btn icon-btn--settle" onClick={() => openSettlementModal(inv)}>
-                          <Activity size={14} />
-                        </button>
+                        {isActive && (
+                          <>
+                            <button type="button" title="Request Tenure Extension" className="action-btn action-btn--extend" onClick={() => openExtendModal(inv)}>
+                              <RefreshCw size={13} /> Extend
+                            </button>
+                            <button type="button" title="Request Pre-Close" className="action-btn action-btn--preclose" onClick={() => openPreCloseModal(inv)}>
+                              <XCircle size={13} /> Pre-Close
+                            </button>
+                          </>
+                        )}
                       </>
                     )}
                   </td>
@@ -182,75 +211,156 @@ export default function MyInvestments() {
             })}
           </tbody>
         </table>
-        <p className="admin-table-footer">Showing 1–{investments.length} of {investments.length} records</p>
+        {visibleInvestments.length === 0 && (
+          <p className="investments-empty-state">No investments in this view yet.</p>
+        )}
+
+        <p className="admin-table-footer">
+          Showing {visibleInvestments.length === 0 ? 0 : 1}–{visibleInvestments.length} of {visibleInvestments.length} records
+        </p>
       </div>
 
-      {extendModal && (
+      {viewModal && (
         <div className="modal-overlay">
           <div className="modal-box">
             <div className="modal-header">
-              <h3>Extend Tenure — {extendModal.bond}</h3>
-              <button className="modal-close-btn" onClick={() => setExtendModal(null)}>
+              <h3>{viewModal.bond}</h3>
+              <button className="modal-close-btn" onClick={() => setViewModal(null)}>
                 <X size={16} />
               </button>
             </div>
             <div className="modal-body">
-              <label className="modal-label">Extension Period</label>
-              <select
-                className="modal-select"
-                value={extensionPeriod}
-                onChange={(e) => setExtensionPeriod(e.target.value)}
-              >
-                {EXTENSION_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+              <div className="view-detail-row">
+                <span>Status</span>
+                <StatusBadge status={viewModal.status} />
+              </div>
+              <div className="view-detail-row">
+                <span>Principal Amount</span>
+                <span className="mono">{formatINR(viewModal.amount)}</span>
+              </div>
+              <div className="view-detail-row">
+                <span>Interest Rate</span>
+                <span className="mono">{viewModal.rate}</span>
+              </div>
+              <div className="view-detail-row">
+                <span>Invested On</span>
+                <span className="mono">{viewModal.invested}</span>
+              </div>
+              <div className="view-detail-row">
+                <span>Matures On</span>
+                <span className="mono">{viewModal.matures || "—"}</span>
+              </div>
+              <div className="view-detail-row">
+                <span>Monthly Interest</span>
+                <span className="mono">{formatINR(viewModal.monthlyInt)}</span>
+              </div>
+              <div className="view-detail-row">
+                <span>Total Earned</span>
+                <span className="mono">{formatINR(viewModal.earned)}</span>
+              </div>
+              {viewModal.utr && (
+                <div className="view-detail-row">
+                  <span>Payment UTR</span>
+                  <span className="mono">{viewModal.utr}</span>
+                </div>
+              )}
             </div>
             <div className="modal-footer">
-              <button className="investor-btn investor-btn--outline" onClick={() => setExtendModal(null)}>Cancel</button>
-              <button className="investor-btn investor-btn--warning" onClick={submitExtendRequest}>Send Request</button>
+              <button className="investor-btn investor-btn--outline" onClick={() => setViewModal(null)}>Close</button>
+              <button className="investor-btn investor-btn--primary" onClick={() => handleViewBond(viewModal.bond)}>
+                <Download size={14} /> Download Bond
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {settlementModal && (() => {
-        const { principal, interest, penalty, net } = getSettlementBreakdown(settlementModal);
-        return (
-          <div className="modal-overlay">
-            <div className="modal-box">
-              <div className="modal-header">
-                <h3>Settlement — {settlementModal.bond}</h3>
-                <button className="modal-close-btn" onClick={() => setSettlementModal(null)}>
-                  <X size={16} />
-                </button>
+      {extendModal && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <div className="modal-header">
+              <h3>Request Tenure Extension — {extendModal.bond}</h3>
+              <button className="modal-close-btn" onClick={() => setExtendModal(null)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-intro">
+                Select how many months you would like to extend this investment. The request will be sent
+                to your branch admin for approval.
+              </p>
+
+              <label className="modal-label">Extension Period</label>
+              <div className="extend-option-grid">
+                {EXTENSION_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    className={`extend-option${extensionPeriod === opt ? " extend-option--active" : ""}`}
+                    onClick={() => setExtensionPeriod(opt)}
+                  >
+                    {opt}
+                  </button>
+                ))}
               </div>
-              <div className="modal-body">
-                <div className="settlement-row">
-                  <span>Principal</span>
-                  <span className="mono">{formatINR(principal)}</span>
-                </div>
-                <div className="settlement-row">
-                  <span>Interest Earned</span>
-                  <span className="mono">{formatINR(interest)}</span>
-                </div>
-                <div className="settlement-row">
-                  <span>Early Penalty</span>
-                  <span className="mono amount-negative">-{formatINR(penalty)}</span>
-                </div>
-                <div className="settlement-row settlement-row--total">
-                  <span>Net Amount</span>
-                  <span className="mono">{formatINR(net)}</span>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button className="investor-btn investor-btn--outline" onClick={() => setSettlementModal(null)}>Cancel</button>
-                <button className="investor-btn investor-btn--success" onClick={submitSettlementRequest}>Send Request</button>
+
+              <div className="extend-info-box">
+                <p>
+                  On approval: maturity date will be extended by <strong>{extensionPeriod.toLowerCase()}</strong> and
+                  an updated bond certificate will be generated automatically.
+                </p>
               </div>
             </div>
+            <div className="modal-footer">
+              <button className="investor-btn investor-btn--outline" onClick={() => setExtendModal(null)}>Cancel</button>
+              <button className="investor-btn investor-btn--primary" onClick={submitExtendRequest}>
+                <Send size={14} /> Submit Extension Request
+              </button>
+            </div>
           </div>
-        );
-      })()}
+        </div>
+      )}
+
+      {preCloseModal && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <div className="modal-header">
+              <h3>Request Pre-Close — {preCloseModal.bond}</h3>
+              <button className="modal-close-btn" onClick={() => setPreCloseModal(null)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="early-closure-notice">
+                <p className="early-closure-notice__title">Early Closure Notice</p>
+                <p className="early-closure-notice__text">
+                  Pre-closing your investment before maturity may attract a penalty. Your request will be
+                  reviewed by the admin and moved to the settlement queue.
+                </p>
+              </div>
+
+              <label className="modal-label">Reason for Pre-Close</label>
+              <textarea
+                className="modal-textarea"
+                placeholder="Briefly state your reason..."
+                value={preCloseReason}
+                onChange={(e) => setPreCloseReason(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="investor-btn investor-btn--outline" onClick={() => setPreCloseModal(null)}>Cancel</button>
+              <button
+                className="investor-btn investor-btn--danger"
+                onClick={submitPreCloseRequest}
+                disabled={preCloseReason.trim().length === 0}
+              >
+                <Send size={14} /> Submit Pre-Close Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className={`request-toast request-toast--${toast.type}`}>

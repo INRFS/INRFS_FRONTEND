@@ -1,84 +1,128 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Download, Plus, Search, Eye, X } from "lucide-react";
+import { Download, Plus, Search, Eye, X, CheckCircle2, XCircle, Send } from "lucide-react";
 import "../../Styles/Admin/InvestorManagement.css";
+
+const BRANCHES = ["Vijayawada", "Hyderabad", "Bengaluru", "Chennai"];
 
 const initialInvestors = [
   {
+    email: "arjun@email.com",
     id: "INV001",
     name: "Arjun Sharma",
-    email: "arjun@email.com",
     mobile: "9876543210",
+    branch: "Hyderabad",
     registered: "12 Jan 2025",
     kyc: "Approved",
     status: "Active",
     investment: "₹5,00,000",
+    dob: "1990-04-12",
+    aadhaar: "XXXX XXXX 4321",
+    address: "204, Silver Oak Residency, Andheri West",
+    city: "Mumbai",
+    state: "Maharashtra",
+    pin: "400058",
     bank: { accountHolder: "Arjun Sharma", accountNumber: "500123456789", ifsc: "HDFC0001234", bankName: "HDFC Bank" },
   },
   {
-    id: "INV002",
-    name: "Priya Patel",
     email: "priya@email.com",
-    mobile: "9876543211",
+    id: null,
+    name: "Priya Patel",
+    mobile: "9876511111",
+    branch: "Vijayawada",
     registered: "14 Jan 2025",
     kyc: "Pending",
     status: "Pending",
     investment: "₹2,50,000",
+    dob: "1988-11-03",
+    aadhaar: "XXXX XXXX 5566",
+    address: "12, Rajouri Garden",
+    city: "Delhi",
+    state: "Delhi",
+    pin: "110027",
     bank: { accountHolder: "Priya Patel", accountNumber: "500223456790", ifsc: "ICIC0002345", bankName: "ICICI Bank" },
   },
   {
+    email: "rahul@email.com",
     id: "INV003",
     name: "Rahul Kumar",
-    email: "rahul@email.com",
     mobile: "9876543212",
+    branch: "Bengaluru",
     registered: "16 Jan 2025",
     kyc: "Approved",
     status: "Active",
     investment: "₹8,75,000",
+    dob: "1992-07-21",
+    aadhaar: "XXXX XXXX 7788",
+    address: "45, Whitefield Main Road",
+    city: "Bangalore",
+    state: "Karnataka",
+    pin: "560066",
     bank: { accountHolder: "Rahul Kumar", accountNumber: "500323456791", ifsc: "SBIN0003456", bankName: "State Bank of India" },
   },
   {
-    id: "INV004",
-    name: "Sunita Verma",
     email: "sunita@email.com",
+    id: null,
+    name: "Sunita Verma",
     mobile: "9876543213",
+    branch: "Chennai",
     registered: "18 Jan 2025",
     kyc: "Rejected",
     status: "Suspended",
     investment: "₹1,50,000",
+    dob: "1985-02-14",
+    aadhaar: "XXXX XXXX 9900",
+    address: "78, Koregaon Park",
+    city: "Pune",
+    state: "Maharashtra",
+    pin: "411001",
     bank: { accountHolder: "Sunita Verma", accountNumber: "500423456792", ifsc: "AXIS0004567", bankName: "Axis Bank" },
   },
   {
-    id: "INV005",
-    name: "Vikram Singh",
     email: "vikram@email.com",
+    id: null,
+    name: "Vikram Singh",
     mobile: "9876543214",
+    branch: "Hyderabad",
     registered: "20 Jan 2025",
     kyc: "Pending",
     status: "Pending",
     investment: "₹3,25,000",
+    dob: "1991-09-30",
+    aadhaar: "XXXX XXXX 1122",
+    address: "9, MG Road",
+    city: "Bangalore",
+    state: "Karnataka",
+    pin: "560001",
     bank: { accountHolder: "Vikram Singh", accountNumber: "500523456793", ifsc: "PUNB0005678", bankName: "Punjab National Bank" },
   },
   {
+    email: "neha@email.com",
     id: "INV006",
     name: "Neha Gupta",
-    email: "neha@email.com",
     mobile: "9876543215",
+    branch: "Bengaluru",
     registered: "22 Jan 2025",
     kyc: "Approved",
     status: "Active",
     investment: "₹6,00,000",
+    dob: "1993-06-05",
+    aadhaar: "XXXX XXXX 3344",
+    address: "22, Bandra West",
+    city: "Mumbai",
+    state: "Maharashtra",
+    pin: "400050",
     bank: { accountHolder: "Neha Gupta", accountNumber: "500623456794", ifsc: "HDFC0006789", bankName: "HDFC Bank" },
   },
 ];
 
 const KYC_OPTIONS = ["Approved", "Pending", "Rejected"];
-const STATUS_OPTIONS = ["Active", "Pending", "Suspended"];
+const STATUS_TABS = ["All", "Pending", "Active", "Suspended"];
 
 const emptyForm = {
   name: "",
   email: "",
   mobile: "",
+  branch: BRANCHES[0],
   kyc: "Pending",
   status: "Pending",
   investment: "",
@@ -93,6 +137,7 @@ function initials(name) {
 
 function nextInvestorId(list) {
   const max = list.reduce((acc, inv) => {
+    if (!inv.id) return acc;
     const num = parseInt(inv.id.replace("INV", ""), 10);
     return Number.isNaN(num) ? acc : Math.max(acc, num);
   }, 0);
@@ -113,8 +158,183 @@ function formatToday() {
   });
 }
 
+function ReviewKycModal({ investor, onClose, onApprove, onReject }) {
+  const [branch, setBranch] = useState(investor.branch || BRANCHES[0]);
+  const [remarks, setRemarks] = useState("");
+
+  return (
+    <div className="im-modal-overlay" onClick={onClose}>
+      <div className="im-modal invmgmt-review-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="im-modal-header">
+          <h2>KYC Review — {investor.name}</h2>
+          <button className="im-icon-btn" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="im-modal-form">
+          <div className="invmgmt-detail-grid">
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">Full Name</span>
+              <span className="invmgmt-detail-value">{investor.name}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">Mobile</span>
+              <span className="invmgmt-detail-value">{investor.mobile}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">Email</span>
+              <span className="invmgmt-detail-value">{investor.email}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">Date of Birth</span>
+              <span className="invmgmt-detail-value">{investor.dob}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">Aadhaar Number</span>
+              <span className="invmgmt-detail-value">{investor.aadhaar}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">Branch</span>
+              <span className="invmgmt-detail-value">{investor.branch}</span>
+            </div>
+            <div className="invmgmt-detail-card invmgmt-detail-card--full">
+              <span className="invmgmt-detail-label">Address</span>
+              <span className="invmgmt-detail-value">{investor.address}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">City</span>
+              <span className="invmgmt-detail-value">{investor.city}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">State</span>
+              <span className="invmgmt-detail-value">{investor.state}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">PIN Code</span>
+              <span className="invmgmt-detail-value">{investor.pin}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">Investment Amount</span>
+              <span className="invmgmt-detail-value">{investor.investment}</span>
+            </div>
+            <div className="invmgmt-detail-card">
+              <span className="invmgmt-detail-label">Current KYC Status</span>
+              <span className={`im-badge im-badge-${investor.kyc.toLowerCase()}`}>{investor.kyc}</span>
+            </div>
+          </div>
+
+          <div className="im-form-row">
+            <label>Branch (assign / change)</label>
+            <select
+              className="invmgmt-branch-select"
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+            >
+              {BRANCHES.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="im-form-row">
+            <label>Remarks (optional)</label>
+            <textarea
+              className="invmgmt-remarks"
+              placeholder="Add remarks..."
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div className="im-modal-actions">
+            <button type="button" className="btn btn-outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => onReject(investor.email, remarks)}
+            >
+              <XCircle size={14} /> Reject
+            </button>
+            <button
+              type="button"
+              className="btn btn-success"
+              onClick={() => onApprove(investor.email, branch, remarks)}
+            >
+              <CheckCircle2 size={14} /> Approve KYC &amp; Activate
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RejectConfirmModal({ investor, onClose, onConfirm }) {
+  return (
+    <div className="im-modal-overlay" onClick={onClose}>
+      <div className="im-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="im-modal-header">
+          <h2>Reject KYC</h2>
+          <button className="im-icon-btn" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="im-modal-form">
+          <p className="invmgmt-confirm-text">
+            Are you sure you want to reject the KYC application for{" "}
+            <strong>{investor.name}</strong>? Their account status will be set to Suspended.
+          </p>
+
+          <div className="im-modal-actions">
+            <button type="button" className="btn btn-outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => onConfirm(investor.email)}
+            >
+              <XCircle size={14} /> Confirm Reject
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SuperAdminNoticeModal({ notice, onClose }) {
+  const isApprove = notice.type === "approve";
+
+  return (
+    <div className="im-modal-overlay" onClick={onClose}>
+      <div className="im-modal invmgmt-notice-modal" onClick={(e) => e.stopPropagation()}>
+        <div className={`invmgmt-notice-icon${isApprove ? " invmgmt-notice-icon--approve" : " invmgmt-notice-icon--reject"}`}>
+          <Send size={22} />
+        </div>
+        <h2 className="invmgmt-notice-title">
+          {isApprove ? "Sent for Super Admin Approval" : "Rejection Sent to Super Admin"}
+        </h2>
+        <p className="invmgmt-notice-text">
+          {notice.name}'s KYC {isApprove ? "approval" : "rejection"} request has been forwarded to
+          the Super Admin for final review.
+        </p>
+        <div className="im-modal-actions im-modal-actions--center">
+          <button type="button" className="btn btn-primary" onClick={onClose}>
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function InvestorManagement() {
-  const navigate = useNavigate();
   const [investors, setInvestors] = useState(initialInvestors);
   const [selected, setSelected] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -122,30 +342,38 @@ export default function InvestorManagement() {
   const [errors, setErrors] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [kycFilter, setKycFilter] = useState("All KYC Status");
-  const [statusFilter, setStatusFilter] = useState("Pending");
+  const [activeTab, setActiveTab] = useState("Pending");
 
   const [viewInvestor, setViewInvestor] = useState(null);
+  const [reviewInvestor, setReviewInvestor] = useState(null);
+  const [rejectInvestor, setRejectInvestor] = useState(null);
+  const [notice, setNotice] = useState(null); // { type: "approve" | "reject", name }
+
+  const tabCounts = STATUS_TABS.reduce((acc, tab) => {
+    acc[tab] = tab === "All" ? investors.length : investors.filter((inv) => inv.status === tab).length;
+    return acc;
+  }, {});
 
   const filteredInvestors = investors.filter((inv) => {
     const q = searchTerm.trim().toLowerCase();
     const matchesSearch =
       !q ||
       inv.name.toLowerCase().includes(q) ||
-      inv.id.toLowerCase().includes(q) ||
+      (inv.id || "").toLowerCase().includes(q) ||
       inv.mobile.includes(q) ||
       inv.email.toLowerCase().includes(q);
     const matchesKyc = kycFilter === "All KYC Status" || inv.kyc === kycFilter;
-    const matchesStatus = statusFilter === "All Status" || inv.status === statusFilter;
-    return matchesSearch && matchesKyc && matchesStatus;
+    const matchesTab = activeTab === "All" || inv.status === activeTab;
+    return matchesSearch && matchesKyc && matchesTab;
   });
 
   const toggleAll = (e) => {
-    setSelected(e.target.checked ? filteredInvestors.map((i) => i.id) : []);
+    setSelected(e.target.checked ? filteredInvestors.map((i) => i.email) : []);
   };
 
-  const toggleOne = (id) => {
+  const toggleOne = (email) => {
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(email) ? prev.filter((x) => x !== email) : [...prev, email]
     );
   };
 
@@ -183,14 +411,21 @@ export default function InvestorManagement() {
     if (!validate()) return;
 
     const newInvestor = {
+      email: form.email.trim(),
       id: nextInvestorId(investors),
       name: form.name.trim(),
-      email: form.email.trim(),
       mobile: form.mobile.trim(),
+      branch: form.branch,
       registered: formatToday(),
       kyc: form.kyc,
       status: form.status,
       investment: formatInvestment(form.investment),
+      dob: "",
+      aadhaar: "",
+      address: "",
+      city: "",
+      state: "",
+      pin: "",
       bank: {
         accountHolder: form.name.trim(),
         accountNumber: form.accountNumber.trim(),
@@ -211,8 +446,28 @@ export default function InvestorManagement() {
     setViewInvestor(null);
   };
 
-  const goToKycApprovals = (inv) => {
-    navigate(`/admin/kyc-approvals?investorId=${inv.id}`);
+  const handleApproveKyc = (email, branch, remarks) => {
+    const name = reviewInvestor?.name;
+    setInvestors((prev) => {
+      const assignedId = nextInvestorId(prev);
+      return prev.map((inv) =>
+        inv.email === email
+          ? { ...inv, id: inv.id || assignedId, branch, kyc: "Approved", status: "Active" }
+          : inv
+      );
+    });
+    setReviewInvestor(null);
+    setNotice({ type: "approve", name });
+  };
+
+  const handleRejectKyc = (email) => {
+    const name = reviewInvestor?.name || rejectInvestor?.name;
+    setInvestors((prev) =>
+      prev.map((inv) => (inv.email === email ? { ...inv, kyc: "Rejected", status: "Suspended" } : inv))
+    );
+    setReviewInvestor(null);
+    setRejectInvestor(null);
+    setNotice({ type: "reject", name });
   };
 
   return (
@@ -230,6 +485,19 @@ export default function InvestorManagement() {
             <Plus size={15} /> Add Investor
           </button>
         </div>
+      </div>
+
+      <div className="invmgmt-status-tabs">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            className={`invmgmt-status-tab${activeTab === tab ? " invmgmt-status-tab--active" : ""}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab} <span className="invmgmt-status-tab-count">{tabCounts[tab]}</span>
+          </button>
+        ))}
       </div>
 
       <div className="im-toolbar">
@@ -252,16 +520,6 @@ export default function InvestorManagement() {
             <option key={k}>{k}</option>
           ))}
         </select>
-        <select
-          className="im-select"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option>All Status</option>
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
       </div>
 
       <div className="im-table-wrap">
@@ -280,6 +538,7 @@ export default function InvestorManagement() {
               <th>INVESTOR ID</th>
               <th>INVESTOR NAME</th>
               <th>MOBILE</th>
+              <th>BRANCH</th>
               <th>REGISTERED</th>
               <th>KYC</th>
               <th>STATUS</th>
@@ -290,22 +549,28 @@ export default function InvestorManagement() {
           <tbody>
             {filteredInvestors.length === 0 && (
               <tr>
-                <td colSpan={9} className="im-no-results">
+                <td colSpan={10} className="im-no-results">
                   No investors match your search or filters.
                 </td>
               </tr>
             )}
             {filteredInvestors.map((inv) => (
-              <tr key={inv.id}>
+              <tr key={inv.email}>
                 <td>
                   <input
                     type="checkbox"
-                    checked={selected.includes(inv.id)}
-                    onChange={() => toggleOne(inv.id)}
+                    checked={selected.includes(inv.email)}
+                    onChange={() => toggleOne(inv.email)}
                   />
                 </td>
                 <td>
-                  <span className="im-id">{inv.id}</span>
+                  {inv.id ? (
+                    <span className="im-id">{inv.id}</span>
+                  ) : (
+                    <span className="invmgmt-id-pending">
+                      {inv.status === "Pending" ? "Pending..." : "—"}
+                    </span>
+                  )}
                 </td>
                 <td>
                   <div className="im-investor-cell">
@@ -317,6 +582,7 @@ export default function InvestorManagement() {
                   </div>
                 </td>
                 <td>{inv.mobile}</td>
+                <td className="im-muted">{inv.branch}</td>
                 <td className="im-muted">{inv.registered}</td>
                 <td>
                   <span className={`im-badge im-badge-${inv.kyc.toLowerCase()}`}>{inv.kyc}</span>
@@ -329,10 +595,10 @@ export default function InvestorManagement() {
                   <div className="im-actions">
                     {inv.status === "Pending" && (
                       <>
-                        <button className="im-btn im-btn-approve" onClick={() => goToKycApprovals(inv)}>
+                        <button className="im-btn im-btn-approve" onClick={() => setReviewInvestor(inv)}>
                           Approve
                         </button>
-                        <button className="im-btn im-btn-reject" onClick={() => goToKycApprovals(inv)}>
+                        <button className="im-btn im-btn-reject" onClick={() => setRejectInvestor(inv)}>
                           Reject
                         </button>
                       </>
@@ -404,6 +670,15 @@ export default function InvestorManagement() {
                 {errors.mobile && <span className="im-error">{errors.mobile}</span>}
               </div>
 
+              <div className="im-form-row">
+                <label>Branch</label>
+                <select value={form.branch} onChange={handleChange("branch")}>
+                  {BRANCHES.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="im-form-row-split">
                 <div className="im-form-row">
                   <label>KYC Status</label>
@@ -419,7 +694,7 @@ export default function InvestorManagement() {
                 <div className="im-form-row">
                   <label>Account Status</label>
                   <select value={form.status} onChange={handleChange("status")}>
-                    {STATUS_OPTIONS.map((s) => (
+                    {STATUS_TABS.filter((s) => s !== "All").map((s) => (
                       <option key={s} value={s}>
                         {s}
                       </option>
@@ -500,7 +775,7 @@ export default function InvestorManagement() {
             <div className="im-modal-form">
               <div className="im-form-row">
                 <label>Investor ID</label>
-                <span className="im-id">{viewInvestor.id}</span>
+                <span className="im-id">{viewInvestor.id || "Pending"}</span>
               </div>
               <div className="im-form-row">
                 <label>Full Name</label>
@@ -513,6 +788,10 @@ export default function InvestorManagement() {
               <div className="im-form-row">
                 <label>Mobile</label>
                 <span>{viewInvestor.mobile}</span>
+              </div>
+              <div className="im-form-row">
+                <label>Branch</label>
+                <span>{viewInvestor.branch}</span>
               </div>
               <div className="im-form-row-split">
                 <div className="im-form-row">
@@ -557,6 +836,27 @@ export default function InvestorManagement() {
             </div>
           </div>
         </div>
+      )}
+
+      {reviewInvestor && (
+        <ReviewKycModal
+          investor={reviewInvestor}
+          onClose={() => setReviewInvestor(null)}
+          onApprove={handleApproveKyc}
+          onReject={handleRejectKyc}
+        />
+      )}
+
+      {rejectInvestor && (
+        <RejectConfirmModal
+          investor={rejectInvestor}
+          onClose={() => setRejectInvestor(null)}
+          onConfirm={handleRejectKyc}
+        />
+      )}
+
+      {notice && (
+        <SuperAdminNoticeModal notice={notice} onClose={() => setNotice(null)} />
       )}
     </>
   );

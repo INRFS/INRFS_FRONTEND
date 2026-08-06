@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Download, Clock, Lock } from "lucide-react";
 import { useInvestorData, StatusBadge, formatINR } from "./InvestorDataContext";
@@ -7,8 +7,19 @@ import "../../Styles/Investor/MyBonds.css";
 export default function MyBonds() {
   const navigate = useNavigate();
   const { investments } = useInvestorData();
+  const [activeTab, setActiveTab] = useState("active");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const hasPending = investments.some((inv) => inv.status === "Pending Approval");
+
+  const activeBonds = investments.filter((inv) => inv.status === "Active");
+  const otherBonds = investments.filter((inv) => inv.status !== "Active");
+
+  const visibleBonds = (activeTab === "active" ? activeBonds : otherBonds).filter((b) => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return true;
+    return b.bond?.toLowerCase().includes(q);
+  });
 
   const handleViewBond = (bondNumber) => {
     navigate(`/investor/bond-certificate/${encodeURIComponent(bondNumber)}`);
@@ -32,9 +43,29 @@ export default function MyBonds() {
         </div>
       )}
 
+      <div className="mb-tabs">
+        <button
+          className={`mb-tab${activeTab === "active" ? " mb-tab--active" : ""}`}
+          onClick={() => setActiveTab("active")}
+        >
+          Active <span className="mb-tab-count">{activeBonds.length}</span>
+        </button>
+        <button
+          className={`mb-tab${activeTab === "other" ? " mb-tab--active" : ""}`}
+          onClick={() => setActiveTab("other")}
+        >
+          Others <span className="mb-tab-count">{otherBonds.length}</span>
+        </button>
+      </div>
+
       <div className="investor-table-card">
         <div className="investor-table-card__header">
-          <input className="investor-search-input" placeholder="Search bonds..." />
+          <input
+            className="investor-search-input"
+            placeholder="Search bonds..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
           <button className="investor-btn investor-btn--outline"><Download size={14} /> Export</button>
         </div>
 
@@ -53,7 +84,14 @@ export default function MyBonds() {
             </tr>
           </thead>
           <tbody>
-            {investments.map((b) => {
+            {visibleBonds.length === 0 && (
+              <tr>
+                <td colSpan={9} className="mb-no-results">
+                  {activeTab === "active" ? "No active bonds yet." : "Nothing here."}
+                </td>
+              </tr>
+            )}
+            {visibleBonds.map((b) => {
               const isPending = b.status === "Pending Approval";
               return (
                 <tr key={b.id}>
@@ -100,7 +138,7 @@ export default function MyBonds() {
             })}
           </tbody>
         </table>
-        <p className="admin-table-footer">Showing 1–{investments.length} of {investments.length} records</p>
+        <p className="admin-table-footer">Showing 1–{visibleBonds.length} of {visibleBonds.length} records</p>
       </div>
     </div>
   );

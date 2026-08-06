@@ -40,6 +40,7 @@ const initialInvestments = [
   {
     id: 1,
     bond: "BND-2025-001",
+       utr: "987654321098",
     amount: 500000,
     rateValue: 12,
     rate: "12% p.a.",
@@ -54,6 +55,7 @@ const initialInvestments = [
   {
     id: 2,
     bond: "BND-2024-087",
+    utr: "123456789012",
     amount: 300000,
     rateValue: 11,
     rate: "11% p.a.",

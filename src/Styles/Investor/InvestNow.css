@@ -1,4 +1,37 @@
 .invest-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; align-items: start; }
+
+
+.payment-method-grid{
+  display:flex;
+  gap:12px;
+  margin:16px 0;
+}
+
+.payment-card{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 16px;
+  border:1px solid #dcdcdc;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.payment-card.active{
+  border-color:#2563eb;
+  background:#eff6ff;
+}
+
+.invest-select{
+  width:100%;
+  padding:10px 12px;
+  margin:12px 0;
+  border:1px solid #dcdcdc;
+  border-radius:8px;
+  background: #fff;
+}
+.invest-select--nomargin { margin: 0; }
 @media (max-width: 900px) { .invest-layout { grid-template-columns: 1fr; } }
 
 .invest-side-col { display: flex; flex-direction: column; gap: 16px; }
@@ -28,13 +61,16 @@
 .invest-rate-banner strong { color: #7c5109; }
 
 .invest-field-label { font-size: 13px; font-weight: 600; color: #334155; margin: 16px 0 8px; display: block; }
+.invest-field-label--top { margin-top: 0; }
+.invest-field-hint { font-size: 12px; color: #94a3b8; margin: 0 0 14px; }
+.invest-field-error { font-size: 11.5px; color: #ef4444; margin: 6px 0 0; }
 .invest-required { color: #ef4444; }
 
 .invest-amount-input {
   display: flex; align-items: center; gap: 6px; border: 1px solid #e2e8f0;
-  border-radius: 8px; padding: 10px 12px;
+  border-radius: 8px; padding: 10px 12px; background: #fff;
 }
-.invest-amount-input input { border: none; outline: none; font-size: 15px; width: 100%; }
+.invest-amount-input input { border: none; outline: none; font-size: 15px; width: 100%; background: transparent; }
 
 .invest-quick-amounts { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .invest-chip {
@@ -65,14 +101,50 @@
   border-radius: 10px;
   padding: 24px;
   text-align: center;
-  margin-bottom: 20px;
+  margin: 16px 0 20px;
 }
 .invest-upi-title { font-size: 14px; font-weight: 700; color: #0f1729; margin: 0 0 4px; }
 .invest-upi-id { font-size: 12.5px; color: #94a3b8; margin: 0 0 14px; }
 .invest-upi-amount { font-size: 26px; font-weight: 800; color: #2f5cf0; margin: 0; }
 
+/* Payout account details — boxed, visually distinct from the payment-bank picker above */
+.invest-payout-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 24px;
+}
+.invest-payout-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed #dbe2ea;
+}
+.invest-payout-card__icon {
+  width: 32px; height: 32px; border-radius: 8px; background: #e8edfb; color: #2f5cf0;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.invest-payout-card__title { font-size: 13.5px; font-weight: 700; color: #0f1729; margin: 0 0 3px; }
+.invest-payout-card__hint { font-size: 11.5px; color: #64748b; margin: 0; line-height: 1.4; }
+
+.invest-bank-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px;
+}
+.invest-bank-field { min-width: 0; }
+.invest-bank-field--full { grid-column: 1 / -1; }
+.invest-bank-field .invest-field-label { margin: 0 0 8px; }
+@media (max-width: 600px) {
+  .invest-bank-grid { grid-template-columns: 1fr; }
+  .invest-payout-card { padding: 16px; }
+}
+
 /* Review step */
+.invest-review-stepwrap { display: block; }
 .invest-review-heading { font-size: 15px; font-weight: 700; color: #0f1729; margin: 0 0 14px; }
+.invest-review-heading--spaced { margin-top: 20px; }
 .invest-review-card {
   background: #f8fafc; border-radius: 10px; padding: 4px 16px; border: 1px solid #eef1f7;
 }
@@ -92,7 +164,7 @@
 .invest-confirmation-icon { color: #16a34a; display: inline-flex; margin-bottom: 10px; }
 .invest-confirmation-step { text-align: center; padding: 30px 10px; }
 .invest-confirmation-title { font-size: 18px; font-weight: 700; color: #0f1729; margin: 4px 0; }
-.invest-confirmation-sub { font-size: 13px; color: #64748b; max-width: 420px; margin: 0 auto; }
+.invest-confirmation-sub { font-size: 13px; color: #64748b; max-width: 420px; margin: 0 auto 20px; }
 
 .invest-summary-row {
   display: flex; justify-content: space-between; padding: 10px 0;

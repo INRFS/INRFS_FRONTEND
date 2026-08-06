@@ -1,8 +1,110 @@
+/* ==========================================================================
+   Page header
+   ========================================================================== */
+
+.admin-page-title {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #03154a;
+}
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-date-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #e2e5ec;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #4b5563;
+  background: #fff;
+}
+
+/* ==========================================================================
+   Due-date groups (grouped table sections)
+   ========================================================================== */
+
+.due-group {
+  margin-top: 22px;
+}
+.due-group:first-of-type {
+  margin-top: 16px;
+}
+
+.due-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.due-group-header__date {
+  font-size: 15px;
+  font-weight: 700;
+  color: #03154a;
+}
+
+.due-group-header__meta {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.due-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.due-badge--today {
+  background: #fdecec;
+  color: #dc2626;
+}
+
+.due-date--today {
+  color: #dc2626;
+  font-weight: 600;
+}
+.due-date--muted {
+  color: #9ca3af;
+}
+
+/* ==========================================================================
+   Row action buttons
+   ========================================================================== */
 
 .admin-action-group {
   display: flex;
   gap: 8px;
 }
+
+.admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+}
+.admin-icon-btn--danger {
+  background: #ef4444;
+  color: #fff;
+}
+.admin-icon-btn--danger:hover {
+  background: #dc2626;
+}
+
+/* ==========================================================================
+   Modal shell
+   ========================================================================== */
 
 .admin-modal-overlay {
   position: fixed;
@@ -38,7 +140,9 @@
   gap: 10px;
   color: #03154a;
 }
-.admin-modal-header__title svg { color: #b8860b; }
+.admin-modal-header__title svg {
+  color: #b8860b;
+}
 .admin-modal-header__title h3 {
   margin: 0;
   font-size: 17px;
@@ -57,7 +161,10 @@
   cursor: pointer;
   color: #6b7280;
 }
-.admin-modal-close-btn:hover { background: #f3f4f6; color: #03154a; }
+.admin-modal-close-btn:hover {
+  background: #f3f4f6;
+  color: #03154a;
+}
 
 .admin-modal-body {
   padding: 20px 24px;
@@ -65,7 +172,9 @@
   font-size: 14px;
   line-height: 1.6;
 }
-.admin-modal-body p { margin: 0; }
+.admin-modal-body p {
+  margin: 0;
+}
 
 .admin-modal-footer {
   display: flex;
@@ -74,4 +183,53 @@
   padding: 16px 24px;
   border-top: 1px solid #eef0f4;
   background: #fafbfc;
+}
+
+/* ==========================================================================
+   Modal — details step (label/value rows shown before the confirm step)
+   ========================================================================== */
+
+.admin-detail-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #eef0f4;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.admin-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #fff;
+}
+.admin-detail-row:not(:last-child) {
+  border-bottom: 1px solid #f1f2f5;
+}
+.admin-detail-row:nth-child(even) {
+  background: #fafbfc;
+}
+
+.admin-detail-row__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9aa1ae;
+}
+
+.admin-detail-row__value {
+  font-size: 14px;
+  color: #03154a;
+  font-weight: 600;
+  text-align: right;
+}
+.admin-detail-row__value.mono {
+  font-family: ui-monospace, monospace;
+  font-weight: 500;
+}
+.admin-detail-row__value.amount-positive {
+  color: #16a34a;
+  font-weight: 700;
 }

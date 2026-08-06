@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2, AlertTriangle, ClipboardCheck, ShieldCheck, FileCheck2 } from "lucide-react";
+import { CheckCircle2, AlertTriangle, ClipboardCheck, ShieldCheck, FileCheck2, Landmark } from "lucide-react";
 import { useInvestorData, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/InvestNow.css";
 
@@ -17,6 +17,8 @@ const tenureOptions = [
 const INITIAL_RATE = 3;
 
 const UPI_ID = "inrfs@ybl";
+
+const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 
 const workflowSteps = [
   {
@@ -54,6 +56,25 @@ export default function InvestNow() {
 
   const [utr, setUtr] = useState("");
 
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [selectedBank, setSelectedBank] = useState("");
+
+  const [accountHolderName, setAccountHolderName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [confirmAccountNumber, setConfirmAccountNumber] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
+  const [payoutBankName, setPayoutBankName] = useState("");
+
+  const banks = [
+    "State Bank of India",
+    "HDFC Bank",
+    "ICICI Bank",
+    "Axis Bank",
+    "Punjab National Bank",
+    "Canara Bank",
+    "Union Bank",
+  ];
+
   const { monthlyInterest, totalInterest, maturityAmount } = useMemo(() => {
     const monthly = Math.round((amount * (INITIAL_RATE / 100)));
     const total = monthly * tenure;
@@ -64,13 +85,41 @@ export default function InvestNow() {
     };
   }, [amount, tenure]);
 
-  const canSubmit = utr.trim().length > 0;
+  const ifscValid = IFSC_REGEX.test(ifscCode.trim().toUpperCase());
+  const accountNumbersMatch =
+    accountNumber.trim().length >= 6 && accountNumber.trim() === confirmAccountNumber.trim();
+
+  const bankDetailsValid =
+    accountHolderName.trim().length > 0 &&
+    accountNumbersMatch &&
+    ifscValid &&
+    payoutBankName.trim().length > 0;
+
+  const canContinueFromPayment =
+    !!paymentMethod &&
+    (paymentMethod !== "netbanking" || !!selectedBank) &&
+    utr.trim().length > 0 &&
+    bankDetailsValid;
+
+  const canSubmit = utr.trim().length > 0 && bankDetailsValid;
 
   const handleSubmitInvestment = () => {
     if (!canSubmit) return;
     setProcessing(true);
     setTimeout(() => {
-      const inv = addInvestment({ amount, rateValue: INITIAL_RATE, tenure, utr, status: "pending" });
+      const inv = addInvestment({
+        amount,
+        rateValue: INITIAL_RATE,
+        tenure,
+        utr,
+        status: "pending",
+        payoutBankDetails: {
+          accountHolderName: accountHolderName.trim(),
+          accountNumber: accountNumber.trim(),
+          ifscCode: ifscCode.trim().toUpperCase(),
+          bankName: payoutBankName.trim(),
+        },
+      });
       setCreatedBond(inv);
       setProcessing(false);
       setSubmitted(true);
@@ -82,6 +131,64 @@ export default function InvestNow() {
     { num: 2, label: "Payment" },
     { num: 3, label: "Confirmation" },
   ];
+
+  const paymentMethodLabel =
+    paymentMethod === "upi" ? "UPI" : paymentMethod === "netbanking" ? "Net Banking" : "-";
+
+  if (submitted) {
+    return (
+      <div className="investor-page">
+        <div className="invest-form-card">
+          <div className="invest-confirmation-step">
+            <CheckCircle2 size={48} className="invest-confirmation-icon" />
+            <p className="invest-confirmation-title">Investment Request Submitted</p>
+            <p className="invest-confirmation-sub">
+              Your request for {formatINR(amount)} has been submitted and is pending admin review.
+              You'll be notified once it's approved and your bond is generated.
+            </p>
+          </div>
+
+          <div className="invest-review-card">
+            <div className="invest-review-row">
+              <span>Reference / UTR</span>
+              <span>{utr}</span>
+            </div>
+            <div className="invest-review-row">
+              <span>Principal</span>
+              <span>{formatINR(amount)}</span>
+            </div>
+            <div className="invest-review-row">
+              <span>Tenure</span>
+              <span>{tenure} months</span>
+            </div>
+            <div className="invest-review-row">
+              <span>Payout Account</span>
+              <span>{accountHolderName} · {payoutBankName}</span>
+            </div>
+            <div className="invest-review-row invest-review-row--last">
+              <span>Status</span>
+              <span>Pending Approval</span>
+            </div>
+          </div>
+
+          <div className="invest-form-actions invest-form-actions--center">
+            <button
+              className="investor-btn investor-btn--outline"
+              onClick={() => navigate("/investor/my-investments")}
+            >
+              View My Investments
+            </button>
+            <button
+              className="investor-btn investor-btn--primary"
+              onClick={() => navigate("/investor/dashboard")}
+            >
+              Go to Dashboard &gt;
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="investor-page">
@@ -174,103 +281,301 @@ export default function InvestNow() {
 
           {step === 2 && (
             <div className="invest-payment-step">
-              <div className="invest-upi-box">
-                <p className="invest-upi-title">Pay via UPI</p>
-                <p className="invest-upi-id">UPI ID: {UPI_ID}</p>
-                <p className="invest-upi-amount">{formatINR(amount)}</p>
+
+              <label className="invest-field-label invest-field-label--top">
+                Select Payment Method
+              </label>
+
+              <div className="payment-method-grid">
+
+                <label className={`payment-card ${paymentMethod === "upi" ? "active" : ""}`}>
+                  <input
+                    type="radio"
+                    value="upi"
+                    checked={paymentMethod === "upi"}
+                    onChange={() => {
+                      setPaymentMethod("upi");
+                      setSelectedBank("");
+                    }}
+                  />
+                  UPI
+                </label>
+
+                <label className={`payment-card ${paymentMethod === "netbanking" ? "active" : ""}`}>
+                  <input
+                    type="radio"
+                    value="netbanking"
+                    checked={paymentMethod === "netbanking"}
+                    onChange={() => setPaymentMethod("netbanking")}
+                  />
+                  Net Banking
+                </label>
+
               </div>
 
-              <label className="invest-field-label" htmlFor="utr">
-                Transaction Reference Number <span className="invest-required">*</span>
-              </label>
-              <div className="invest-amount-input">
-                <input
-                  id="utr"
-                  type="text"
-                  placeholder="Enter UTR / Transaction ID"
-                  value={utr}
-                  onChange={(e) => setUtr(e.target.value)}
-                />
+              {paymentMethod === "upi" && (
+                <div className="invest-upi-box">
+                  <p className="invest-upi-title">Pay via UPI</p>
+                  <p className="invest-upi-id">UPI ID: {UPI_ID}</p>
+                  <p className="invest-upi-amount">{formatINR(amount)}</p>
+                </div>
+              )}
+
+              {paymentMethod === "netbanking" && (
+                <>
+                  <label className="invest-field-label">
+                    Select Bank to Pay From
+                  </label>
+
+                  <select
+                    className="invest-select"
+                    value={selectedBank}
+                    onChange={(e) => setSelectedBank(e.target.value)}
+                  >
+                    <option value="">Choose Bank</option>
+
+                    {banks.map((bank) => (
+                      <option key={bank} value={bank}>
+                        {bank}
+                      </option>
+                    ))}
+                  </select>
+
+                  {selectedBank && (
+                    <div className="invest-upi-box">
+                      <p><strong>Account Name:</strong> INRFS Pvt Ltd</p>
+                      <p><strong>Bank:</strong> {selectedBank}</p>
+                      <p><strong>Account No:</strong> 123456789012</p>
+                      <p><strong>IFSC:</strong> INRF0001234</p>
+                      <p><strong>Amount:</strong> {formatINR(amount)}</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {paymentMethod && (
+                <>
+                  <label className="invest-field-label">
+                    Transaction Reference Number
+                    <span className="invest-required">*</span>
+                  </label>
+
+                  <div className="invest-amount-input">
+                    <input
+                      type="text"
+                      placeholder="Enter Transaction ID / UTR"
+                      value={utr}
+                      onChange={(e) => setUtr(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="invest-payout-card">
+                <div className="invest-payout-card__header">
+                  <span className="invest-payout-card__icon">
+                    <Landmark size={16} />
+                  </span>
+                  <div>
+                    <p className="invest-payout-card__title">
+                      Payout Account Details <span className="invest-required">*</span>
+                    </p>
+                    <p className="invest-payout-card__hint">
+                      Interest &amp; maturity amount will be credited here. Different from the bank you pay from above.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="invest-bank-grid">
+                  <div className="invest-bank-field">
+                    <label className="invest-field-label">
+                      Account Holder Name <span className="invest-required">*</span>
+                    </label>
+                    <div className="invest-amount-input">
+                      <input
+                        type="text"
+                        placeholder="As per bank records"
+                        value={accountHolderName}
+                        onChange={(e) => setAccountHolderName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="invest-bank-field">
+                    <label className="invest-field-label">
+                      Payout Bank <span className="invest-required">*</span>
+                    </label>
+                    <select
+                      className="invest-select invest-select--nomargin"
+                      value={payoutBankName}
+                      onChange={(e) => setPayoutBankName(e.target.value)}
+                    >
+                      <option value="">Choose Bank</option>
+                      {banks.map((bank) => (
+                        <option key={bank} value={bank}>
+                          {bank}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="invest-bank-field">
+                    <label className="invest-field-label">
+                      Account Number <span className="invest-required">*</span>
+                    </label>
+                    <div className="invest-amount-input">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Enter account number"
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9]/g, ""))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="invest-bank-field">
+                    <label className="invest-field-label">
+                      Confirm Account Number <span className="invest-required">*</span>
+                    </label>
+                    <div className="invest-amount-input">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Re-enter account number"
+                        value={confirmAccountNumber}
+                        onChange={(e) => setConfirmAccountNumber(e.target.value.replace(/[^0-9]/g, ""))}
+                      />
+                    </div>
+                    {confirmAccountNumber.length > 0 && !accountNumbersMatch && (
+                      <p className="invest-field-error">Account numbers do not match</p>
+                    )}
+                  </div>
+
+                  <div className="invest-bank-field invest-bank-field--full">
+                    <label className="invest-field-label">
+                      IFSC Code <span className="invest-required">*</span>
+                    </label>
+                    <div className="invest-amount-input">
+                      <input
+                        type="text"
+                        placeholder="e.g. HDFC0001234"
+                        value={ifscCode}
+                        maxLength={11}
+                        onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                      />
+                    </div>
+                    {ifscCode.length > 0 && !ifscValid && (
+                      <p className="invest-field-error">Enter a valid 11-character IFSC code</p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="invest-form-actions">
-                <button className="investor-btn investor-btn--outline" onClick={() => setStep(1)}>
+
+                <button
+                  className="investor-btn investor-btn--outline"
+                  onClick={() => setStep(1)}
+                >
                   &lt; Back
                 </button>
+
                 <button
                   className="investor-btn investor-btn--primary"
                   onClick={() => setStep(3)}
-                  disabled={!canSubmit}
+                  disabled={!canContinueFromPayment}
                 >
                   Continue to Review &gt;
                 </button>
+
               </div>
+
             </div>
           )}
 
-          {step === 3 && !submitted && (
-            <div className="invest-review-step">
-              <p className="invest-review-heading">Review Your Investment</p>
+          {step === 3 && (
+            <div className="invest-review-stepwrap">
+              <p className="invest-review-heading">Review Investment Details</p>
 
               <div className="invest-review-card">
                 <div className="invest-review-row">
                   <span>Principal Amount</span>
-                  <span className="mono">{formatINR(amount)}</span>
-                </div>
-                <div className="invest-review-row">
-                  <span>Initial Rate</span>
-                  <span className="mono">{INITIAL_RATE}% per month</span>
+                  <span>{formatINR(amount)}</span>
                 </div>
                 <div className="invest-review-row">
                   <span>Tenure</span>
-                  <span className="mono">{tenure} months</span>
+                  <span>{tenure} months</span>
+                </div>
+                <div className="invest-review-row">
+                  <span>Initial Rate</span>
+                  <span>{INITIAL_RATE}% per month</span>
                 </div>
                 <div className="invest-review-row">
                   <span>Expected Monthly Interest</span>
-                  <span className="mono">{formatINR(monthlyInterest)}</span>
+                  <span>{formatINR(monthlyInterest)}</span>
+                </div>
+                <div className="invest-review-row">
+                  <span>Total Interest (est.)</span>
+                  <span>{formatINR(totalInterest)}</span>
+                </div>
+                <div className="invest-review-row">
+                  <span>Payment Method</span>
+                  <span>{paymentMethodLabel}</span>
+                </div>
+                {paymentMethod === "netbanking" && (
+                  <div className="invest-review-row">
+                    <span>Bank Paid From</span>
+                    <span>{selectedBank}</span>
+                  </div>
+                )}
+                <div className="invest-review-row invest-review-row--last">
+                  <span>Transaction Ref / UTR</span>
+                  <span>{utr}</span>
+                </div>
+              </div>
+
+              <p className="invest-review-heading invest-review-heading--spaced">Payout Account Details</p>
+              <div className="invest-review-card">
+                <div className="invest-review-row">
+                  <span>Account Holder Name</span>
+                  <span>{accountHolderName}</span>
+                </div>
+                <div className="invest-review-row">
+                  <span>Payout Bank</span>
+                  <span>{payoutBankName}</span>
+                </div>
+                <div className="invest-review-row">
+                  <span>Account Number</span>
+                  <span>{accountNumber}</span>
                 </div>
                 <div className="invest-review-row invest-review-row--last">
-                  <span>Transaction Ref</span>
-                  <span className="mono">{utr || "—"}</span>
+                  <span>IFSC Code</span>
+                  <span>{ifscCode}</span>
                 </div>
               </div>
 
               <div className="invest-review-note">
-                After you submit, your branch admin will review this request. They may adjust the interest
-                rate. Your investment will be <strong>activated</strong> and a bond certificate generated only
-                after admin approval.
+                <strong>Please review carefully.</strong> Once submitted, your request will be sent to your
+                branch admin for review and approval, and the rate may be adjusted at that stage. Payouts
+                will be made only to the account listed above.
               </div>
 
               <div className="invest-form-actions">
-                <button className="investor-btn investor-btn--outline" onClick={() => setStep(2)}>
+                <button
+                  className="investor-btn investor-btn--outline"
+                  onClick={() => setStep(2)}
+                  disabled={processing}
+                >
                   &lt; Back
                 </button>
+
                 <button
                   className="investor-btn investor-btn--primary"
                   onClick={handleSubmitInvestment}
-                  disabled={processing}
+                  disabled={!canSubmit || processing}
                 >
-                  {processing ? "Submitting..." : "Submit Investment Request"} &gt;
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && submitted && createdBond && (
-            <div className="invest-confirmation-step">
-              <span className="invest-confirmation-icon">
-                <CheckCircle2 size={40} />
-              </span>
-              <p className="invest-confirmation-title">Investment Submitted!</p>
-              <p className="invest-confirmation-sub">
-                Your investment is pending admin verification. You'll be notified once approved.
-              </p>
-              <div className="invest-form-actions invest-form-actions--center">
-                <button className="investor-btn investor-btn--primary" onClick={() => navigate("/investor/dashboard")}>
-                  Go to Dashboard
-                </button>
-                <button className="investor-btn investor-btn--outline" onClick={() => navigate("/investor/my-investments")}>
-                  View Investments
+                  {processing ? "Submitting..." : "Submit Investment >"}
                 </button>
               </div>
             </div>
