@@ -49,7 +49,7 @@ export default function MyInvestments() {
     setPreCloseModal(inv);
   };
 
-  const extensionMonths = parseInt(extensionPeriod, 10);
+  // const extensionMonths = parseInt(extensionPeriod, 10);
 
   const submitExtendRequest = async () => {
     if (!extendModal) return;
