@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Send, CheckCircle2, Ban, X, AlertTriangle, Calendar } from "lucide-react";
+import { Send, CheckCircle2, Ban, X, AlertTriangle, Filter } from "lucide-react";
 import { StatusBadge, formatINR } from "../../shared/Shared";
 import "../../Styles/Admin/MontlyIntrest.css";
 
@@ -42,6 +42,25 @@ const CONFIRM_COPY = {
   },
 };
 
+const MONTHS = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+
+// Parses "05 Aug 2026" style strings into a local Date at midnight.
+function parseDueDate(str) {
+  const [day, mon, year] = str.split(" ");
+  const monthIndex = MONTHS[mon];
+  if (monthIndex === undefined) return null;
+  return new Date(Number(year), monthIndex, Number(day));
+}
+
+// Converts a Date into the yyyy-mm-dd format used by <input type="date">.
+function toISODate(date) {
+  if (!date) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 function DetailRow({ label, value, valueClass }) {
   return (
     <div className="admin-detail-row">
@@ -55,6 +74,7 @@ export default function MonthlyInterest() {
   const [rows, setRows] = useState(initialRows);
   const [confirmAction, setConfirmAction] = useState(null);
   const [step, setStep] = useState("details");
+  const [filterDate, setFilterDate] = useState(""); // yyyy-mm-dd, "" = no filter
 
   const groups = useMemo(() => {
     const order = [];
@@ -75,7 +95,16 @@ export default function MonthlyInterest() {
     }));
   }, [rows]);
 
-  const pendingRows = rows.filter((r) => r.status === "Pending");
+  // Groups that match the selected filter date (or all groups when no filter is set).
+  const visibleGroups = useMemo(() => {
+    if (!filterDate) return groups;
+    return groups.filter((g) => toISODate(parseDueDate(g.due)) === filterDate);
+  }, [groups, filterDate]);
+
+  // "Approve All Pending" only acts on what's currently visible under the filter.
+  const pendingRows = visibleGroups.flatMap((g) => g.rows).filter((r) => r.status === "Pending");
+
+  const clearFilter = () => setFilterDate("");
 
   const openConfirm = (type, rowOrRows) => {
     const copy = CONFIRM_COPY[type];
@@ -100,7 +129,8 @@ export default function MonthlyInterest() {
     } else if (type === "reject") {
       setRows((prev) => prev.map((r) => (r.bond === row.bond ? { ...r, status: "Rejected" } : r)));
     } else if (type === "approveAllPending") {
-      setRows((prev) => prev.map((r) => (r.status === "Pending" ? { ...r, status: "Approved" } : r)));
+      const bondsToApprove = new Set(row.map((r) => r.bond));
+      setRows((prev) => prev.map((r) => (bondsToApprove.has(r.bond) && r.status === "Pending" ? { ...r, status: "Approved" } : r)));
     }
 
     closeConfirm();
@@ -116,9 +146,21 @@ export default function MonthlyInterest() {
           <p className="admin-page-subtitle">Investments with interest payments due — grouped by due date</p>
         </div>
         <div className="admin-header-actions">
-          <span className="admin-date-pill">
-            <Calendar size={14} /> Today: {TODAY_LABEL}
-          </span>
+          <label className="admin-date-filter">
+            <Filter size={14} />
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+              aria-label="Filter by due date"
+            />
+          </label>
+          {filterDate && (
+            <button className="admin-btn admin-btn--outline" onClick={clearFilter}>
+              <X size={14} /> Clear Filter
+            </button>
+          )}
+
           <button
             className="admin-btn admin-btn--primary"
             disabled={pendingRows.length === 0}
@@ -129,7 +171,13 @@ export default function MonthlyInterest() {
         </div>
       </div>
 
-      {groups.map((group) => (
+      {visibleGroups.length === 0 && (
+        <div className="admin-table-card">
+          <p className="admin-no-results">No interest payments due on the selected date.</p>
+        </div>
+      )}
+
+      {visibleGroups.map((group) => (
         <div className="due-group" key={group.due}>
           <div className="due-group-header">
             <span className="due-group-header__date">
