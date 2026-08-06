@@ -18,33 +18,9 @@ const INITIAL_RATE = 3;
 
 const UPI_ID = "inrfs@ybl";
 
-const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-
-const workflowSteps = [
-  {
-    icon: ClipboardCheck,
-    title: "Submit Request",
-    desc: "Investor submits with payment proof",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Admin Review",
-    desc: "Branch admin reviews & sets final rate",
-  },
-  {
-    icon: CheckCircle2,
-    title: "Approval",
-    desc: "Admin approves → status becomes Active",
-  },
-  {
-    icon: FileCheck2,
-    title: "Bond Generated",
-    desc: "Digital bond certificate is issued",
-  },
-];
-
 export default function InvestNow() {
   const navigate = useNavigate();
+  // const location = useLocation();
   const { addInvestment } = useInvestorData();
 
   const [step, setStep] = useState(1);
@@ -59,11 +35,7 @@ export default function InvestNow() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [selectedBank, setSelectedBank] = useState("");
 
-  const [accountHolderName, setAccountHolderName] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [confirmAccountNumber, setConfirmAccountNumber] = useState("");
-  const [ifscCode, setIfscCode] = useState("");
-  const [payoutBankName, setPayoutBankName] = useState("");
+  const [showBankPopup, setShowBankPopup] = useState(false);
 
   const banks = [
     "State Bank of India",
@@ -75,6 +47,25 @@ export default function InvestNow() {
     "Union Bank",
   ];
 
+  React.useEffect(() => {
+    const saved = sessionStorage.getItem("investNowState");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setAmount(parsed.amount ?? 500000);
+        setTenure(parsed.tenure ?? 12);
+        setStep(parsed.step ?? 1);
+        setPaymentMethod(parsed.paymentMethod ?? "");
+        setSelectedBank(parsed.selectedBank ?? "");
+        setUtr(parsed.utr ?? "");
+      } catch (e) {
+        console.error("Failed to restore invest state", e);
+      } finally {
+        sessionStorage.removeItem("investNowState");
+      }
+    }
+  }, []);
+
   const { monthlyInterest, totalInterest, maturityAmount } = useMemo(() => {
     const monthly = Math.round((amount * (INITIAL_RATE / 100)));
     const total = monthly * tenure;
@@ -85,23 +76,20 @@ export default function InvestNow() {
     };
   }, [amount, tenure]);
 
-  const ifscValid = IFSC_REGEX.test(ifscCode.trim().toUpperCase());
-  const accountNumbersMatch =
-    accountNumber.trim().length >= 6 && accountNumber.trim() === confirmAccountNumber.trim();
-
-  const bankDetailsValid =
-    accountHolderName.trim().length > 0 &&
-    accountNumbersMatch &&
-    ifscValid &&
-    payoutBankName.trim().length > 0;
-
   const canContinueFromPayment =
     !!paymentMethod &&
     (paymentMethod !== "netbanking" || !!selectedBank) &&
-    utr.trim().length > 0 &&
-    bankDetailsValid;
+    utr.trim().length > 0;
 
-  const canSubmit = utr.trim().length > 0 && bankDetailsValid;
+  const canSubmit = utr.trim().length > 0;
+
+  const handleUpdateBankDetails = () => {
+    sessionStorage.setItem(
+      "investNowState",
+      JSON.stringify({ amount, tenure, step: 2, paymentMethod, selectedBank, utr })
+    );
+    navigate("/investor/profile", { state: { returnTo: "/investor/invest-now" } });
+  };
 
   const handleSubmitInvestment = () => {
     if (!canSubmit) return;
@@ -113,12 +101,6 @@ export default function InvestNow() {
         tenure,
         utr,
         status: "pending",
-        payoutBankDetails: {
-          accountHolderName: accountHolderName.trim(),
-          accountNumber: accountNumber.trim(),
-          ifscCode: ifscCode.trim().toUpperCase(),
-          bankName: payoutBankName.trim(),
-        },
       });
       setCreatedBond(inv);
       setProcessing(false);
@@ -157,13 +139,9 @@ export default function InvestNow() {
               <span>Principal</span>
               <span>{formatINR(amount)}</span>
             </div>
-            <div className="invest-review-row">
+            <div className="invest-review-row invest-review-row--last">
               <span>Tenure</span>
               <span>{tenure} months</span>
-            </div>
-            <div className="invest-review-row">
-              <span>Payout Account</span>
-              <span>{accountHolderName} · {payoutBankName}</span>
             </div>
             <div className="invest-review-row invest-review-row--last">
               <span>Status</span>
@@ -271,7 +249,7 @@ export default function InvestNow() {
                 <button
                   className="investor-btn investor-btn--primary"
                   disabled={amount <= 0}
-                  onClick={() => setStep(2)}
+                  onClick={() => setShowBankPopup(true)}
                 >
                   Continue to Payment &gt;
                 </button>
@@ -281,13 +259,11 @@ export default function InvestNow() {
 
           {step === 2 && (
             <div className="invest-payment-step">
-
               <label className="invest-field-label invest-field-label--top">
                 Select Payment Method
               </label>
 
               <div className="payment-method-grid">
-
                 <label className={`payment-card ${paymentMethod === "upi" ? "active" : ""}`}>
                   <input
                     type="radio"
@@ -310,7 +286,6 @@ export default function InvestNow() {
                   />
                   Net Banking
                 </label>
-
               </div>
 
               {paymentMethod === "upi" && (
@@ -333,7 +308,6 @@ export default function InvestNow() {
                     onChange={(e) => setSelectedBank(e.target.value)}
                   >
                     <option value="">Choose Bank</option>
-
                     {banks.map((bank) => (
                       <option key={bank} value={bank}>
                         {bank}
@@ -371,109 +345,7 @@ export default function InvestNow() {
                 </>
               )}
 
-              <div className="invest-payout-card">
-                <div className="invest-payout-card__header">
-                  <span className="invest-payout-card__icon">
-                    <Landmark size={16} />
-                  </span>
-                  <div>
-                    <p className="invest-payout-card__title">
-                      Payout Account Details <span className="invest-required">*</span>
-                    </p>
-                    <p className="invest-payout-card__hint">
-                      Interest &amp; maturity amount will be credited here. Different from the bank you pay from above.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="invest-bank-grid">
-                  <div className="invest-bank-field">
-                    <label className="invest-field-label">
-                      Account Holder Name <span className="invest-required">*</span>
-                    </label>
-                    <div className="invest-amount-input">
-                      <input
-                        type="text"
-                        placeholder="As per bank records"
-                        value={accountHolderName}
-                        onChange={(e) => setAccountHolderName(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="invest-bank-field">
-                    <label className="invest-field-label">
-                      Payout Bank <span className="invest-required">*</span>
-                    </label>
-                    <select
-                      className="invest-select invest-select--nomargin"
-                      value={payoutBankName}
-                      onChange={(e) => setPayoutBankName(e.target.value)}
-                    >
-                      <option value="">Choose Bank</option>
-                      {banks.map((bank) => (
-                        <option key={bank} value={bank}>
-                          {bank}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="invest-bank-field">
-                    <label className="invest-field-label">
-                      Account Number <span className="invest-required">*</span>
-                    </label>
-                    <div className="invest-amount-input">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="Enter account number"
-                        value={accountNumber}
-                        onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9]/g, ""))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="invest-bank-field">
-                    <label className="invest-field-label">
-                      Confirm Account Number <span className="invest-required">*</span>
-                    </label>
-                    <div className="invest-amount-input">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="Re-enter account number"
-                        value={confirmAccountNumber}
-                        onChange={(e) => setConfirmAccountNumber(e.target.value.replace(/[^0-9]/g, ""))}
-                      />
-                    </div>
-                    {confirmAccountNumber.length > 0 && !accountNumbersMatch && (
-                      <p className="invest-field-error">Account numbers do not match</p>
-                    )}
-                  </div>
-
-                  <div className="invest-bank-field invest-bank-field--full">
-                    <label className="invest-field-label">
-                      IFSC Code <span className="invest-required">*</span>
-                    </label>
-                    <div className="invest-amount-input">
-                      <input
-                        type="text"
-                        placeholder="e.g. HDFC0001234"
-                        value={ifscCode}
-                        maxLength={11}
-                        onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                      />
-                    </div>
-                    {ifscCode.length > 0 && !ifscValid && (
-                      <p className="invest-field-error">Enter a valid 11-character IFSC code</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
               <div className="invest-form-actions">
-
                 <button
                   className="investor-btn investor-btn--outline"
                   onClick={() => setStep(1)}
@@ -488,9 +360,7 @@ export default function InvestNow() {
                 >
                   Continue to Review &gt;
                 </button>
-
               </div>
-
             </div>
           )}
 
@@ -535,30 +405,10 @@ export default function InvestNow() {
                 </div>
               </div>
 
-              <p className="invest-review-heading invest-review-heading--spaced">Payout Account Details</p>
-              <div className="invest-review-card">
-                <div className="invest-review-row">
-                  <span>Account Holder Name</span>
-                  <span>{accountHolderName}</span>
-                </div>
-                <div className="invest-review-row">
-                  <span>Payout Bank</span>
-                  <span>{payoutBankName}</span>
-                </div>
-                <div className="invest-review-row">
-                  <span>Account Number</span>
-                  <span>{accountNumber}</span>
-                </div>
-                <div className="invest-review-row invest-review-row--last">
-                  <span>IFSC Code</span>
-                  <span>{ifscCode}</span>
-                </div>
-              </div>
-
               <div className="invest-review-note">
                 <strong>Please review carefully.</strong> Once submitted, your request will be sent to your
                 branch admin for review and approval, and the rate may be adjusted at that stage. Payouts
-                will be made only to the account listed above.
+                will be made only to the bank account on your profile.
               </div>
 
               <div className="invest-form-actions">
@@ -625,6 +475,60 @@ export default function InvestNow() {
           </div>
         </div>
       </div>
+
+      {showBankPopup && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <Landmark size={28} />
+            <p className="modal-title">Confirm Your Bank Details</p>
+            <p className="modal-desc">
+              Your interest and maturity amount will be credited to the bank account on your profile.
+              Please make sure it's up to date before proceeding.
+            </p>
+
+            <div className="modal-actions">
+              <button
+                className="investor-btn investor-btn--outline"
+                onClick={handleUpdateBankDetails}
+              >
+                Update Bank Details
+              </button>
+              <button
+                className="investor-btn investor-btn--primary"
+                onClick={() => {
+                  setShowBankPopup(false);
+                  setStep(2);
+                }}
+              >
+                Continue &gt;
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+const workflowSteps = [
+  {
+    icon: ClipboardCheck,
+    title: "Submit Request",
+    desc: "Investor submits with payment proof",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Admin Review",
+    desc: "Branch admin reviews & sets final rate",
+  },
+  {
+    icon: CheckCircle2,
+    title: "Approval",
+    desc: "Admin approves → status becomes Active",
+  },
+  {
+    icon: FileCheck2,
+    title: "Bond Generated",
+    desc: "Digital bond certificate is issued",
+  },
+];

@@ -145,7 +145,7 @@ export default function MyInvestments() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Bond Number</th>
+              <th>Investment Id</th>
               <th>Amount</th>
               <th>Rate</th>
               <th>Invested On</th>

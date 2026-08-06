@@ -6,11 +6,12 @@ import { StatusBadge, formatINR } from "../../shared/Shared";
 import "../../Styles/Admin/investments.css";
 
 const initialInvestments = [
-  { bondNumber: "BND-2025-001", investor: "Arjun Sharma", investmentId: "INV001", pan: "ABCDE1234F", mobile: "9876543210", amount: 500000, rate: 12, invested: "15 Jan 2025", matures: "15 Jan 2026", status: "Active" },
-  { bondNumber: "BND-2025-002", investor: "Rahul Kumar", investmentId: "INV003", pan: "BCDEF2345G", mobile: "9876543212", amount: 875000, rate: 13, invested: "18 Jan 2025", matures: "18 Jul 2025", status: "Matured" },
-  { bondNumber: "BND-2025-003", investor: "Neha Gupta", investmentId: "INV006", pan: "CDEFG3456H", mobile: "9876543215", amount: 600000, rate: 11.5, invested: "22 Jan 2025", matures: "22 Jan 2026", status: "Active" },
+  { bondNumber: "BND-2025-001", investorId: "INR-001", investor: "Arjun Sharma", investmentId: "INV001", pan: "ABCDE1234F", mobile: "9876543210", amount: 500000, rate: 12, invested: "15 Jan 2025", matures: "15 Jan 2026", status: "Active" },
+  { bondNumber: "BND-2025-002", investorId: "INR-002", investor: "Rahul Kumar", investmentId: "INV003", pan: "BCDEF2345G", mobile: "9876543212", amount: 875000, rate: 13, invested: "18 Jan 2025", matures: "18 Jul 2025", status: "Matured" },
+  { bondNumber: "BND-2025-003", investorId: "INR-003", investor: "Neha Gupta", investmentId: "INV006", pan: "CDEFG3456H", mobile: "9876543215", amount: 600000, rate: 11.5, invested: "22 Jan 2025", matures: "22 Jan 2026", status: "Active" },
   {
     bondNumber: null,
+    investorId: "INR-004",
     investor: "Priya Patel",
     investmentId: null,
     pan: "—",
@@ -28,6 +29,7 @@ const initialInvestments = [
   },
   {
     bondNumber: null,
+    investorId: "INR-005",
     investor: "Vikram Singh",
     investmentId: null,
     pan: "—",
@@ -47,6 +49,7 @@ const initialInvestments = [
 
 const STATUS_OPTIONS = ["Active", "Pending", "Matured"];
 const emptyForm = {
+  investorId: "",
   investor: "",
   investmentId: "",
   pan: "",
@@ -57,6 +60,15 @@ const emptyForm = {
   matures: "",
   status: "Pending",
 };
+
+function nextInvestorId(list) {
+  const max = list.reduce((acc, inv) => {
+    if (!inv.investorId) return acc;
+    const num = parseInt(inv.investorId.replace(/\D/g, ""), 10);
+    return Number.isNaN(num) ? acc : Math.max(acc, num);
+  }, 0);
+  return `INR-${String(max + 1).padStart(3, "0")}`;
+}
 
 function nextBondNumber(list) {
   const year = new Date().getFullYear();
@@ -345,6 +357,7 @@ function AddInvestmentModal({ existing, onClose, onSave }) {
 
     onSave({
       bondNumber: nextBondNumber(existing),
+      investorId: form.investorId.trim() || nextInvestorId(existing),
       investor: form.investor.trim(),
       investmentId: form.investmentId.trim() || nextInvestmentId(existing),
       pan: form.pan.trim() || "—",
@@ -368,10 +381,16 @@ function AddInvestmentModal({ existing, onClose, onSave }) {
         </div>
 
         <form onSubmit={handleSubmit} className="admin-form-modal-body">
-          <div className="admin-form-row">
-            <label>Investor Name</label>
-            <input type="text" value={form.investor} onChange={handleChange("investor")} placeholder="e.g. Arjun Sharma" />
-            {errors.investor && <span className="admin-form-error">{errors.investor}</span>}
+          <div className="admin-form-row-split">
+            <div className="admin-form-row">
+              <label>Investor ID (leave blank to auto-generate)</label>
+              <input type="text" value={form.investorId} onChange={handleChange("investorId")} placeholder="e.g. INR-006" />
+            </div>
+            <div className="admin-form-row">
+              <label>Investor Name</label>
+              <input type="text" value={form.investor} onChange={handleChange("investor")} placeholder="e.g. Arjun Sharma" />
+              {errors.investor && <span className="admin-form-error">{errors.investor}</span>}
+            </div>
           </div>
 
           <div className="admin-form-row-split">
@@ -456,9 +475,15 @@ function ViewInvestmentModal({ investment, onClose }) {
             <label>Bond Number</label>
             <span className="mono">{investment.bondNumber}</span>
           </div>
-          <div className="admin-form-row">
-            <label>Investor Name</label>
-            <span>{investment.investor}</span>
+          <div className="admin-form-row-split">
+            <div className="admin-form-row">
+              <label>Investor ID</label>
+              <span className="mono">{investment.investorId}</span>
+            </div>
+            <div className="admin-form-row">
+              <label>Investor Name</label>
+              <span>{investment.investor}</span>
+            </div>
           </div>
           <div className="admin-form-row-split">
             <div className="admin-form-row">
@@ -605,8 +630,9 @@ function RenewTenureModal({ investment, onClose, onApprove }) {
   );
 }
 
-function ReviewApproveModal({ investment, onClose, onApprove, onReject }) {
+function ReviewApproveModal({ investment, existing, onClose, onApprove, onReject }) {
   const [rate, setRate] = useState(investment.initialRate ?? 3);
+  const [investmentId, setInvestmentId] = useState(() => nextInvestmentId(existing));
   const monthlyInterest = Math.round((investment.amount * Number(rate || 0)) / 100);
   const quickRates = [2, 2.5, 3, 3.5, 4];
 
@@ -625,12 +651,22 @@ function ReviewApproveModal({ investment, onClose, onApprove, onReject }) {
             <p className="im-review-details__title">Investment Details</p>
             <div className="im-review-grid">
               <div>
+                <span className="im-review-label">Investor ID</span>
+                <span className="im-review-value mono">{investment.investorId}</span>
+              </div>
+              <div>
                 <span className="im-review-label">Investor</span>
                 <span className="im-review-value">{investment.investor}</span>
               </div>
               <div>
                 <span className="im-review-label">Investment ID</span>
-                <span className="im-review-value mono">Will be generated on approval</span>
+                <input
+                  type="text"
+                  className="im-review-id-input"
+                  value={investmentId}
+                  onChange={(e) => setInvestmentId(e.target.value)}
+                  placeholder="e.g. INV007"
+                />
               </div>
               <div>
                 <span className="im-review-label">Branch</span>
@@ -688,7 +724,7 @@ function ReviewApproveModal({ investment, onClose, onApprove, onReject }) {
           </div>
 
           <div className="im-info-box">
-            Approving will: <strong>generate an investment ID, activate the investment, assign a bond number,</strong> and{" "}
+            Approving will: <strong>assign investment ID {investmentId || "(auto)"}, activate the investment, assign a bond number,</strong> and{" "}
             <strong>generate the digital bond certificate at {rate}% per month.</strong> The investor
             will be notified automatically.
           </div>
@@ -703,7 +739,7 @@ function ReviewApproveModal({ investment, onClose, onApprove, onReject }) {
           </button>
           <button
             className="admin-btn admin-btn--approve"
-            onClick={() => onApprove(investment.txnRef, rate)}
+            onClick={() => onApprove(investment.txnRef, rate, investmentId)}
           >
             <CheckCircle2 size={14} /> Approve &amp; Generate Bond
           </button>
@@ -766,6 +802,7 @@ export default function Investments() {
     if (!q) return true;
     return (
       (inv.bondNumber || "").toLowerCase().includes(q) ||
+      (inv.investorId || "").toLowerCase().includes(q) ||
       inv.investor.toLowerCase().includes(q) ||
       (inv.investmentId || "").toLowerCase().includes(q)
     );
@@ -788,10 +825,11 @@ export default function Investments() {
   };
 
   // Investment ID and Bond Number are BOTH generated here, only on approval.
-  const handleApproveInvestment = (txnRef, monthlyRatePercent) => {
+  // investmentIdOverride lets the reviewer edit the auto-generated ID before confirming.
+  const handleApproveInvestment = (txnRef, monthlyRatePercent, investmentIdOverride) => {
     setInvestments((prev) => {
       const bondNumber = nextBondNumber(prev);
-      const investmentId = nextInvestmentId(prev);
+      const investmentId = (investmentIdOverride || "").trim() || nextInvestmentId(prev);
       const investedDate = new Date();
       return prev.map((inv) => {
         if (inv.txnRef !== txnRef) return inv;
@@ -854,6 +892,7 @@ export default function Investments() {
           <table className="data-table im-pending-table">
             <thead>
               <tr>
+                <th>Investor ID</th>
                 <th>Investor</th>
                 <th>Investment ID</th>
                 <th>Branch</th>
@@ -868,13 +907,14 @@ export default function Investments() {
             <tbody>
               {pendingInvestments.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="admin-no-results">
+                  <td colSpan={10} className="admin-no-results">
                     No pending investment requests.
                   </td>
                 </tr>
               )}
               {pendingInvestments.map((inv) => (
                 <tr key={inv.txnRef}>
+                  <td className="mono">{inv.investorId}</td>
                   <td className="im-investor-name">{inv.investor}</td>
                   <td><span className="im-muted">Pending</span></td>
                   <td>{inv.branch}</td>
@@ -917,6 +957,7 @@ export default function Investments() {
             <thead>
               <tr>
                 <th>Bond Number</th>
+                <th>Investor ID</th>
                 <th>Investor</th>
                 <th>Investment ID</th>
                 <th>Amount</th>
@@ -930,12 +971,13 @@ export default function Investments() {
             <tbody>
               {filteredInvestments.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="admin-no-results">No bonds match your search.</td>
+                  <td colSpan={10} className="admin-no-results">No bonds match your search.</td>
                 </tr>
               )}
               {filteredInvestments.map((inv) => (
                 <tr key={inv.txnRef || inv.investmentId}>
                   <td className="mono link">{inv.bondNumber || "—"}</td>
+                  <td className="mono">{inv.investorId || "—"}</td>
                   <td>{inv.investor}</td>
                   <td className="mono">{inv.investmentId || "—"}</td>
                   <td className="mono">{formatINR(inv.amount)}</td>
@@ -999,6 +1041,7 @@ export default function Investments() {
       {reviewInvestment && (
         <ReviewApproveModal
           investment={reviewInvestment}
+          existing={investments}
           onClose={() => setReviewInvestment(null)}
           onApprove={handleApproveInvestment}
           onReject={handleRejectInvestment}
