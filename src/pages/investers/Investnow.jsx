@@ -52,7 +52,7 @@ export default function InvestNow() {
   const [tenure, setTenure] = useState(12);
   const [processing, setProcessing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [createdBond, setCreatedBond] = useState(null);
+  const [ setCreatedBond] = useState(null);
 
   const [utr, setUtr] = useState("");
 
