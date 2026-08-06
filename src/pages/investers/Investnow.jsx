@@ -1,6 +1,16 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2, AlertTriangle, ClipboardCheck, ShieldCheck, FileCheck2, Landmark } from "lucide-react";
+import {
+  CheckCircle2,
+  AlertTriangle,
+  ClipboardCheck,
+  ShieldCheck,
+  FileCheck2,
+  Landmark,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
 import { useInvestorData, formatINR } from "./InvestorDataContext";
 import "../../Styles/Investor/InvestNow.css";
 
@@ -28,7 +38,7 @@ export default function InvestNow() {
   const [tenure, setTenure] = useState(12);
   const [processing, setProcessing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [ setCreatedBond] = useState(null);
+  const [, setCreatedBond] = useState(null);
 
   const [utr, setUtr] = useState("");
 
@@ -160,7 +170,7 @@ export default function InvestNow() {
               className="investor-btn investor-btn--primary"
               onClick={() => navigate("/investor/dashboard")}
             >
-              Go to Dashboard &gt;
+              Go to Dashboard <ChevronRight size={16} />
             </button>
           </div>
         </div>
@@ -244,14 +254,14 @@ export default function InvestNow() {
 
               <div className="invest-form-actions">
                 <button className="investor-btn investor-btn--outline" onClick={() => navigate("/investor/dashboard")}>
-                  &lt; Cancel
+                  <ChevronLeft size={16} /> Cancel
                 </button>
                 <button
                   className="investor-btn investor-btn--primary"
                   disabled={amount <= 0}
                   onClick={() => setShowBankPopup(true)}
                 >
-                  Continue to Payment &gt;
+                  Continue to Payment <ChevronRight size={16} />
                 </button>
               </div>
             </>
@@ -350,7 +360,7 @@ export default function InvestNow() {
                   className="investor-btn investor-btn--outline"
                   onClick={() => setStep(1)}
                 >
-                  &lt; Back
+                  <ChevronLeft size={16} /> Back
                 </button>
 
                 <button
@@ -358,7 +368,7 @@ export default function InvestNow() {
                   onClick={() => setStep(3)}
                   disabled={!canContinueFromPayment}
                 >
-                  Continue to Review &gt;
+                  Continue to Review <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -417,7 +427,7 @@ export default function InvestNow() {
                   onClick={() => setStep(2)}
                   disabled={processing}
                 >
-                  &lt; Back
+                  <ChevronLeft size={16} /> Back
                 </button>
 
                 <button
@@ -425,7 +435,11 @@ export default function InvestNow() {
                   onClick={handleSubmitInvestment}
                   disabled={!canSubmit || processing}
                 >
-                  {processing ? "Submitting..." : "Submit Investment >"}
+                  {processing ? "Submitting..." : (
+                    <>
+                      Submit Investment <ChevronRight size={16} />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -477,8 +491,16 @@ export default function InvestNow() {
       </div>
 
       {showBankPopup && (
-        <div className="modal-overlay">
-          <div className="modal-box">
+        <div className="modal-overlay" onClick={() => setShowBankPopup(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="modal-close-btn"
+              onClick={() => setShowBankPopup(false)}
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+
             <Landmark size={28} />
             <p className="modal-title">Confirm Your Bank Details</p>
             <p className="modal-desc">
@@ -500,7 +522,7 @@ export default function InvestNow() {
                   setStep(2);
                 }}
               >
-                Continue &gt;
+                Continue <ChevronRight size={16} />
               </button>
             </div>
           </div>
