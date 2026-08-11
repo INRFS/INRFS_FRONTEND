@@ -1,221 +1,164 @@
-.audit-page__header {
+.al-page {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  flex-direction: column;
 }
 
-.audit-page__title {
+.al-page-head {
+  margin-bottom: 18px;
+}
+
+.al-page-head h1 {
   font-size: 24px;
-  font-weight: 700;
-  color: #111827;
+  font-weight: 800;
+  color: #0f1729;
   margin: 0;
 }
 
-.audit-export-btn {
+.al-card {
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  cursor: pointer;
+  border-radius: 14px;
+  border: 1px solid #eef0f6;
+  padding: 18px;
 }
 
-.audit-export-btn:hover {
-  background: #f3f4f6;
+.al-table-wrap {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.audit-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 8px 20px 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+.al-table-wrap::-webkit-scrollbar {
+  display: none;
 }
 
-.audit-table {
+.al-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 760px;
 }
 
-.audit-table th {
+.al-table th {
   text-align: left;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: #9ca3af;
-  padding: 14px 12px;
-  border-bottom: 1px solid #f0f1f3;
+  font-size: 10.5px;
+  letter-spacing: 0.4px;
+  color: #9aa1b5;
+  font-weight: 700;
+  padding: 10px 8px;
+  border-bottom: 1px solid #eef0f6;
+  text-transform: uppercase;
 }
 
-.audit-table td {
-  padding: 14px 12px;
-  font-size: 14px;
+.al-table td {
+  padding: 14px 8px;
+  font-size: 13px;
   color: #374151;
-  border-bottom: 1px solid #f5f6f8;
+  border-bottom: 1px solid #f4f6fb;
+  vertical-align: middle;
 }
 
-.audit-table__ts {
-  color: #9ca3af;
+.al-timestamp {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12.5px;
+  color: #9aa1b5;
 }
 
-.audit-table__user {
-  font-weight: 600;
-  color: #111827;
+.al-user {
+  font-weight: 700;
+  color: #0f1729;
 }
 
-.audit-role {
+.al-action {
+  color: #374151;
+}
+
+.al-role-badge {
+  background: #eef1fb;
+  color: #3b5bfe;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
   display: inline-block;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 10px;
+}
+
+.al-status-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #4338ca;
+  display: inline-block;
 }
 
-.audit-role--admin { background: #eef2ff; color: #4338ca; }
-.audit-role--branch { background: #fef3c7; color: #b45309; }
-.audit-role--investor { background: #dcfce7; color: #15803d; }
-.audit-role--super { background: #e0e7ff; color: #3730a3; }
-.audit-role--system { background: #f3f4f6; color: #4b5563; }
-
-.audit-status {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 999px;
+.al-status-success {
+  background: #e4f9ee;
+  color: #16a34a;
 }
 
-.audit-status--success {
-  background: #d1fae5;
-  color: #047857;
+.al-status-failed {
+  background: #fdeaea;
+  color: #dc2626;
 }
 
-.audit-status--failed {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.audit-pagination {
+.al-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 16px;
+  margin-top: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.audit-pagination__info {
+.al-footer-text {
   font-size: 13px;
-  color: #9ca3af;
+  color: #9aa1b5;
 }
 
-.audit-pagination__controls {
+.al-pagination {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
-.audit-pagination__arrow,
-.audit-pagination__num {
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  border-radius: 8px;
+.al-page-btn {
   width: 30px;
   height: 30px;
-  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #e5e8f0;
+  background: #fff;
   color: #374151;
   cursor: pointer;
+  font-size: 14px;
 }
 
-.audit-pagination__arrow:disabled {
+.al-page-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.audit-pagination__num--active {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
+.al-page-btn:hover:not(:disabled) {
+  background: #f4f6fb;
 }
 
-@media (max-width: 640px) {
-  .audit-page__header {
-    margin-bottom: 14px;
-    gap: 10px;
+.al-page-current {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #3b5bfe;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 700px) {
+  .al-page-head h1 {
+    font-size: 20px;
   }
 
-  .audit-page__title {
-    font-size: 19px;
-    font-weight: 600;
-  }
-
-  .audit-export-btn {
-    padding: 7px 12px;
-    font-size: 13px;
-  }
-
-  .audit-card {
-    padding: 6px 0 14px;
-    border-radius: 10px;
-  }
-
-  .audit-card {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .audit-table {
-    min-width: 640px;
-  }
-
-  .audit-table th {
-    font-size: 10px;
-    font-weight: 500;
-    padding: 10px 10px;
-  }
-
-  .audit-table td {
-    font-size: 12.5px;
-    font-weight: 400;
-    padding: 10px 10px;
-  }
-
-  .audit-table__user {
-    font-weight: 500;
-    color: #374151;
-  }
-
-  .audit-role,
-  .audit-status {
-    font-size: 11px;
-    font-weight: 400;
-    padding: 3px 8px;
-  }
-
-  .audit-pagination {
-    padding-top: 12px;
-    padding-left: 16px;
-    padding-right: 16px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .audit-pagination__info {
-    font-size: 12px;
-    order: 2;
-    flex-basis: 100%;
-  }
-
-  .audit-pagination__controls {
-    order: 1;
-    gap: 4px;
-  }
-
-  .audit-pagination__arrow,
-  .audit-pagination__num {
-    width: 28px;
-    height: 28px;
-    font-size: 12.5px;
+  .al-footer {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

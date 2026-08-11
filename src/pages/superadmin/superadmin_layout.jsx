@@ -5,8 +5,10 @@ import {
   Building2,
   Shield,
   Users,
-  // KeyRound,
-  // FileText,
+  TrendingUp,
+  Wallet,
+  KeyRound,
+  FileText,
   BarChart3,
   Settings,
   Bell,
@@ -21,17 +23,16 @@ import Modal from "./Modal";
 
 const navItems = [
   { to: "/superadmin/dashboard", label: "Dashboard", icon: LayoutGrid },
+  { to: "/superadmin/investors", label: "Investor Management", icon: Users },
+  { to: "/superadmin/investments", label: "Investment Management", icon: TrendingUp },
+  { to: "/superadmin/payments", label: "Payments", icon: Wallet, badge: 5 },
   { to: "/superadmin/branches", label: "Branch Management", icon: Building2 },
   { to: "/superadmin/admins", label: "Admin Management", icon: Shield },
-  { to: "/superadmin/users", label: "User Management", icon: Users },
-  // { to: "/superadmin/roles", label: "Roles & Permissions", icon: KeyRound },
-  // { to: "/superadmin/audit-logs", label: "Audit Logs", icon: FileText },
+  { to: "/superadmin/roles", label: "Roles & Permissions", icon: KeyRound },
+  { to: "/superadmin/audit-logs", label: "Audit Logs", icon: FileText },
   { to: "/superadmin/reports", label: "Reports", icon: BarChart3 },
   { to: "/superadmin/system-settings", label: "System Settings", icon: Settings },
-//   { to: "/superadmin/email-settings", label: "Email Settings", icon: Mail },
-//   { to: "/superadmin/sms-settings", label: "SMS Settings", icon: Phone },
-//   { to: "/superadmin/backup-settings", label: "Backup Settings", icon: Database },
-  { to: "/superadmin/notifications", label: "Notifications", icon: Bell },
+  // { to: "/superadmin/notifications", label: "Notifications", icon: Bell },
   { to: "/superadmin/profile", label: "Profile", icon: User },
 ];
 
@@ -54,22 +55,22 @@ export default function SuperAdminLayout({ breadcrumb = ["Home", "Super Admin", 
   return (
     <div className="sa-shell">
       <aside className={"sa-sidebar" + (sidebarOpen ? " sa-sidebar-open" : "")}>
-<div className="sa-logo">
-  <img src="/assets/logo2.jpg" alt="INRFS" className="sa-logo-badge" />
-  <div>
-    <div className="sa-logo-sub">INVESTMENT PORTAL</div>
-  </div>
-  <button
-    className="sa-sidebar-close"
-    onClick={closeSidebar}
-    aria-label="Close menu"
-  >
-    <X size={16} />
-  </button>
-</div>
+        <div className="sa-logo">
+          <img src="/assets/logo2.jpg" alt="INRFS" className="sa-logo-badge" />
+          <div>
+            <div className="sa-logo-sub">INVESTMENT PORTAL</div>
+          </div>
+          <button
+            className="sa-sidebar-close"
+            onClick={closeSidebar}
+            aria-label="Close menu"
+          >
+            <X size={16} />
+          </button>
+        </div>
 
         <nav className="sa-nav">
-          {navItems.map(({ to, label, icon: Icon }) => (
+          {navItems.map(({ to, label, icon: Icon, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -80,6 +81,7 @@ export default function SuperAdminLayout({ breadcrumb = ["Home", "Super Admin", 
             >
               <Icon size={16} />
               <span>{label}</span>
+              {badge ? <span className="sa-nav-badge">{badge}</span> : null}
             </NavLink>
           ))}
         </nav>

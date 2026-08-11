@@ -33,6 +33,7 @@ import BondCertificate from "./pages/investers/bondCertficate";
 import SuperAdminLayout from "./pages/superadmin/superadmin_layout";
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 // import SuperAdminComingSoon from "./pages/superadmin/SuperAdminComingSoon";
+import SuperAdminInvestorManagement from "./pages/superadmin/InvestorManagement";
 import BranchManagement from "./pages/superadmin/branch_management";
 import AdminManagement from "./pages/superadmin/admin_management";
 import UserManagement from "./pages/superadmin/user_management";
@@ -40,6 +41,8 @@ import RolesPermissions from "./pages/superadmin/RolesPermissions";
 import AuditLogs from "./pages/superadmin/AuditLogs";
 import SystemSettings from "./pages/superadmin/SystemSettings";
 import Notifications from "./pages/superadmin/Notifications";
+import InvestmentManagement from "./pages/superadmin/InvestmentManagement";
+import Payments from "./pages/superadmin/Payments";
 
 function App() {
   return (
@@ -78,6 +81,9 @@ function App() {
         <Route path="/superadmin" element={<SuperAdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<SuperAdminDashboard />} />
+          <Route path="investors" element={<SuperAdminInvestorManagement />} />
+          <Route path="investments" element={<InvestmentManagement title="Investment Management" />} />
+          <Route path="payments" element={<Payments title="Payments" />} />
           <Route path="branches" element={<BranchManagement title="Branch Management" />} />
           <Route path="admins" element={<AdminManagement title="Admin Management" />} />
           <Route path="users" element={<UserManagement title="User Management" />} />
@@ -85,9 +91,6 @@ function App() {
           <Route path="audit-logs" element={<AuditLogs title="Audit Logs" />} />
           <Route path="reports" element={<Reports title="Reports" />} />
           <Route path="system-settings" element={<SystemSettings title="System Settings" />} />
-          {/* <Route path="email-settings" element={<SuperAdminComingSoon title="Email Settings" />} />
-          <Route path="sms-settings" element={<SuperAdminComingSoon title="SMS Settings" />} />
-          <Route path="backup-settings" element={<SuperAdminComingSoon title="Backup Settings" />} /> */}
           <Route path="notifications" element={<Notifications title="Notifications" />} />
           <Route path="profile" element={<Profile title="Profile" />} />
         </Route>
