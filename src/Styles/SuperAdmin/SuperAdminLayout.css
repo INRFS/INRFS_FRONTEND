@@ -92,6 +92,7 @@
   font-weight: 600;
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
+  position: relative;
 }
 
 .sa-nav-item:hover {
@@ -102,6 +103,24 @@
 .sa-nav-item-active {
   background: #3b5bfe;
   color: #fff;
+}
+
+.sa-nav-badge {
+  margin-left: auto;
+  background: #e0555a;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 999px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.sa-nav-item-active .sa-nav-badge {
+  background: #fff;
+  color: #3b5bfe;
 }
 
 .sa-sidebar-footer {

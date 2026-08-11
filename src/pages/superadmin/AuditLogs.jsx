@@ -1,111 +1,107 @@
 import React, { useState } from "react";
 import "../../Styles/SuperAdmin/AuditLogs.css";
 
-const LOGS = [
-  { ts: "22 Jul 2025, 14:30", user: "Ravi Mehta", role: "Admin", action: "KYC Approved", status: "Success" },
-  { ts: "22 Jul 2025, 14:00", user: "Kishore Nair", role: "Branch Manager", action: "Investment Added", status: "Success" },
-  { ts: "22 Jul 2025, 13:30", user: "Super Admin", role: "Super Admin", action: "Login", status: "Success" },
-  { ts: "22 Jul 2025, 13:00", user: "Priya Patel", role: "Investor", action: "Settings Updated", status: "Success" },
-  { ts: "22 Jul 2025, 12:30", user: "System", role: "System", action: "Backup Run", status: "Failed" },
-  { ts: "22 Jul 2025, 12:00", user: "Ravi Mehta", role: "Admin", action: "Interest Paid", status: "Success" },
-  { ts: "22 Jul 2025, 11:30", user: "Kishore Nair", role: "Branch Manager", action: "KYC Approved", status: "Success" },
-  { ts: "22 Jul 2025, 11:00", user: "Super Admin", role: "Super Admin", action: "Investment Added", status: "Success" },
-  { ts: "22 Jul 2025, 10:30", user: "Priya Patel", role: "Investor", action: "Login", status: "Success" },
-  { ts: "22 Jul 2025, 10:00", user: "System", role: "System", action: "Settings Updated", status: "Success" },
+const MOCK_LOGS = [
+  { id: 1, timestamp: "2025-07-22T14:30:00", user: "Ravi Mehta", role: "Admin", action: "KYC Approved", status: "Success" },
+  { id: 2, timestamp: "2025-07-22T14:00:00", user: "Kishore Nair", role: "Branch Manager", action: "Investment Added", status: "Success" },
+  { id: 3, timestamp: "2025-07-22T13:30:00", user: "Super Admin", role: "Super Admin", action: "Login", status: "Success" },
+  { id: 4, timestamp: "2025-07-22T13:00:00", user: "Priya Patel", role: "Investor", action: "Settings Updated", status: "Success" },
+  { id: 5, timestamp: "2025-07-22T12:30:00", user: "System", role: "System", action: "Backup Run", status: "Failed" },
+  { id: 6, timestamp: "2025-07-22T12:00:00", user: "Ravi Mehta", role: "Admin", action: "Interest Paid", status: "Success" },
+  { id: 7, timestamp: "2025-07-22T11:30:00", user: "Kishore Nair", role: "Branch Manager", action: "KYC Approved", status: "Success" },
+  { id: 8, timestamp: "2025-07-22T11:00:00", user: "Super Admin", role: "Super Admin", action: "Investment Added", status: "Success" },
+  { id: 9, timestamp: "2025-07-22T10:30:00", user: "Priya Patel", role: "Investor", action: "Login", status: "Success" },
+  { id: 10, timestamp: "2025-07-22T10:00:00", user: "System", role: "System", action: "Settings Updated", status: "Success" },
+  { id: 11, timestamp: "2025-07-22T09:30:00", user: "Ravi Mehta", role: "Admin", action: "KYC Approved", status: "Success" },
+  { id: 12, timestamp: "2025-07-22T09:00:00", user: "Kishore Nair", role: "Branch Manager", action: "Investment Added", status: "Success" },
+  { id: 13, timestamp: "2025-07-22T08:30:00", user: "Super Admin", role: "Super Admin", action: "Login", status: "Success" },
+  { id: 14, timestamp: "2025-07-22T08:00:00", user: "Priya Patel", role: "Investor", action: "Settings Updated", status: "Success" },
+  { id: 15, timestamp: "2025-07-22T07:30:00", user: "System", role: "System", action: "Backup Run", status: "Success" },
+  { id: 16, timestamp: "2025-07-21T18:00:00", user: "Ravi Mehta", role: "Admin", action: "Interest Paid", status: "Success" },
+  { id: 17, timestamp: "2025-07-21T17:30:00", user: "Kishore Nair", role: "Branch Manager", action: "KYC Approved", status: "Failed" },
+  { id: 18, timestamp: "2025-07-21T17:00:00", user: "Super Admin", role: "Super Admin", action: "Investment Added", status: "Success" },
+  { id: 19, timestamp: "2025-07-21T16:30:00", user: "Priya Patel", role: "Investor", action: "Login", status: "Success" },
+  { id: 20, timestamp: "2025-07-21T16:00:00", user: "System", role: "System", action: "Settings Updated", status: "Success" },
 ];
 
-const ROLE_CLASS = {
-  Admin: "audit-role--admin",
-  "Branch Manager": "audit-role--branch",
-  Investor: "audit-role--investor",
-  "Super Admin": "audit-role--super",
-  System: "audit-role--system",
-};
+const PAGE_SIZE = 10;
 
-export default function AuditLogs({ totalRecords = 20, pageSize = 10 }) {
+function formatTimestamp(iso) {
+  const d = new Date(iso);
+  const datePart = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const timePart = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${datePart}, ${timePart}`;
+}
+
+function roleBadgeClass(role) {
+  return "al-role-badge";
+}
+
+function statusBadgeClass(status) {
+  return status === "Success" ? "al-status-badge al-status-success" : "al-status-badge al-status-failed";
+}
+
+export default function AuditLogs() {
   const [page, setPage] = useState(1);
-  const totalPages = Math.ceil(totalRecords / pageSize);
-  const rangeStart = (page - 1) * pageSize + 1;
-  const rangeEnd = Math.min(page * pageSize, totalRecords);
 
-  const handleExport = () => {
-    // TODO: hook up export
-    console.log("Exporting audit logs...");
-  };
+  const totalPages = Math.max(1, Math.ceil(MOCK_LOGS.length / PAGE_SIZE));
+  const pageSafe = Math.min(page, totalPages);
+  const paginated = MOCK_LOGS.slice((pageSafe - 1) * PAGE_SIZE, pageSafe * PAGE_SIZE);
 
   return (
-    <div className="audit-page">
-      <div className="audit-page__header">
-        <h1 className="audit-page__title">Audit Logs</h1>
-        <button className="audit-export-btn" onClick={handleExport}>
-          ⬇ Export
-        </button>
+    <div className="al-page">
+      <div className="al-page-head">
+        <h1>Audit Logs</h1>
       </div>
 
-      <div className="audit-card">
-        <table className="audit-table">
-          <thead>
-            <tr>
-              <th>TIMESTAMP</th>
-              <th>USER</th>
-              <th>ROLE</th>
-              <th>ACTION</th>
-              <th>STATUS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {LOGS.map((log, idx) => (
-              <tr key={idx}>
-                <td className="audit-table__ts">{log.ts}</td>
-                <td className="audit-table__user">{log.user}</td>
-                <td>
-                  <span className={`audit-role ${ROLE_CLASS[log.role] || ""}`}>
-                    {log.role}
-                  </span>
-                </td>
-                <td>{log.action}</td>
-                <td>
-                  <span
-                    className={`audit-status ${
-                      log.status === "Success"
-                        ? "audit-status--success"
-                        : "audit-status--failed"
-                    }`}
-                  >
-                    {log.status}
-                  </span>
-                </td>
+      <div className="al-card">
+        <div className="al-table-wrap">
+          <table className="al-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Role</th>
+                <th>Action</th>
+                <th>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {paginated.map((log) => (
+                <tr key={log.id}>
+                  <td className="al-timestamp">{formatTimestamp(log.timestamp)}</td>
+                  <td className="al-user">{log.user}</td>
+                  <td>
+                    <span className={roleBadgeClass(log.role)}>{log.role}</span>
+                  </td>
+                  <td className="al-action">{log.action}</td>
+                  <td>
+                    <span className={statusBadgeClass(log.status)}>{log.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        <div className="audit-pagination">
-          <span className="audit-pagination__info">
-            Showing {rangeStart}-{rangeEnd} of {totalRecords} records
+        <div className="al-footer">
+          <span className="al-footer-text">
+            Showing {(pageSafe - 1) * PAGE_SIZE + 1}–{Math.min(pageSafe * PAGE_SIZE, MOCK_LOGS.length)} of {MOCK_LOGS.length} records
           </span>
-          <div className="audit-pagination__controls">
+          <div className="al-pagination">
             <button
-              className="audit-pagination__arrow"
-              disabled={page === 1}
+              type="button"
+              className="al-page-btn"
+              disabled={pageSafe === 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               ‹
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                className={`audit-pagination__num ${
-                  p === page ? "audit-pagination__num--active" : ""
-                }`}
-                onClick={() => setPage(p)}
-              >
-                {p}
-              </button>
-            ))}
+            <span className="al-page-current">{pageSafe}</span>
             <button
-              className="audit-pagination__arrow"
-              disabled={page === totalPages}
+              type="button"
+              className="al-page-btn"
+              disabled={pageSafe === totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
               ›

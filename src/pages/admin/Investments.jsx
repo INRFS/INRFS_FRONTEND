@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Plus, Eye, Zap, RefreshCw, Download, X, Printer, Loader2, CheckCircle2, Clock, Pencil } from "lucide-react";
+import { Plus, Eye, Zap, RefreshCw, Download, X, Printer, Loader2, CheckCircle2, Clock, Pencil, Calendar } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { StatusBadge, formatINR } from "../../shared/Shared";
@@ -43,6 +43,35 @@ const initialInvestments = [
     txnRef: "UTR776543210",
     invested: "21 Jul 2025",
     matures: null,
+    status: "Pending",
+  },
+];
+
+const initialTenureRequests = [
+  {
+    requestId: "TER-001",
+    bondNumber: "BND-2025-001",
+    investorId: "INR-001",
+    investor: "Arjun Sharma",
+    currentRate: 12,
+    currentMatures: "15 Jan 2026",
+    requestedMonths: 6,
+    requestedRate: 12,
+    reason: "Would like to continue investment for another 6 months at the same rate.",
+    submittedOn: "05 Aug 2025, 11:20 AM",
+    status: "Pending",
+  },
+  {
+    requestId: "TER-002",
+    bondNumber: "BND-2025-003",
+    investorId: "INR-003",
+    investor: "Neha Gupta",
+    currentRate: 11.5,
+    currentMatures: "22 Jan 2026",
+    requestedMonths: 12,
+    requestedRate: 11.5,
+    reason: "Requesting a full 12-month extension on maturity.",
+    submittedOn: "04 Aug 2025, 4:05 PM",
     status: "Pending",
   },
 ];
@@ -784,8 +813,181 @@ function RejectConfirmModal({ investment, onClose, onConfirm }) {
   );
 }
 
+function ReviewTenureRequestModal({ request, onClose, onApprove, onReject }) {
+  const [months, setMonths] = useState(request.requestedMonths);
+  const [rate, setRate] = useState(request.requestedRate ?? request.currentRate);
+  const [remarks, setRemarks] = useState("");
+
+  const currentMaturity = parseDisplayDate(request.currentMatures);
+  const newMaturity = addMonths(currentMaturity, months);
+
+  return (
+    <div className="bond-modal-overlay" onClick={onClose}>
+      <div className="im-review-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-form-modal-header">
+          <h2>Review Tenure Extend Request</h2>
+          <button className="admin-icon-btn" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="im-review-body">
+          <div className="im-review-details">
+            <p className="im-review-details__title">Request Details</p>
+            <div className="im-review-grid">
+              <div>
+                <span className="im-review-label">Investor ID</span>
+                <span className="im-review-value mono">{request.investorId}</span>
+              </div>
+              <div>
+                <span className="im-review-label">Investor</span>
+                <span className="im-review-value">{request.investor}</span>
+              </div>
+              <div>
+                <span className="im-review-label">Bond Number</span>
+                <span className="im-review-value mono">{request.bondNumber}</span>
+              </div>
+              <div>
+                <span className="im-review-label">Current Maturity</span>
+                <span className="im-review-value">{request.currentMatures}</span>
+              </div>
+              <div>
+                <span className="im-review-label">Current Rate</span>
+                <span className="im-review-value">{request.currentRate}% p.a.</span>
+              </div>
+              <div>
+                <span className="im-review-label">Requested Extension</span>
+                <span className="im-review-value">{request.requestedMonths} months</span>
+              </div>
+              <div>
+                <span className="im-review-label">Submitted On</span>
+                <span className="im-review-value">{request.submittedOn}</span>
+              </div>
+            </div>
+            {request.reason && (
+              <p className="im-confirm-text" style={{ marginTop: 12 }}>
+                <strong>Investor's note:</strong> {request.reason}
+              </p>
+            )}
+          </div>
+
+          <div className="im-rate-box">
+            <p className="im-rate-box__title">Confirm Extension Terms</p>
+            <p className="im-rate-box__hint">
+              Adjust the extension length or rate before approving. Rejecting will notify the investor
+              their request was not accepted.
+            </p>
+
+            <div className="im-rate-input-row">
+              <div className="im-rate-input-field">
+                <label>Extend By (months)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={months}
+                  onChange={(e) => setMonths(e.target.value)}
+                />
+              </div>
+              <div className="im-rate-input-field">
+                <label>New Rate (% p.a.)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={rate}
+                  onChange={(e) => setRate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="admin-form-row">
+              <label>New Maturity Date</label>
+              <span className="mono">{formatDateDisplay(newMaturity.toISOString())}</span>
+            </div>
+
+            <div className="admin-form-row">
+              <label>Remarks (optional)</label>
+              <textarea
+                className="kyc-remarks"
+                placeholder="Add remarks..."
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="im-info-box">
+            Approving will extend bond <strong>{request.bondNumber}</strong> to{" "}
+            <strong>{formatDateDisplay(newMaturity.toISOString())}</strong> at{" "}
+            <strong>{rate}% p.a.</strong> The investor will be notified automatically.
+          </div>
+        </div>
+
+        <div className="admin-form-modal-actions im-review-actions">
+          <button className="admin-btn admin-btn--outline" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="admin-btn admin-btn--reject-solid"
+            onClick={() => onReject(request.requestId)}
+          >
+            <X size={14} /> Reject
+          </button>
+          <button
+            className="admin-btn admin-btn--approve"
+            onClick={() =>
+              onApprove(request.requestId, {
+                newMonths: Number(months),
+                newRate: Number(rate),
+                remarks: remarks.trim(),
+              })
+            }
+          >
+            <CheckCircle2 size={14} /> Approve Extension
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RejectTenureRequestModal({ request, onClose, onConfirm }) {
+  return (
+    <div className="bond-modal-overlay" onClick={onClose}>
+      <div className="admin-form-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-form-modal-header">
+          <h2>Reject Tenure Extend Request</h2>
+          <button className="admin-icon-btn" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="admin-form-modal-body">
+          <p className="im-confirm-text">
+            Are you sure you want to reject the tenure extension request from{" "}
+            <strong>{request.investor}</strong> for bond{" "}
+            <strong>{request.bondNumber}</strong>? This cannot be undone.
+          </p>
+
+          <div className="admin-form-modal-actions">
+            <button className="admin-btn admin-btn--outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button
+              className="admin-btn admin-btn--reject-solid"
+              onClick={() => onConfirm(request.requestId)}
+            >
+              <X size={14} /> Confirm Reject
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Investments() {
   const [investments, setInvestments] = useState(initialInvestments);
+  const [tenureRequests, setTenureRequests] = useState(initialTenureRequests);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("pending");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -794,8 +996,11 @@ export default function Investments() {
   const [renewInvestment, setRenewInvestment] = useState(null);
   const [reviewInvestment, setReviewInvestment] = useState(null);
   const [rejectInvestment, setRejectInvestment] = useState(null);
+  const [reviewTenureRequest, setReviewTenureRequest] = useState(null);
+  const [rejectTenureRequest, setRejectTenureRequest] = useState(null);
 
   const pendingInvestments = investments.filter((inv) => inv.status === "Pending");
+  const pendingTenureRequests = tenureRequests.filter((r) => r.status === "Pending");
 
   const filteredInvestments = investments.filter((inv) => {
     const q = searchTerm.trim().toLowerCase();
@@ -857,6 +1062,41 @@ export default function Investments() {
     setRejectInvestment(null);
   };
 
+  const handleApproveTenureRequest = (requestId, { newMonths, newRate, remarks }) => {
+    const request = tenureRequests.find((r) => r.requestId === requestId);
+    if (!request) return;
+
+    const currentMaturity = parseDisplayDate(request.currentMatures);
+    const newMaturity = addMonths(currentMaturity, newMonths);
+    const newMaturesDisplay = formatDateDisplay(newMaturity.toISOString());
+
+    setInvestments((prev) =>
+      prev.map((inv) =>
+        inv.bondNumber === request.bondNumber
+          ? { ...inv, matures: newMaturesDisplay, rate: newRate, status: "Active" }
+          : inv
+      )
+    );
+
+    setTenureRequests((prev) =>
+      prev.map((r) =>
+        r.requestId === requestId
+          ? { ...r, status: "Approved", currentMatures: newMaturesDisplay, currentRate: newRate }
+          : r
+      )
+    );
+
+    setReviewTenureRequest(null);
+  };
+
+  const handleRejectTenureRequest = (requestId) => {
+    setTenureRequests((prev) =>
+      prev.map((r) => (r.requestId === requestId ? { ...r, status: "Rejected" } : r))
+    );
+    setReviewTenureRequest(null);
+    setRejectTenureRequest(null);
+  };
+
   return (
     <div className="admin-page">
       <div className="im-page-header">
@@ -880,6 +1120,12 @@ export default function Investments() {
           Pending Approval <span className="im-tab-count">{pendingInvestments.length}</span>
         </button>
         <button
+          className={`im-tab${activeTab === "tenure" ? " im-tab--active" : ""}`}
+          onClick={() => setActiveTab("tenure")}
+        >
+          Tenure Extend Requests <span className="im-tab-count">{pendingTenureRequests.length}</span>
+        </button>
+        <button
           className={`im-tab${activeTab === "all" ? " im-tab--active" : ""}`}
           onClick={() => setActiveTab("all")}
         >
@@ -887,7 +1133,7 @@ export default function Investments() {
         </button>
       </div>
 
-      {activeTab === "pending" ? (
+      {activeTab === "pending" && (
         <div className="admin-table-card">
           <table className="data-table im-pending-table">
             <thead>
@@ -942,7 +1188,75 @@ export default function Investments() {
             </tbody>
           </table>
         </div>
-      ) : (
+      )}
+
+      {activeTab === "tenure" && (
+        <div className="admin-table-card">
+          <table className="data-table im-pending-table">
+            <thead>
+              <tr>
+                <th>Investor ID</th>
+                <th>Investor</th>
+                <th>Bond Number</th>
+                <th>Current Maturity</th>
+                <th>Current Rate</th>
+                <th>Requested Extension</th>
+                <th>Submitted On</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tenureRequests.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="admin-no-results">
+                    No tenure extension requests.
+                  </td>
+                </tr>
+              )}
+              {tenureRequests.map((req) => (
+                <tr key={req.requestId}>
+                  <td className="mono">{req.investorId}</td>
+                  <td className="im-investor-name">{req.investor}</td>
+                  <td className="mono link">{req.bondNumber}</td>
+                  <td>{req.currentMatures}</td>
+                  <td><span className="im-rate-pill">{req.currentRate}% p.a.</span></td>
+                  <td>
+                    <span className="im-rate-pill">
+                      <Calendar size={11} style={{ marginRight: 4 }} />
+                      +{req.requestedMonths} months
+                    </span>
+                  </td>
+                  <td className="im-muted">{req.submittedOn}</td>
+                  <td><StatusBadge status={req.status} /></td>
+                  <td>
+                    {req.status === "Pending" ? (
+                      <div className="im-actions">
+                        <button className="im-approve-btn" onClick={() => setReviewTenureRequest(req)}>
+                          <Pencil size={12} /> Review &amp; Approve
+                        </button>
+                        <button
+                          className="im-reject-btn"
+                          title="Reject"
+                          onClick={() => setRejectTenureRequest(req)}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="im-muted">
+                        {req.status === "Approved" ? "Extension applied" : "Request closed"}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {activeTab === "all" && (
         <div className="admin-table-card">
           <div className="admin-table-card__header">
             <input
@@ -1053,6 +1367,23 @@ export default function Investments() {
           investment={rejectInvestment}
           onClose={() => setRejectInvestment(null)}
           onConfirm={handleRejectInvestment}
+        />
+      )}
+
+      {reviewTenureRequest && (
+        <ReviewTenureRequestModal
+          request={reviewTenureRequest}
+          onClose={() => setReviewTenureRequest(null)}
+          onApprove={handleApproveTenureRequest}
+          onReject={handleRejectTenureRequest}
+        />
+      )}
+
+      {rejectTenureRequest && (
+        <RejectTenureRequestModal
+          request={rejectTenureRequest}
+          onClose={() => setRejectTenureRequest(null)}
+          onConfirm={handleRejectTenureRequest}
         />
       )}
     </div>
