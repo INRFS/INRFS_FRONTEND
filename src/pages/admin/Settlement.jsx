@@ -1,7 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { formatINR } from "../../shared/Shared";
-import { CheckCircle2, XCircle, X, AlertTriangle, Send, CheckCheck, Ban } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  X,
+  AlertTriangle,
+  Send,
+  CheckCheck,
+  Ban,
+  Archive,
+  Clock,
+} from "lucide-react";
 import "../../Styles/Admin/Settlement.css";
+
+const GST_RATE = 0.18;
+
+const STATUS = {
+  PENDING: "Pending",
+  AWAITING_SUPERADMIN: "Awaiting Super Admin",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+// Maps a status string to a CSS-safe class suffix (handles multi-word statuses)
+const statusClass = (status) => status.toLowerCase().replace(/\s+/g, "-");
 
 const initialTenureItems = [
   {
@@ -12,7 +34,7 @@ const initialTenureItems = [
     maturedOn: "18 Jul 2026",
     principal: 875000,
     interestEarned: 157500,
-    status: "Pending",
+    status: STATUS.PENDING,
   },
   {
     bondNumber: "BND-2024-055",
@@ -22,7 +44,7 @@ const initialTenureItems = [
     maturedOn: "10 Jan 2026",
     principal: 150000,
     interestEarned: 54000,
-    status: "Pending",
+    status: STATUS.PENDING,
   },
 ];
 
@@ -37,7 +59,7 @@ const initialPrecloseItems = [
     principal: 500000,
     interestEarned: 90000,
     penalty: 25000,
-    status: "Pending",
+    status: STATUS.PENDING,
   },
   {
     bondNumber: "BND-2025-003",
@@ -49,31 +71,33 @@ const initialPrecloseItems = [
     principal: 600000,
     interestEarned: 126000,
     penalty: 30000,
-    status: "Pending",
+    status: STATUS.PENDING,
   },
 ];
 
 const CONFIRM_COPY = {
   tenureApprove: {
-    title: "Approve Settlement",
+    title: "Send for Super Admin Approval",
     confirmClass: "admin-btn--success",
-    confirmLabel: "Confirm Approval",
+    confirmLabel: "Confirm & Send",
     body: (item) => (
       <>
-        Approve settlement of <strong>{formatINR(item.principal + item.interestEarned)}</strong> for{" "}
-        <strong>{item.investor}</strong> on bond <strong>{item.bondNumber}</strong>? This cannot be undone.
+        Send the settlement of <strong>{formatINR(item.principal + item.interestEarned)}</strong> for{" "}
+        <strong>{item.investor}</strong> on bond <strong>{item.bondNumber}</strong> to the Super Admin for
+        approval? You won't be able to edit it once sent.
       </>
     ),
   },
   preApprove: {
-    title: "Approve Pre-Close Request",
+    title: "Send for Super Admin Approval",
     confirmClass: "admin-btn--success",
-    confirmLabel: "Confirm Approval",
+    confirmLabel: "Confirm & Send",
     body: (item) => (
       <>
-        Approve the pre-close request for <strong>{item.investor}</strong> on bond{" "}
-        <strong>{item.bondNumber}</strong>, releasing a net amount of{" "}
-        <strong>{formatINR(item.principal + item.interestEarned - item.penalty)}</strong>? This cannot be undone.
+        Send the pre-close request for <strong>{item.investor}</strong> on bond{" "}
+        <strong>{item.bondNumber}</strong>, with a net amount of{" "}
+        <strong>{formatINR(item.principal + item.interestEarned - item.penalty)}</strong>, to the Super Admin
+        for approval? You won't be able to edit it once sent.
       </>
     ),
   },
@@ -108,14 +132,76 @@ function BreakdownRow({ label, value, tone }) {
   );
 }
 
+// Shown in place of action buttons once an item has moved past "Pending"
+function StatusPill({ status }) {
+  if (status === STATUS.AWAITING_SUPERADMIN) {
+    return (
+      <span className="admin-action-muted admin-action-muted--waiting">
+        <Clock size={14} /> Waiting for Super Admin approval
+      </span>
+    );
+  }
+  if (status === STATUS.APPROVED) {
+    return (
+      <span className="admin-action-muted">
+        <CheckCircle2 size={14} /> Settled
+      </span>
+    );
+  }
+  if (status === STATUS.REJECTED) {
+    return (
+      <span className="admin-action-muted">
+        <XCircle size={14} /> Rejected
+      </span>
+    );
+  }
+  return null;
+}
+
 export default function Settlement() {
   const [activeTab, setActiveTab] = useState("tenure");
   const [tenureItems, setTenureItems] = useState(initialTenureItems);
   const [precloseItems, setPrecloseItems] = useState(initialPrecloseItems);
   const [confirmAction, setConfirmAction] = useState(null);
 
-  // const tenurePendingCount = tenureItems.filter((i) => i.status === "Pending").length;
-  // const preclosePendingCount = precloseItems.filter((i) => i.status === "Pending").length;
+  // const tenurePendingCount = tenureItems.filter((i) => i.status === STATUS.PENDING).length;
+  // const preclosePendingCount = precloseItems.filter((i) => i.status === STATUS.PENDING).length;
+
+  const closedItems = useMemo(() => {
+    // Only fully resolved items (Approved / Rejected) belong in "Closed".
+    // Items "Awaiting Super Admin" are still in-flight and stay on their own tab.
+    const isClosed = (status) => status === STATUS.APPROVED || status === STATUS.REJECTED;
+
+    const tenureClosed = tenureItems
+      .filter((i) => isClosed(i.status))
+      .map((i) => ({
+        type: "Tenure",
+        bondNumber: i.bondNumber,
+        investor: i.investor,
+        branch: i.branch,
+        date: i.maturedOn,
+        principal: i.principal,
+        interestEarned: i.interestEarned,
+        penalty: 0,
+        status: i.status,
+      }));
+
+    const precloseClosed = precloseItems
+      .filter((i) => isClosed(i.status))
+      .map((i) => ({
+        type: "Pre-Close",
+        bondNumber: i.bondNumber,
+        investor: i.investor,
+        branch: i.branch,
+        date: i.requestedOn,
+        principal: i.principal,
+        interestEarned: i.interestEarned,
+        penalty: i.penalty,
+        status: i.status,
+      }));
+
+    return [...tenureClosed, ...precloseClosed].sort((a, b) => (a.status === STATUS.APPROVED ? -1 : 1));
+  }, [tenureItems, precloseItems]);
 
   const openConfirm = (kind, item) => setConfirmAction({ kind, item });
   const closeConfirm = () => setConfirmAction(null);
@@ -125,16 +211,21 @@ export default function Settlement() {
     const { kind, item } = confirmAction;
 
     if (kind === "tenureApprove") {
+      // Admin approval doesn't finalize the settlement — it goes to the Super Admin queue.
       setTenureItems((prev) =>
-        prev.map((i) => (i.bondNumber === item.bondNumber ? { ...i, status: "Approved" } : i))
+        prev.map((i) =>
+          i.bondNumber === item.bondNumber ? { ...i, status: STATUS.AWAITING_SUPERADMIN } : i
+        )
       );
     } else if (kind === "preApprove") {
       setPrecloseItems((prev) =>
-        prev.map((i) => (i.bondNumber === item.bondNumber ? { ...i, status: "Approved" } : i))
+        prev.map((i) =>
+          i.bondNumber === item.bondNumber ? { ...i, status: STATUS.AWAITING_SUPERADMIN } : i
+        )
       );
     } else if (kind === "preReject") {
       setPrecloseItems((prev) =>
-        prev.map((i) => (i.bondNumber === item.bondNumber ? { ...i, status: "Rejected" } : i))
+        prev.map((i) => (i.bondNumber === item.bondNumber ? { ...i, status: STATUS.REJECTED } : i))
       );
     }
 
@@ -161,6 +252,12 @@ export default function Settlement() {
         >
           Pre-Close Requests <span className="settlement-tab__count">{precloseItems.length}</span>
         </button>
+        <button
+          className={`settlement-tab ${activeTab === "closed" ? "settlement-tab--active" : ""}`}
+          onClick={() => setActiveTab("closed")}
+        >
+          Closed Settlements <span className="settlement-tab__count">{closedItems.length}</span>
+        </button>
       </div>
 
       {activeTab === "tenure" && (
@@ -172,12 +269,12 @@ export default function Settlement() {
                 <div className="settlement-card-header">
                   <div className="settlement-card-header__left">
                     <span className="settlement-bond-link">{item.bondNumber}</span>
-                    <span className={`settlement-badge settlement-badge--${item.status.toLowerCase()}`}>
+                    <span className={`settlement-badge settlement-badge--${statusClass(item.status)}`}>
                       {item.status}
                     </span>
                   </div>
                   <div className="settlement-card-header__actions">
-                    {item.status === "Pending" && (
+                    {item.status === STATUS.PENDING && (
                       <button
                         className="admin-btn admin-btn--success admin-btn--pill"
                         onClick={() => openConfirm("tenureApprove", item)}
@@ -185,9 +282,7 @@ export default function Settlement() {
                         <Send size={14} /> Approve Settlement
                       </button>
                     )}
-                    {item.status === "Approved" && (
-                      <span className="admin-action-muted"><CheckCircle2 size={14} /> Settled</span>
-                    )}
+                    <StatusPill status={item.status} />
                   </div>
                 </div>
 
@@ -220,13 +315,13 @@ export default function Settlement() {
                 <div className="settlement-card-header">
                   <div className="settlement-card-header__left">
                     <span className="settlement-bond-link">{item.bondNumber}</span>
-                    <span className={`settlement-badge settlement-badge--${item.status.toLowerCase()}`}>
+                    <span className={`settlement-badge settlement-badge--${statusClass(item.status)}`}>
                       {item.status}
                     </span>
                     <span className="settlement-badge settlement-badge--preclose">Pre-Close</span>
                   </div>
                   <div className="settlement-card-header__actions">
-                    {item.status === "Pending" && (
+                    {item.status === STATUS.PENDING && (
                       <>
                         <button
                           className="admin-btn admin-btn--success admin-btn--pill"
@@ -242,12 +337,7 @@ export default function Settlement() {
                         </button>
                       </>
                     )}
-                    {item.status === "Approved" && (
-                      <span className="admin-action-muted"><CheckCircle2 size={14} /> Approved</span>
-                    )}
-                    {item.status === "Rejected" && (
-                      <span className="admin-action-muted"><XCircle size={14} /> Rejected</span>
-                    )}
+                    <StatusPill status={item.status} />
                   </div>
                 </div>
 
@@ -268,6 +358,65 @@ export default function Settlement() {
                     <BreakdownRow label="Interest Earned" value={formatINR(item.interestEarned)} />
                     <BreakdownRow label="Early Penalty" value={`-${formatINR(item.penalty)}`} tone="penalty" />
                     <BreakdownRow label="Net Pre-Close Amount" value={formatINR(net)} tone="total" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {activeTab === "closed" && (
+        <div className="settlement-card-list">
+          {closedItems.length === 0 && (
+            <div className="settlement-empty-state">
+              <Archive size={20} />
+              <p>No closed settlements yet.</p>
+            </div>
+          )}
+
+          {closedItems.map((item) => {
+            const gstAmount = Math.round(item.interestEarned * GST_RATE);
+            const netAfterGst =
+              item.principal + item.interestEarned - gstAmount - (item.penalty || 0);
+
+            return (
+              <div className="settlement-card" key={`${item.type}-${item.bondNumber}`}>
+                <div className="settlement-card-header">
+                  <div className="settlement-card-header__left">
+                    <span className="settlement-bond-link">{item.bondNumber}</span>
+                    <span className={`settlement-badge settlement-badge--${statusClass(item.status)}`}>
+                      {item.status}
+                    </span>
+                    <span
+                      className={`settlement-badge ${
+                        item.type === "Pre-Close" ? "settlement-badge--preclose" : ""
+                      }`}
+                    >
+                      {item.type}
+                    </span>
+                  </div>
+                  <div className="settlement-card-header__actions">
+                    <StatusPill status={item.status} />
+                  </div>
+                </div>
+
+                <div className="settlement-card-body">
+                  <div className="settlement-info-grid">
+                    <InfoItem label="Investor" value={item.investor} />
+                    <InfoItem label="Branch" value={item.branch} />
+                    <InfoItem label="Date" value={item.date} />
+                    <InfoItem label="Type" value={item.type} />
+                  </div>
+
+                  <div className="settlement-breakdown-list">
+                    <BreakdownRow label="Principal" value={formatINR(item.principal)} />
+                    <BreakdownRow label="Interest Earned" value={formatINR(item.interestEarned)} />
+                    <BreakdownRow label="GST (18% on interest)" value={`-${formatINR(gstAmount)}`} tone="penalty" />
+                    {item.penalty > 0 && (
+                      <BreakdownRow label="Early Penalty" value={`-${formatINR(item.penalty)}`} tone="penalty" />
+                    )}
+                    <BreakdownRow label="Net Payable" value={formatINR(netAfterGst)} tone="total" />
                   </div>
                 </div>
               </div>

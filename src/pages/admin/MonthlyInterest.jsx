@@ -1,26 +1,36 @@
 import React, { useMemo, useState } from "react";
-import { Send, CheckCircle2, Ban, X, AlertTriangle, Filter } from "lucide-react";
+import { Send, CheckCircle2, Ban, X, AlertTriangle, Filter, Clock } from "lucide-react";
 import { StatusBadge, formatINR } from "../../shared/Shared";
 import "../../Styles/Admin/MontlyIntrest.css";
 
 // Static "today" for this demo — swap for a real date source when wiring up data.
 const TODAY_LABEL = "05 Aug 2026";
+const GST_RATE = 0.18;
 
 const initialRows = [
   { investor: "Arjun Sharma", bond: "BND-2025-001", amount: 15000, due: "05 Aug 2026", ref: "-", status: "Pending" },
   { investor: "Neha Gupta", bond: "BND-2025-003", amount: 18000, due: "05 Aug 2026", ref: "-", status: "Pending" },
   { investor: "Rahul Kumar", bond: "BND-2025-002", amount: 26250, due: "06 Aug 2026", ref: "-", status: "Pending" },
-  { investor: "Vikram Singh", bond: "BND-2025-007", amount: 9750, due: "06 Aug 2026", ref: "-", status: "Pending" },
-  { investor: "Priya Patel", bond: "BND-2025-004", amount: 7500, due: "10 Aug 2026", ref: "-", status: "Pending" },
+  { investor: "Vikram Singh", bond: "BND-2025-007", amount: 9750, due: "06 Aug 2026", ref: "-", status: "Awaiting Approval" },
+  { investor: "Priya Patel", bond: "BND-2025-004", amount: 7500, due: "10 Aug 2026", ref: "-", status: "Approved" },
   { investor: "Sunita Verma", bond: "BND-2025-008", amount: 4500, due: "12 Aug 2026", ref: "UTR112233", status: "Paid" },
 ];
+
+function gstFor(amount) {
+  return Math.round(amount * GST_RATE);
+}
+
+function netPayableFor(amount) {
+  return amount - gstFor(amount);
+}
 
 const CONFIRM_COPY = {
   approve: {
     title: "Interest Payout Details",
-    confirmTitle: "Approve Interest Request",
-    body: (r) => `Approve the interest payout of ${formatINR(r.amount)} for ${r.investor} (${r.bond})?`,
-    confirmLabel: "Approve",
+    confirmTitle: "Send for Super Admin Approval",
+    body: (r) =>
+      `Send the interest payout of ${formatINR(netPayableFor(r.amount))} (net of 18% GST) for ${r.investor} (${r.bond}) to the Super Admin for final approval?`,
+    confirmLabel: "Send for Approval",
     confirmClass: "admin-btn--success",
     showDetails: true,
   },
@@ -34,9 +44,10 @@ const CONFIRM_COPY = {
   },
   approveAllPending: {
     title: "Approve All Pending",
-    confirmTitle: "Approve All Pending",
-    body: (rows) => `Approve all ${rows.length} pending interest payouts totalling ${formatINR(rows.reduce((s, r) => s + r.amount, 0))}?`,
-    confirmLabel: "Approve All",
+    confirmTitle: "Send All for Super Admin Approval",
+    body: (rows) =>
+      `Send all ${rows.length} pending interest payouts (${formatINR(rows.reduce((s, r) => s + r.amount, 0))} gross, ${formatINR(rows.reduce((s, r) => s + netPayableFor(r.amount), 0))} net of GST) to the Super Admin for final approval?`,
+    confirmLabel: "Send All for Approval",
     confirmClass: "admin-btn--success",
     showDetails: false,
   },
@@ -92,6 +103,7 @@ export default function MonthlyInterest() {
       isToday: due === TODAY_LABEL,
       rows: map[due],
       total: map[due].reduce((s, r) => s + r.amount, 0),
+      netTotal: map[due].reduce((s, r) => s + netPayableFor(r.amount), 0),
     }));
   }, [rows]);
 
@@ -125,12 +137,17 @@ export default function MonthlyInterest() {
     const { type, row } = confirmAction;
 
     if (type === "approve") {
-      setRows((prev) => prev.map((r) => (r.bond === row.bond ? { ...r, status: "Approved" } : r)));
+      // Branch admin approval doesn't finalize the payout — it moves to the
+      // Super Admin's Payment Queue for final sign-off. Status only flips to
+      // "Approved" once the Super Admin actually approves it on their end.
+      setRows((prev) => prev.map((r) => (r.bond === row.bond ? { ...r, status: "Awaiting Approval" } : r)));
     } else if (type === "reject") {
       setRows((prev) => prev.map((r) => (r.bond === row.bond ? { ...r, status: "Rejected" } : r)));
     } else if (type === "approveAllPending") {
       const bondsToApprove = new Set(row.map((r) => r.bond));
-      setRows((prev) => prev.map((r) => (bondsToApprove.has(r.bond) && r.status === "Pending" ? { ...r, status: "Approved" } : r)));
+      setRows((prev) =>
+        prev.map((r) => (bondsToApprove.has(r.bond) && r.status === "Pending" ? { ...r, status: "Awaiting Approval" } : r))
+      );
     }
 
     closeConfirm();
@@ -185,7 +202,8 @@ export default function MonthlyInterest() {
             </span>
             {group.isToday && <span className="due-badge due-badge--today">Due Today</span>}
             <span className="due-group-header__meta">
-              {group.rows.length} payment{group.rows.length > 1 ? "s" : ""} · {formatINR(group.total)} total
+              {group.rows.length} payment{group.rows.length > 1 ? "s" : ""} · {formatINR(group.total)} gross ·{" "}
+              {formatINR(group.netTotal)} net of GST
             </span>
           </div>
 
@@ -195,47 +213,60 @@ export default function MonthlyInterest() {
                 <tr>
                   <th>Investor</th>
                   <th>Bond Number</th>
-                  <th>Monthly Interest</th>
+                  <th>Interest Amount</th>
+                  <th>GST (18%)</th>
+                  <th>Net Payable</th>
                   <th>Due Date</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {group.rows.map((r) => (
-                  <tr key={r.bond}>
-                    <td>{r.investor}</td>
-                    <td className="mono link">{r.bond}</td>
-                    <td className="mono amount-positive">{formatINR(r.amount)}</td>
-                    <td className={group.isToday ? "due-date--today" : "due-date--muted"}>{r.due}</td>
-                    <td><StatusBadge status={r.status} /></td>
-                    <td>
-                      {r.status === "Pending" && (
-                        <div className="admin-action-group">
-                          <button className="admin-btn admin-btn--success admin-btn--pill" onClick={() => openConfirm("approve", r)}>
-                            <CheckCircle2 size={14} /> Approve
-                          </button>
-                          <button
-                            className="admin-icon-btn admin-icon-btn--danger"
-                            aria-label="Reject"
-                            onClick={() => openConfirm("reject", r)}
-                          >
-                            <Ban size={14} />
-                          </button>
-                        </div>
-                      )}
-                      {r.status === "Approved" && (
-                        <span className="admin-action-muted"><CheckCircle2 size={14} /> Approved</span>
-                      )}
-                      {r.status === "Rejected" && (
-                        <span className="admin-action-muted"><Ban size={14} /> Rejected</span>
-                      )}
-                      {r.status === "Paid" && (
-                        <span className="admin-action-muted"><CheckCircle2 size={14} /> Paid</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {group.rows.map((r) => {
+                  const gst = gstFor(r.amount);
+                  const net = netPayableFor(r.amount);
+                  return (
+                    <tr key={r.bond}>
+                      <td>{r.investor}</td>
+                      <td className="mono link">{r.bond}</td>
+                      <td className="mono amount-positive">{formatINR(r.amount)}</td>
+                      <td className="mono">-{formatINR(gst)}</td>
+                      <td className="mono amount-positive">{formatINR(net)}</td>
+                      <td className={group.isToday ? "due-date--today" : "due-date--muted"}>{r.due}</td>
+                      <td><StatusBadge status={r.status} /></td>
+                      <td>
+                        {r.status === "Pending" && (
+                          <div className="admin-action-group">
+                            <button className="admin-btn admin-btn--success admin-btn--pill" onClick={() => openConfirm("approve", r)}>
+                              <CheckCircle2 size={14} /> Approve
+                            </button>
+                            <button
+                              className="admin-icon-btn admin-icon-btn--danger"
+                              aria-label="Reject"
+                              onClick={() => openConfirm("reject", r)}
+                            >
+                              <Ban size={14} />
+                            </button>
+                          </div>
+                        )}
+                        {r.status === "Awaiting Approval" && (
+                          <span className="admin-action-muted">
+                            <Clock size={14} /> Waiting for Super Admin Approval
+                          </span>
+                        )}
+                        {r.status === "Approved" && (
+                          <span className="admin-action-muted"><CheckCircle2 size={14} /> Approved</span>
+                        )}
+                        {r.status === "Rejected" && (
+                          <span className="admin-action-muted"><Ban size={14} /> Rejected</span>
+                        )}
+                        {r.status === "Paid" && (
+                          <span className="admin-action-muted"><CheckCircle2 size={14} /> Paid</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -262,7 +293,9 @@ export default function MonthlyInterest() {
                   <div className="admin-detail-list">
                     <DetailRow label="Investor" value={confirmAction.row.investor} />
                     <DetailRow label="Bond Number" value={confirmAction.row.bond} valueClass="mono" />
-                    <DetailRow label="Amount" value={formatINR(confirmAction.row.amount)} valueClass="mono amount-positive" />
+                    <DetailRow label="Interest Amount" value={formatINR(confirmAction.row.amount)} valueClass="mono amount-positive" />
+                    <DetailRow label="GST (18%)" value={`-${formatINR(gstFor(confirmAction.row.amount))}`} valueClass="mono" />
+                    <DetailRow label="Net Payable" value={formatINR(netPayableFor(confirmAction.row.amount))} valueClass="mono amount-positive" />
                     <DetailRow label="Due Date" value={confirmAction.row.due} />
                     <DetailRow label="Reference" value={confirmAction.row.ref} valueClass="mono" />
                     <DetailRow label="Status" value={<StatusBadge status={confirmAction.row.status} />} />
