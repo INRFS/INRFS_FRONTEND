@@ -22,7 +22,6 @@ const STATUS = {
   REJECTED: "Rejected",
 };
 
-// Maps a status string to a CSS-safe class suffix (handles multi-word statuses)
 const statusClass = (status) => status.toLowerCase().replace(/\s+/g, "-");
 
 const initialTenureItems = [
@@ -75,45 +74,6 @@ const initialPrecloseItems = [
   },
 ];
 
-const CONFIRM_COPY = {
-  tenureApprove: {
-    title: "Send for Super Admin Approval",
-    confirmClass: "admin-btn--success",
-    confirmLabel: "Confirm & Send",
-    body: (item) => (
-      <>
-        Send the settlement of <strong>{formatINR(item.principal + item.interestEarned)}</strong> for{" "}
-        <strong>{item.investor}</strong> on bond <strong>{item.bondNumber}</strong> to the Super Admin for
-        approval? You won't be able to edit it once sent.
-      </>
-    ),
-  },
-  preApprove: {
-    title: "Send for Super Admin Approval",
-    confirmClass: "admin-btn--success",
-    confirmLabel: "Confirm & Send",
-    body: (item) => (
-      <>
-        Send the pre-close request for <strong>{item.investor}</strong> on bond{" "}
-        <strong>{item.bondNumber}</strong>, with a net amount of{" "}
-        <strong>{formatINR(item.principal + item.interestEarned - item.penalty)}</strong>, to the Super Admin
-        for approval? You won't be able to edit it once sent.
-      </>
-    ),
-  },
-  preReject: {
-    title: "Reject Pre-Close Request",
-    confirmClass: "admin-btn--danger",
-    confirmLabel: "Confirm Rejection",
-    body: (item) => (
-      <>
-        Reject the pre-close request for <strong>{item.investor}</strong> on bond{" "}
-        <strong>{item.bondNumber}</strong>? This cannot be undone.
-      </>
-    ),
-  },
-};
-
 function InfoItem({ label, value }) {
   return (
     <div className="settlement-info-item">
@@ -132,7 +92,6 @@ function BreakdownRow({ label, value, tone }) {
   );
 }
 
-// Shown in place of action buttons once an item has moved past "Pending"
 function StatusPill({ status }) {
   if (status === STATUS.AWAITING_SUPERADMIN) {
     return (
@@ -158,18 +117,92 @@ function StatusPill({ status }) {
   return null;
 }
 
+function ConfirmBreakdown({ item, includePenalty }) {
+  const gstAmount = Math.round(item.interestEarned * GST_RATE);
+  const penalty = includePenalty ? item.penalty : 0;
+  const net = item.principal + item.interestEarned - gstAmount - penalty;
+
+  return (
+    <div className="settlement-confirm-breakdown">
+      <div className="settlement-confirm-breakdown__row">
+        <span>Principal</span>
+        <span className="mono">{formatINR(item.principal)}</span>
+      </div>
+      <div className="settlement-confirm-breakdown__row">
+        <span>Interest Earned</span>
+        <span className="mono">{formatINR(item.interestEarned)}</span>
+      </div>
+      <div className="settlement-confirm-breakdown__row settlement-confirm-breakdown__row--gst">
+        <span>
+          GST <em>(18% on interest)</em>
+        </span>
+        <span className="mono">-{formatINR(gstAmount)}</span>
+      </div>
+      {includePenalty && (
+        <div className="settlement-confirm-breakdown__row settlement-confirm-breakdown__row--penalty">
+          <span>Early Penalty</span>
+          <span className="mono">-{formatINR(penalty)}</span>
+        </div>
+      )}
+      <div className="settlement-confirm-breakdown__row settlement-confirm-breakdown__row--total">
+        <span>Net Payable</span>
+        <span className="mono">{formatINR(net)}</span>
+      </div>
+    </div>
+  );
+}
+
+const CONFIRM_COPY = {
+  tenureApprove: {
+    title: "Send for Super Admin Approval",
+    confirmClass: "admin-btn--success",
+    confirmLabel: "Confirm & Send",
+    body: (item) => (
+      <>
+        <p>
+          Send the matured settlement for <strong>{item.investor}</strong> on bond{" "}
+          <strong>{item.bondNumber}</strong> to the Super Admin for approval? You won't be able to edit it
+          once sent.
+        </p>
+        <ConfirmBreakdown item={item} includePenalty={false} />
+      </>
+    ),
+  },
+  preApprove: {
+    title: "Send for Super Admin Approval",
+    confirmClass: "admin-btn--success",
+    confirmLabel: "Confirm & Send",
+    body: (item) => (
+      <>
+        <p>
+          Send the pre-close request for <strong>{item.investor}</strong> on bond{" "}
+          <strong>{item.bondNumber}</strong> to the Super Admin for approval? You won't be able to edit it
+          once sent.
+        </p>
+        <ConfirmBreakdown item={item} includePenalty={true} />
+      </>
+    ),
+  },
+  preReject: {
+    title: "Reject Pre-Close Request",
+    confirmClass: "admin-btn--danger",
+    confirmLabel: "Confirm Rejection",
+    body: (item) => (
+      <p>
+        Reject the pre-close request for <strong>{item.investor}</strong> on bond{" "}
+        <strong>{item.bondNumber}</strong>? This cannot be undone.
+      </p>
+    ),
+  },
+};
+
 export default function Settlement() {
   const [activeTab, setActiveTab] = useState("tenure");
   const [tenureItems, setTenureItems] = useState(initialTenureItems);
   const [precloseItems, setPrecloseItems] = useState(initialPrecloseItems);
   const [confirmAction, setConfirmAction] = useState(null);
 
-  // const tenurePendingCount = tenureItems.filter((i) => i.status === STATUS.PENDING).length;
-  // const preclosePendingCount = precloseItems.filter((i) => i.status === STATUS.PENDING).length;
-
   const closedItems = useMemo(() => {
-    // Only fully resolved items (Approved / Rejected) belong in "Closed".
-    // Items "Awaiting Super Admin" are still in-flight and stay on their own tab.
     const isClosed = (status) => status === STATUS.APPROVED || status === STATUS.REJECTED;
 
     const tenureClosed = tenureItems
@@ -211,7 +244,6 @@ export default function Settlement() {
     const { kind, item } = confirmAction;
 
     if (kind === "tenureApprove") {
-      // Admin approval doesn't finalize the settlement — it goes to the Super Admin queue.
       setTenureItems((prev) =>
         prev.map((i) =>
           i.bondNumber === item.bondNumber ? { ...i, status: STATUS.AWAITING_SUPERADMIN } : i
@@ -437,9 +469,7 @@ export default function Settlement() {
                 <X size={16} />
               </button>
             </div>
-            <div className="settlement-modal-body">
-              <p>{activeCopy.body(confirmAction.item)}</p>
-            </div>
+            <div className="settlement-modal-body">{activeCopy.body(confirmAction.item)}</div>
             <div className="settlement-modal-footer">
               <button className="admin-btn admin-btn--outline" onClick={closeConfirm}>
                 Cancel
