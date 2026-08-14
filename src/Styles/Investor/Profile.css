@@ -1,64 +1,517 @@
-.profile-layout { display: grid; grid-template-columns: 280px 1fr; gap: 18px; }
-@media (max-width: 800px) { .profile-layout { grid-template-columns: 1fr; } }
+.profile-layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  width: 100%;
+}
 
 .profile-card {
-  background: #fff; border-radius: 12px; border: 1px solid #eef1f7;
-  padding: 26px 18px; text-align: center; height: fit-content;
-}
-.profile-avatar {
-  width: 64px; height: 64px; border-radius: 50%; background: #6366f1; color: #fff;
-  display: flex; align-items: center; justify-content: center; font-size: 24px;
-  font-weight: 700; margin: 0 auto 12px;
+  position: relative;
+  background: linear-gradient(145deg, #ffffff 0%, #f8faff 100%);
+  border: 1px solid #e8edf6;
+  border-radius: 16px;
+  padding: 30px 20px 24px;
+  text-align: center;
+  height: fit-content;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
 }
 
-/* Editable profile fields */
-.profile-info-input {
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 6px 10px;
+.profile-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #315bea, #647cff);
+}
+
+.profile-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #315bea, #647cff);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+  font-weight: 700;
+  margin: 2px auto 14px;
+  box-shadow: 0 8px 20px rgba(49, 91, 234, 0.25);
+  border: 4px solid #fff;
+}
+
+.profile-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #101828;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.profile-email {
+  font-size: 12px;
+  color: #667085;
+  margin: 4px 0 10px;
+  word-break: break-word;
+}
+
+.profile-investor-id {
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  background: #f1f5ff;
+  color: #315bea;
+  border: 1px solid #dce5ff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.profile-role-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: #ecfdf3;
+  color: #079455;
+  border: 1px solid #abefc6;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 11px;
+  border-radius: 30px;
+}
+
+.profile-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.profile-info-card {
+  background: #fff;
+  border-radius: 15px;
+  border: 1px solid #e8edf6;
+  padding: 21px;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.045);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.profile-info-card:hover {
+  border-color: #dce4f2;
+  box-shadow: 0 9px 28px rgba(15, 23, 42, 0.065);
+}
+
+.investor-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #edf1f7;
+  color: #172033;
   font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+}
+
+.investor-section__title svg {
+  color: #315bea;
+  flex-shrink: 0;
+}
+
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+  margin-top: 18px;
+}
+
+.profile-info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.profile-info-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #98a2b3;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+  line-height: 1.2;
+}
+
+.profile-info-label svg {
+  color: #98a2b3;
+  flex-shrink: 0;
+}
+
+.profile-info-value {
+  display: block;
+  min-height: 20px;
+  color: #344054;
+  font-size: 13px;
   font-weight: 600;
-  color: #111;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.profile-info-input {
   width: 100%;
-  max-width: 220px;
+  max-width: none;
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 8px 11px;
+  border: 1px solid #d9e0eb;
+  border-radius: 8px;
+  outline: none;
+  background: #fbfcfe;
+  color: #172033;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.profile-info-input:hover {
+  border-color: #c4cedd;
+  background: #fff;
 }
 
 .profile-info-input:focus {
-  outline: none;
-  border-color: #03154a;
-  box-shadow: 0 0 0 2px rgba(3, 21, 74, 0.12);
+  border-color: #315bea;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(49, 91, 234, 0.1);
+}
+
+.profile-info-input::placeholder {
+  color: #a0a9b8;
+}
+
+.profile-info-textarea {
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.profile-info-input[type="date"] {
+  color: #344054;
+}
+
+.profile-info-input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.65;
+}
+
+.investor-page-actions--end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 18px;
 }
 
 .investor-btn--outline {
   background: #fff;
-  color: #03154a;
-  border: 1px solid #03154a;
+  color: #344054;
+  border: 1px solid #d8e0eb;
   border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 14px;
+  min-height: 37px;
+  padding: 8px 14px;
+  font-size: 12.5px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   cursor: pointer;
-  margin-right: 8px;
+  transition: all 0.2s ease;
 }
 
 .investor-btn--outline:hover {
-  background: #f3f4f6;
+  border-color: #b9c4d4;
+  background: #f8fafc;
+  color: #172033;
 }
 
-.profile-name { font-size: 15px; font-weight: 700; color: #0f1729; margin: 0; }
-.profile-email { font-size: 12px; color: #94a3b8; margin: 2px 0 12px; }
-.profile-role-pill {
-  background: #dcfce7; color: #16a34a; font-size: 11px; font-weight: 600;
-  padding: 4px 10px; border-radius: 20px;
+.investor-btn--outline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-.profile-right-col { display: flex; flex-direction: column; gap: 16px; }
-.profile-info-card { background: #fff; border-radius: 12px; border: 1px solid #eef1f7; padding: 18px; }
-.profile-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
-@media (max-width: 500px) { .profile-info-grid { grid-template-columns: 1fr; } }
-.profile-info-field { display: flex; flex-direction: column; gap: 4px; }
-.profile-info-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; }
-.profile-info-value { font-size: 13.5px; color: #1e293b; font-weight: 500; }
+.investor-btn--primary {
+  min-height: 37px;
+  border-radius: 8px;
+  padding: 8px 15px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.investor-btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(49, 91, 234, 0.2);
+}
+
+.investor-btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.profile-alert {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 9px;
+  padding: 10px 13px;
+  margin-bottom: 15px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.profile-alert svg {
+  flex-shrink: 0;
+}
+
+.profile-alert--error {
+  background: #fff5f5;
+  border: 1px solid #ffd6d6;
+  color: #d92d20;
+}
+
+.profile-alert--success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+.profile-loading {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profile-loading-icon {
+  color: #315bea;
+  animation: profileSpin 0.9s linear infinite;
+}
+
+.profile-spin {
+  animation: profileSpin 0.9s linear infinite;
+}
+
+@keyframes profileSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1100px) {
+  .profile-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .profile-card {
+    padding: 25px 16px 21px;
+  }
+
+  .profile-info-card {
+    padding: 18px;
+  }
+
+  .profile-info-grid {
+    gap: 16px 18px;
+  }
+}
+
+@media (max-width: 800px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .profile-card {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 22px 16px;
+  }
+
+  .profile-avatar {
+    width: 62px;
+    height: 62px;
+    font-size: 23px;
+  }
+
+  .profile-right-col {
+    gap: 14px;
+  }
+
+  .profile-info-card {
+    padding: 17px;
+  }
+
+  .profile-info-grid {
+    gap: 15px 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .investor-page-actions--end {
+    margin-bottom: 14px;
+  }
+
+  .investor-btn--outline,
+  .investor-btn--primary {
+    min-height: 35px;
+    padding: 7px 11px;
+    font-size: 11.5px;
+  }
+
+  .profile-layout {
+    gap: 12px;
+  }
+
+  .profile-card {
+    border-radius: 12px;
+    padding: 20px 14px;
+  }
+
+  .profile-info-card {
+    border-radius: 12px;
+    padding: 15px;
+  }
+
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 15px;
+  }
+
+  .profile-info-field {
+    gap: 6px;
+  }
+
+  .profile-info-label {
+    font-size: 9.5px;
+  }
+
+  .profile-info-value {
+    font-size: 12.5px;
+  }
+
+  .profile-info-input {
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 12.5px;
+  }
+
+  .profile-info-textarea {
+    min-height: 72px;
+  }
+
+  .investor-section__title {
+    font-size: 13px;
+    padding-bottom: 11px;
+  }
+
+  .profile-alert {
+    font-size: 11.5px;
+    padding: 9px 11px;
+  }
+}
+
+@media (max-width: 420px) {
+  .investor-page-actions--end {
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .investor-btn--outline,
+  .investor-btn--primary {
+    padding: 7px 9px;
+    font-size: 11px;
+  }
+
+  .profile-card {
+    padding: 18px 12px;
+  }
+
+  .profile-avatar {
+    width: 58px;
+    height: 58px;
+    font-size: 21px;
+  }
+
+  .profile-name {
+    font-size: 15px;
+  }
+
+  .profile-email {
+    font-size: 11px;
+  }
+
+  .profile-info-card {
+    padding: 13px;
+  }
+
+  .profile-info-grid {
+    gap: 13px;
+  }
+
+  .profile-info-label {
+    font-size: 9px;
+  }
+
+  .profile-info-value,
+  .profile-info-input {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 350px) {
+  .investor-btn--outline,
+  .investor-btn--primary {
+    padding: 6px 8px;
+    font-size: 10.5px;
+  }
+
+  .profile-info-card {
+    padding: 11px;
+  }
+}

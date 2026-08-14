@@ -15,7 +15,6 @@ export default function Header() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Lock background scroll while the mobile menu is open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => {
@@ -23,7 +22,6 @@ export default function Header() {
     };
   }, [menuOpen]);
 
-  // Close on Escape
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === "Escape") setMenuOpen(false);
@@ -69,13 +67,11 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Backdrop */}
       <div
         className={`inrfs-mobile-backdrop${menuOpen ? " inrfs-mobile-backdrop-open" : ""}`}
         onClick={closeMenu}
       />
 
-      {/* Mobile slide-down menu */}
       <div className={`inrfs-mobile-menu${menuOpen ? " inrfs-mobile-menu-open" : ""}`}>
         <nav className="inrfs-mobile-nav-links">
           {NAV_LINKS.map((link) => (

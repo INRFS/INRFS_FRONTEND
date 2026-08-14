@@ -1,88 +1,170 @@
-import React, { useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Printer, Download, Loader2 } from "lucide-react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  ArrowLeft,
+  Download,
+  Loader2,
+  Printer,
+} from "lucide-react";
+
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { useInvestorData, formatINR } from "./InvestorDataContext";
+
+import {
+  getMyInvestmentBond,
+} from "../../services/investment_service";
+
 import "../../Styles/Investor/BondCertificate.css";
 
 
-function amountInWords(num) {
-  const a = [
-    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
-    "Seventeen", "Eighteen", "Nineteen",
-  ];
-  const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+const formatINR = (value) => {
+  const amount = Number(value || 0);
 
-  const twoDigits = (n) => (n < 20 ? a[n] : `${b[Math.floor(n / 10)]} ${a[n % 10]}`.trim());
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
 
-  const threeDigits = (n) =>
-    n > 99 ? `${a[Math.floor(n / 100)]} Hundred ${twoDigits(n % 100)}`.trim() : twoDigits(n);
 
-  if (num === 0) return "Zero Rupees Only";
+const formatDate = (value) => {
+  if (!value) {
+    return "—";
+  }
 
-  const crore = Math.floor(num / 10000000);
-  const lakh = Math.floor((num % 10000000) / 100000);
-  const thousand = Math.floor((num % 100000) / 1000);
-  const rest = num % 1000;
+  const parsed = new Date(value);
 
-  let words = "";
-  if (crore) words += `${threeDigits(crore)} Crore `;
-  if (lakh) words += `${threeDigits(lakh)} Lakh `;
-  if (thousand) words += `${threeDigits(thousand)} Thousand `;
-  if (rest) words += `${threeDigits(rest)}`;
+  if (Number.isNaN(parsed.getTime())) {
+    return String(value);
+  }
 
-  return `${words.trim()} Rupees Only`;
-}
+  return parsed.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
-function QrPlaceholder() {
-  const seed = [
-    1, 1, 0, 1, 1, 1, 0,
-    1, 0, 1, 0, 1, 0, 1,
-    0, 1, 1, 1, 0, 1, 1,
-    1, 0, 0, 1, 0, 0, 1,
-    1, 1, 0, 1, 1, 1, 0,
-    0, 0, 1, 0, 1, 0, 1,
-    1, 1, 1, 0, 1, 1, 0,
-  ];
+
+const getInvestmentIdFromParams = (params) => {
   return (
-    <div className="bond-qr">
-      {seed.map((v, i) => (
-        <span key={i} className={v ? "bond-qr__cell bond-qr__cell--on" : "bond-qr__cell"} />
-      ))}
-    </div>
+    params?.investmentId ??
+    params?.id ??
+    params?.investment_id ??
+    params?.bondId ??
+    null
   );
-}
+};
+
 
 export default function BondCertificate() {
-  const { bondId } = useParams();
   const navigate = useNavigate();
-  const { investments } = useInvestorData();
-  const certRef = useRef(null);
+  const params = useParams();
+
+  const investmentId =
+    getInvestmentIdFromParams(params);
+
+  const printableRef = useRef(null);
+
+  const [bond, setBond] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState("");
 
-  const decodedBondId = decodeURIComponent(bondId || "");
 
-  const investment = investments.find(
-    (inv) => inv.bond === decodedBondId || String(inv.id) === decodedBondId
-  );
+  useEffect(() => {
+    let mounted = true;
 
-  const handlePrint = () => window.print();
+    const loadBond = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const handleDownloadPdf = async () => {
-    if (!certRef.current || downloading) return;
-    setDownloading(true);
+        if (!investmentId) {
+          throw new Error(
+            "Investment ID is missing."
+          );
+        }
+
+        const response =
+          await getMyInvestmentBond(
+            investmentId
+          );
+
+        if (!mounted) {
+          return;
+        }
+
+        const bondData =
+          response?.data ?? response;
+
+        if (!bondData) {
+          throw new Error(
+            "Bond certificate not found."
+          );
+        }
+
+        setBond(bondData);
+      } catch (err) {
+        if (mounted) {
+          setBond(null);
+          setError(
+            err?.message ||
+            "Unable to load bond certificate."
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadBond();
+
+    return () => {
+      mounted = false;
+    };
+  }, [investmentId]);
+
+
+  const handleDownload = async () => {
+    if (
+      !printableRef.current ||
+      downloading ||
+      !bond
+    ) {
+      return;
+    }
+
     try {
-      const node = certRef.current;
+      setDownloading(true);
+      setError("");
 
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-      });
+      const canvas =
+        await html2canvas(
+          printableRef.current,
+          {
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#fffdf7",
+            logging: false,
+          }
+        );
 
-      const imgData = canvas.toDataURL("image/png");
+      const image =
+        canvas.toDataURL("image/png", 1.0);
 
       const pdf = new jsPDF({
         orientation: "portrait",
@@ -90,266 +172,525 @@ export default function BondCertificate() {
         format: "a4",
       });
 
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      const pageWidth =
+        pdf.internal.pageSize.getWidth();
 
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pageHeight =
+        pdf.internal.pageSize.getHeight();
 
-      let heightLeft = imgHeight;
-      let position = 0;
+      const imageWidth = 252;
+      const imageHeight =
+        (canvas.height * imageWidth) /
+        canvas.width;
 
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      const x =
+        (pageWidth - imageWidth) / 2;
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
+      const y =
+        (pageHeight - imageHeight) / 2;
 
-      const fileName = `Bond-Certificate-${investment?.bond || "INRFS"}.pdf`;
-      pdf.save(fileName);
+      pdf.addImage(
+        image,
+        "PNG",
+        x,
+        y,
+        imageWidth,
+        imageHeight
+      );
+
+      pdf.save(
+        `Bond-Certificate-${
+          bond.bond_number ||
+          bond.bond_id ||
+          investmentId
+        }.pdf`
+      );
     } catch (err) {
-      console.error("PDF generation failed:", err);
-      alert("Could not generate the PDF. Please try again.");
+      console.error(
+        "Bond PDF error:",
+        err
+      );
+
+      setError(
+        "Could not generate the PDF certificate."
+      );
     } finally {
       setDownloading(false);
     }
   };
 
-  if (!investment) {
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+
+  const handleBack = () => {
+    navigate(
+      "/investor/my-investments"
+    );
+  };
+
+
+  if (loading) {
     return (
-      <div className="investor-page">
-        <p>Bond not found.</p>
-        <button className="investor-btn investor-btn--outline" onClick={() => navigate(-1)}>
-          <ChevronLeft size={14} /> Back
-        </button>
+      <div className="bond-certificate-page">
+        <div className="bond-certificate-loading">
+          <Loader2
+            className="bond-certificate-loading-icon"
+            size={18}
+          />
+          <span>
+            Loading bond certificate...
+          </span>
+        </div>
       </div>
     );
   }
 
-  const investorName = investment.investorName || "Arjun Sharma";
-  const investorId = investment.investorId || "INV001";
-  const aadhar = investment.aadhar || "1234 5678 9012";
-  const mobile = investment.mobile || "+91 98765 43210";
+
+  if (error || !bond) {
+    return (
+      <div className="bond-certificate-page">
+        <div className="bond-certificate-error-card">
+          <div className="bond-certificate-error">
+            {error ||
+              "Bond certificate not found."}
+          </div>
+
+          <button
+            type="button"
+            className="bond-certificate-btn"
+            onClick={handleBack}
+          >
+            <ArrowLeft size={13} />
+            Back to My Investments
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
+  const bondNumber =
+    bond.bond_number ||
+    bond.bond_id ||
+    "—";
+
+  const amount =
+    bond.investment_amount ??
+    bond.amount ??
+    0;
+
+  const rate =
+    bond.interest_rate ??
+    bond.rate ??
+    0;
+
+  const investorName =
+    bond.investor_name ||
+    bond.full_name ||
+    "Investor";
+
+  const investmentCode =
+    bond.investment_code ||
+    bond.investment_id ||
+    investmentId;
+
+  const investorId =
+    bond.investor_registration_id ||
+    bond.investor_id ||
+    "—";
+
+  const monthlyInterest =
+    bond.monthly_interest ??
+    bond.expected_monthly_interest ??
+    null;
+
+  const totalInterest =
+    bond.total_interest ??
+    bond.expected_interest_amount ??
+    null;
+
+  const tenureMonths =
+    bond.tenure_months ??
+    bond.tenure ??
+    null;
+
+  const maturityAmount =
+    bond.maturity_amount ??
+    0;
+
 
   return (
-    <div className="investor-page bond-certificate-page">
-      <div className="bond-cert-topbar">
-        <button className="bond-cert-back" onClick={() => navigate(-1)}>
-          <ChevronLeft size={15} /> Back
+    <div className="bond-certificate-page">
+
+      {/* Top page toolbar */}
+      <div className="bond-certificate-toolbar">
+
+        <button
+          type="button"
+          className="bond-certificate-back"
+          onClick={handleBack}
+        >
+          <ArrowLeft size={12} />
+          Back
         </button>
-        <h2 className="bond-cert-title">Bond Certificate</h2>
 
-        <div className="bond-cert-topbar__actions">
-          <button className="investor-btn investor-btn--outline" onClick={handlePrint}>
-            <Printer size={14} /> Print Bond
-          </button>
+        <div className="bond-certificate-toolbar-right">
+
           <button
-            className="investor-btn investor-btn--primary"
-            onClick={handleDownloadPdf}
+            type="button"
+            className="bond-certificate-btn"
+            onClick={handlePrint}
+          >
+            <Printer size={11} />
+            Print Bond
+          </button>
+
+          <button
+            type="button"
+            className="bond-certificate-btn bond-certificate-btn--primary"
+            onClick={handleDownload}
             disabled={downloading}
           >
             {downloading ? (
-              <Loader2 size={14} className="spin" />
+              <Loader2
+                size={11}
+                className="bond-certificate-spin"
+              />
             ) : (
-              <Download size={14} />
+              <Download size={11} />
             )}
-            {downloading ? "Generating..." : "Download PDF"}
+
+            {downloading
+              ? "Generating..."
+              : "Download PDF"}
           </button>
+
         </div>
       </div>
 
-      <div className="bond-cert-wrap">
-        <div className="bond-cert-card" ref={certRef}>
-         <div
-  className="bond-cert-header"
-  style={{ display: "block", textAlign: "center", width: "100%" }}
->
-  <div
-    style={{
-      display: "inline-flex",
-      flexDirection: "row",
-      alignItems: "flex-start",
-      textAlign: "left",
-      gap: "10px",
-      marginBottom: "16px",
-    }}
-  >
-    <span
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "26px",
-        height: "26px",
-        minWidth: "26px",
-        maxWidth: "26px",
-        flexShrink: 0,
-        borderRadius: "7px",
-        background: "#2f5cf0",
-        color: "#fff",
-        fontWeight: 800,
-        fontSize: "10.5px",
-        marginTop: "1px",
-      }}
-    >
-      IN
-    </span>
-    <div style={{ flex: "1 1 auto" }}>
-      <p
-        style={{
-          fontSize: "13px",
-          fontWeight: 800,
-          color: "#0f1729",
-          margin: 0,
-          lineHeight: 1.3,
-          whiteSpace: "nowrap",
-        }}
+
+      <div className="bond-certificate-heading">
+        Bond Certificate
+      </div>
+
+
+      {/* Printable certificate */}
+      <div
+        ref={printableRef}
+        className="bond-certificate-card"
+        data-print-bond="true"
       >
-        INRFS
-      </p>
-      <p
-        style={{
-          fontSize: "8.5px",
-          color: "#94a3b8",
-          margin: 0,
-          lineHeight: 1.4,
-          maxWidth: "220px",
-        }}
-      >
-        Investor Management &amp; Investment Portal
-      </p>
-    </div>
-  </div>
-  <h1 className="bond-cert-heading" style={{ display: "block", width: "100%" }}>
-    INVESTMENT BOND CERTIFICATE
-  </h1>
-  <p className="bond-cert-tagline" style={{ display: "block", width: "100%" }}>
-    FIXED INCOME INVESTMENT — GOVERNMENT COMPLIANT
-  </p>
-  <span
-    className="bond-cert-number"
-    style={{ display: "inline-block", marginTop: "8px" }}
-  >
-    {investment.bond}
-  </span>
-</div>
 
-          <div className="bond-cert-amount-box">
-            <p className="bond-cert-amount-label">INVESTED PRINCIPAL AMOUNT</p>
-            <p className="bond-cert-amount-value">{formatINR(investment.amount)}</p>
-            <p className="bond-cert-amount-words">{amountInWords(investment.amount)}</p>
+        <div className="bond-certificate-body">
+
+          {/* INRFS header */}
+          <div className="bond-certificate-brand-row">
+
+            <div className="bond-certificate-logo">
+              IN
+            </div>
+
+            <div>
+              <div className="bond-certificate-brand">
+                INRFS
+              </div>
+
+              <div className="bond-certificate-brand-sub">
+                Investor Management & Investment Portal
+              </div>
+            </div>
+
           </div>
 
-          <div className="bond-cert-grid">
-            <div>
-              <p className="bond-cert-field-label">INVESTOR NAME</p>
-              <p className="bond-cert-field-value">{investorName}</p>
-            </div>
-            <div>
-              <p className="bond-cert-field-label">INVESTOR ID</p>
-              <p className="bond-cert-field-value mono">{investorId}</p>
-            </div>
 
-            <div>
-              <p className="bond-cert-field-label">AADHAR NUMBER</p>
-              <p className="bond-cert-field-value mono">{aadhar}</p>
-            </div>
-            <div>
-              <p className="bond-cert-field-label">MOBILE</p>
-              <p className="bond-cert-field-value mono">{mobile}</p>
-            </div>
+          <h1 className="bond-certificate-title">
+            INVESTMENT BOND CERTIFICATE
+          </h1>
 
-            <div>
-              <p className="bond-cert-field-label">INVESTMENT DATE</p>
-              <p className="bond-cert-field-value">{investment.invested}</p>
-            </div>
-            <div>
-              <p className="bond-cert-field-label">MATURITY DATE</p>
-              <p className="bond-cert-field-value">{investment.matures}</p>
-            </div>
-
-            <div>
-              <p className="bond-cert-field-label">INTEREST RATE</p>
-              <p className="bond-cert-field-value">{investment.rate} per annum</p>
-            </div>
-            <div>
-              <p className="bond-cert-field-label">MONTHLY INTEREST</p>
-              <p className="bond-cert-field-value">{formatINR(investment.monthlyInt)}</p>
-            </div>
-
-            <div>
-              <p className="bond-cert-field-label">TOTAL INTEREST</p>
-              <p className="bond-cert-field-value">
-                {formatINR(investment.earned)} ({investment.tenure || "12"} months)
-              </p>
-            </div>
-            <div>
-              <p className="bond-cert-field-label">MATURITY AMOUNT</p>
-              <p className="bond-cert-field-value">
-                {formatINR(investment.amount + (investment.earned || 0))}
-              </p>
-            </div>
+          <div className="bond-certificate-subtitle">
+            FIXED INCOME INVESTMENT — GOVERNMENT COMPLIANT
           </div>
 
-          <div className="bond-cert-qr-wrap">
-            <QrPlaceholder />
-            <p className="bond-cert-qr-label">QR Verification Code</p>
-            <p className="bond-cert-qr-link">verify.inrfs.in/{investment.bond}</p>
+
+          <div className="bond-certificate-number">
+            {bondNumber}
           </div>
 
-          <div className="bond-cert-note">
-            This bond certifies that the above named investor has deposited the stated principal amount with
-            INRFS Investment Portal. The investment carries a fixed rate of interest as stated above, payable
-            monthly. This bond is non-transferable and subject to INRFS terms and conditions.
+
+          {/* Principal amount */}
+          <div className="bond-certificate-amount-box">
+
+            <div className="bond-certificate-amount-label">
+              INVESTED PRINCIPAL AMOUNT
+            </div>
+
+            <div className="bond-certificate-amount">
+              {formatINR(amount)}
+            </div>
+
+            <div className="bond-certificate-amount-words">
+              Fixed Income Investment
+            </div>
+
           </div>
 
-          <div className="bond-cert-sign">
-            <div className="bond-cert-sign-line">
-              <span />
-              <p>Investor Signature</p>
+
+          {/* Details */}
+          <div className="bond-certificate-grid">
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                INVESTOR NAME
+              </span>
+              <span className="bond-certificate-field-value">
+                {investorName}
+              </span>
             </div>
-            <div className="bond-cert-seal">
-              <span>INRFS</span>
-              <span>SEAL</span>
+
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                INVESTMENT ID
+              </span>
+              <span className="bond-certificate-field-value">
+                {investmentCode}
+              </span>
             </div>
-            <div className="bond-cert-sign-line">
-              <span />
-              <p>Authorised Signatory</p>
+
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                INVESTOR ID
+              </span>
+              <span className="bond-certificate-field-value">
+                {investorId}
+              </span>
             </div>
+
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                MOBILE
+              </span>
+              <span className="bond-certificate-field-value">
+                {bond.mobile || "—"}
+              </span>
+            </div>
+
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                INVESTMENT DATE
+              </span>
+              <span className="bond-certificate-field-value">
+                {formatDate(
+                  bond.investment_date
+                )}
+              </span>
+            </div>
+
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                ISSUE DATE
+              </span>
+              <span className="bond-certificate-field-value">
+                {formatDate(
+                  bond.issue_date ||
+                  bond.investment_date
+                )}
+              </span>
+            </div>
+
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                MATURITY DATE
+              </span>
+              <span className="bond-certificate-field-value">
+                {formatDate(
+                  bond.maturity_date
+                )}
+              </span>
+            </div>
+
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                INTEREST RATE
+              </span>
+              <span className="bond-certificate-field-value">
+                {rate}% p.a.
+              </span>
+            </div>
+
+
+            {monthlyInterest !== null && (
+              <div className="bond-certificate-field">
+                <span className="bond-certificate-field-label">
+                  MONTHLY INTEREST
+                </span>
+                <span className="bond-certificate-field-value">
+                  {formatINR(
+                    monthlyInterest
+                  )}
+                </span>
+              </div>
+            )}
+
+
+            {totalInterest !== null && (
+              <div className="bond-certificate-field">
+                <span className="bond-certificate-field-label">
+                  TOTAL INTEREST
+                </span>
+                <span className="bond-certificate-field-value">
+                  {formatINR(totalInterest)}
+                  {tenureMonths
+                    ? ` (${tenureMonths} months)`
+                    : ""}
+                </span>
+              </div>
+            )}
+
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                MATURITY AMOUNT
+              </span>
+              <span className="bond-certificate-field-value">
+                {formatINR(maturityAmount)}
+              </span>
+            </div>
+
+
+            <div className="bond-certificate-field">
+              <span className="bond-certificate-field-label">
+                STATUS
+              </span>
+              <span className="bond-certificate-field-value bond-certificate-status">
+                ACTIVE
+              </span>
+            </div>
+
           </div>
 
-          <p className="bond-cert-footer">
-            INRFS Investment Portal | CIN: U65900MH2020PTC123456 | SEBI Reg: INZ345678901
+
+          {/* Verification area */}
+          <div className="bond-certificate-verification-area">
+
+            <div className="bond-certificate-qr">
+              <span className="qr-square qr-a" />
+              <span className="qr-square qr-b" />
+              <span className="qr-square qr-c" />
+              <span className="qr-dots">
+                ▦
+              </span>
+            </div>
+
+            <div className="bond-certificate-verification">
+              QR Verification Code
+            </div>
+
+            <div className="bond-certificate-verification-code">
+              Verify {bondNumber}
+            </div>
+
+          </div>
+
+
+          {/* Certificate declaration */}
+          <div className="bond-certificate-legal">
+            This bond certificate confirms that the above
+            named investor has deposited the stated
+            principal amount with INRFS Investment
+            Management System. This certificate is
+            digitally generated and is valid subject
+            to the applicable investment terms.
+          </div>
+
+
+          {/* Signature section */}
+          <div className="bond-certificate-signatures">
+
+            <div className="bond-certificate-signature">
+              <div className="bond-certificate-signature-line" />
+              <div className="bond-certificate-signature-name">
+                Investor Signature
+              </div>
+            </div>
+
+
+            <div className="bond-certificate-seal">
+              INRFS
+            </div>
+
+
+            <div className="bond-certificate-signature">
+              <div className="bond-certificate-signature-line" />
+              <div className="bond-certificate-signature-name">
+                Authorized Signatory
+              </div>
+            </div>
+
+          </div>
+
+
+          <div className="bond-certificate-footer">
+            INRFS Investment Portal • Digital Bond Certificate
             <br />
-            Verify at: verify.inrfs.in/{investment.bond}
-          </p>
-        </div>
+            Verify at the official INRFS investment portal.
+          </div>
 
-        <div className="bond-cert-actions">
-          <button className="investor-btn investor-btn--outline" onClick={() => navigate(-1)}>
-            <ChevronLeft size={14} /> Close Preview
-          </button>
-          <button className="investor-btn investor-btn--outline" onClick={handlePrint}>
-            <Printer size={14} /> Print Bond
-          </button>
-          <button
-            className="investor-btn investor-btn--primary"
-            onClick={handleDownloadPdf}
-            disabled={downloading}
-          >
-            {downloading ? (
-              <Loader2 size={14} className="spin" />
-            ) : (
-              <Download size={14} />
-            )}
-            {downloading ? "Generating..." : "Download PDF"}
-          </button>
         </div>
       </div>
+
+
+      {/* Bottom buttons */}
+      <div className="bond-certificate-bottom-actions">
+
+        <button
+          type="button"
+          className="bond-certificate-btn"
+          onClick={handleBack}
+        >
+          <ArrowLeft size={11} />
+          Close Preview
+        </button>
+
+        <button
+          type="button"
+          className="bond-certificate-btn"
+          onClick={handlePrint}
+        >
+          <Printer size={11} />
+          Print Bond
+        </button>
+
+        <button
+          type="button"
+          className="bond-certificate-btn bond-certificate-btn--primary"
+          onClick={handleDownload}
+          disabled={downloading}
+        >
+          {downloading ? (
+            <Loader2
+              size={11}
+              className="bond-certificate-spin"
+            />
+          ) : (
+            <Download size={11} />
+          )}
+          {downloading
+            ? "Generating..."
+            : "Download PDF"}
+        </button>
+
+      </div>
+
     </div>
   );
 }

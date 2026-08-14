@@ -1,863 +1,1596 @@
-import React, { useState } from "react";
-import { Download, Plus, Search, Eye, X, CheckCircle2, XCircle, Send } from "lucide-react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Search,
+  Download,
+  Eye,
+  Check,
+  X,
+  Loader2,
+  RefreshCw,
+  Users,
+  UserCheck,
+  UserX,
+  BadgeCheck,
+  IndianRupee,
+} from "lucide-react";
+
+import {
+  getInvestors,
+  getInvestorStatuses,
+  getKycStatuses,
+  getInvestorDetails,
+  approveInvestor,
+  rejectInvestor,
+} from "../../services/admin/investorManagementService";
+
 import "../../Styles/Admin/InvestorManagement.css";
 
-const BRANCHES = ["Vijayawada", "Hyderabad", "Bengaluru", "Chennai"];
-
-const initialInvestors = [
+const STATUS_TABS = [
   {
-    email: "arjun@email.com",
-    id: "INV001",
-    name: "Arjun Sharma",
-    mobile: "9876543210",
-    branch: "Hyderabad",
-    registered: "12 Jan 2025",
-    kyc: "Approved",
-    status: "Active",
-    investment: "₹5,00,000",
-    dob: "1990-04-12",
-    aadhaar: "XXXX XXXX 4321",
-    address: "204, Silver Oak Residency, Andheri West",
-    city: "Mumbai",
-    state: "Maharashtra",
-    pin: "400058",
-    bank: { accountHolder: "Arjun Sharma", accountNumber: "500123456789", ifsc: "HDFC0001234", bankName: "HDFC Bank" },
+    key: "All",
+    label: "All",
   },
   {
-    email: "priya@email.com",
-    id: null,
-    name: "Priya Patel",
-    mobile: "9876511111",
-    branch: "Vijayawada",
-    registered: "14 Jan 2025",
-    kyc: "Pending",
-    status: "Pending",
-    investment: "₹2,50,000",
-    dob: "1988-11-03",
-    aadhaar: "XXXX XXXX 5566",
-    address: "12, Rajouri Garden",
-    city: "Delhi",
-    state: "Delhi",
-    pin: "110027",
-    bank: { accountHolder: "Priya Patel", accountNumber: "500223456790", ifsc: "ICIC0002345", bankName: "ICICI Bank" },
+    key: "Pending",
+    label: "Pending",
   },
   {
-    email: "rahul@email.com",
-    id: "INV003",
-    name: "Rahul Kumar",
-    mobile: "9876543212",
-    branch: "Bengaluru",
-    registered: "16 Jan 2025",
-    kyc: "Approved",
-    status: "Active",
-    investment: "₹8,75,000",
-    dob: "1992-07-21",
-    aadhaar: "XXXX XXXX 7788",
-    address: "45, Whitefield Main Road",
-    city: "Bangalore",
-    state: "Karnataka",
-    pin: "560066",
-    bank: { accountHolder: "Rahul Kumar", accountNumber: "500323456791", ifsc: "SBIN0003456", bankName: "State Bank of India" },
+    key: "Active",
+    label: "Active",
   },
   {
-    email: "sunita@email.com",
-    id: null,
-    name: "Sunita Verma",
-    mobile: "9876543213",
-    branch: "Chennai",
-    registered: "18 Jan 2025",
-    kyc: "Rejected",
-    status: "Suspended",
-    investment: "₹1,50,000",
-    dob: "1985-02-14",
-    aadhaar: "XXXX XXXX 9900",
-    address: "78, Koregaon Park",
-    city: "Pune",
-    state: "Maharashtra",
-    pin: "411001",
-    bank: { accountHolder: "Sunita Verma", accountNumber: "500423456792", ifsc: "AXIS0004567", bankName: "Axis Bank" },
-  },
-  {
-    email: "vikram@email.com",
-    id: null,
-    name: "Vikram Singh",
-    mobile: "9876543214",
-    branch: "Hyderabad",
-    registered: "20 Jan 2025",
-    kyc: "Pending",
-    status: "Pending",
-    investment: "₹3,25,000",
-    dob: "1991-09-30",
-    aadhaar: "XXXX XXXX 1122",
-    address: "9, MG Road",
-    city: "Bangalore",
-    state: "Karnataka",
-    pin: "560001",
-    bank: { accountHolder: "Vikram Singh", accountNumber: "500523456793", ifsc: "PUNB0005678", bankName: "Punjab National Bank" },
-  },
-  {
-    email: "neha@email.com",
-    id: "INV006",
-    name: "Neha Gupta",
-    mobile: "9876543215",
-    branch: "Bengaluru",
-    registered: "22 Jan 2025",
-    kyc: "Approved",
-    status: "Active",
-    investment: "₹6,00,000",
-    dob: "1993-06-05",
-    aadhaar: "XXXX XXXX 3344",
-    address: "22, Bandra West",
-    city: "Mumbai",
-    state: "Maharashtra",
-    pin: "400050",
-    bank: { accountHolder: "Neha Gupta", accountNumber: "500623456794", ifsc: "HDFC0006789", bankName: "HDFC Bank" },
+    key: "Suspended",
+    label: "Suspended",
   },
 ];
 
-const KYC_OPTIONS = ["Approved", "Pending", "Rejected"];
-const STATUS_TABS = ["All", "Pending", "Active", "Suspended"];
+const getArray = (response) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
 
-const emptyForm = {
-  name: "",
-  email: "",
-  mobile: "",
-  branch: BRANCHES[0],
-  kyc: "Pending",
-  status: "Pending",
-  investment: "",
-  bankName: "",
-  accountNumber: "",
-  ifsc: "",
+  if (Array.isArray(response?.data)) {
+    return response.data;
+  }
+
+  if (Array.isArray(response?.items)) {
+    return response.items;
+  }
+
+  if (Array.isArray(response?.rows)) {
+    return response.rows;
+  }
+
+  if (Array.isArray(response?.results)) {
+    return response.results;
+  }
+
+  return [];
 };
 
-function initials(name) {
-  return name.charAt(0);
-}
+const getValue = (
+  obj,
+  keys,
+  fallback = ""
+) => {
+  for (const key of keys) {
+    if (
+      obj &&
+      obj[key] !== undefined &&
+      obj[key] !== null &&
+      obj[key] !== ""
+    ) {
+      return obj[key];
+    }
+  }
 
-function nextInvestorId(list) {
-  const max = list.reduce((acc, inv) => {
-    if (!inv.id) return acc;
-    const num = parseInt(inv.id.replace("INV", ""), 10);
-    return Number.isNaN(num) ? acc : Math.max(acc, num);
-  }, 0);
-  return `INV${String(max + 1).padStart(3, "0")}`;
-}
+  return fallback;
+};
 
-function formatInvestment(value) {
-  const digits = value.replace(/[^\d]/g, "");
-  if (!digits) return "₹0";
-  return `₹${Number(digits).toLocaleString("en-IN")}`;
-}
+const normalizeInvestor = (item) => {
+  const fullName = getValue(
+    item,
+    [
+      "investor_name",
+      "full_name",
+      "investor_full_name",
+      "name",
+      "fullName",
+    ],
+    "Unknown Investor"
+  );
 
-function formatToday() {
-  return new Date().toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+  const email = getValue(
+    item,
+    [
+      "email",
+      "email_address",
+      "investor_email",
+    ],
+    ""
+  );
 
-function ReviewKycModal({ investor, onClose, onApprove, onReject }) {
-  const [branch, setBranch] = useState(investor.branch || BRANCHES[0]);
-  const [remarks, setRemarks] = useState("");
+  const investorId = getValue(
+    item,
+    [
+      "investor_id",
+      "investor_code",
+      "investorId",
+    ],
+    ""
+  );
+
+  const investorRegistrationId =
+    getValue(
+      item,
+      [
+        "investor_registration_id",
+        "registration_id",
+        "investorRegistrationId",
+        "id",
+      ],
+      null
+    );
+
+  const mobile = getValue(
+    item,
+    [
+      "mobile",
+      "mobile_number",
+      "phone",
+      "phone_number",
+    ],
+    "-"
+  );
+
+  const branch = getValue(
+    item,
+    [
+      "branch_name",
+      "branch",
+      "branchName",
+    ],
+    "-"
+  );
+
+  const registeredDate = getValue(
+    item,
+    [
+      "registered_date",
+      "registration_date",
+      "created_date",
+      "created_at",
+      "registered_on",
+    ],
+    null
+  );
+
+  const kycStatus = getValue(
+    item,
+    [
+      "kyc_status_name",
+      "kyc_status",
+      "kycStatus",
+    ],
+    "Pending"
+  );
+  const status = getValue(
+    item,
+    [
+      "account_status",
+      "status_name",
+      "status",
+      "request_status_name",
+      "request_status",
+    ],
+    "Pending"
+  );
+
+  const investment = getValue(
+    item,
+    [
+      "investment_amount",
+      "total_investment",
+      "total_invested",
+      "investment",
+    ],
+    0
+  );
+
+  const branchId = getValue(
+    item,
+    [
+      "branch_id",
+      "branchId",
+    ],
+    item?.branch?.id ??
+      item?.branch?.branch_id ??
+      item?.branch?.branchId ??
+      null
+  );
+
+  const userId = getValue(
+    item,
+    [
+      "user_id",
+      "userId",
+    ],
+    null
+  );
+
+  return {
+    ...item,
+    raw: item,
+    investorId,
+    investorRegistrationId,
+    fullName,
+    email,
+    mobile,
+    branch,
+    branchId,
+    userId,
+    registeredDate,
+    kycStatus,
+    status,
+    investment,
+  };
+};
+
+const formatDate = (value) => {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString(
+    "en-GB",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
+};
+
+const formatAmount = (value) => {
+  const number = Number(value || 0);
+
+  return number.toLocaleString(
+    "en-IN",
+    {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }
+  );
+};
+
+const normalizeStatus = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  return String(value)
+    .trim()
+    .toLowerCase();
+};
+
+const statusMatches = (
+  investor,
+  status
+) => {
+  if (status === "All") {
+    return true;
+  }
+
+  const investorStatus =
+    normalizeStatus(
+      investor.status
+    );
+
+  const selectedStatus =
+    normalizeStatus(status);
+
+  if (selectedStatus === "active") {
+    return (
+      investorStatus === "active" ||
+      investorStatus === "approved"
+    );
+  }
+
+  if (selectedStatus === "suspended") {
+    return (
+      investorStatus === "suspended"
+    );
+  }
+
+  if (selectedStatus === "pending") {
+    return (
+      investorStatus === "pending"
+    );
+  }
 
   return (
-    <div className="im-modal-overlay" onClick={onClose}>
-      <div className="im-modal invmgmt-review-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="im-modal-header">
-          <h2>KYC Review — {investor.name}</h2>
-          <button className="im-icon-btn" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="im-modal-form">
-          <div className="invmgmt-detail-grid">
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">Full Name</span>
-              <span className="invmgmt-detail-value">{investor.name}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">Mobile</span>
-              <span className="invmgmt-detail-value">{investor.mobile}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">Email</span>
-              <span className="invmgmt-detail-value">{investor.email}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">Date of Birth</span>
-              <span className="invmgmt-detail-value">{investor.dob}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">Aadhaar Number</span>
-              <span className="invmgmt-detail-value">{investor.aadhaar}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">Branch</span>
-              <span className="invmgmt-detail-value">{investor.branch}</span>
-            </div>
-            <div className="invmgmt-detail-card invmgmt-detail-card--full">
-              <span className="invmgmt-detail-label">Address</span>
-              <span className="invmgmt-detail-value">{investor.address}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">City</span>
-              <span className="invmgmt-detail-value">{investor.city}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">State</span>
-              <span className="invmgmt-detail-value">{investor.state}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">PIN Code</span>
-              <span className="invmgmt-detail-value">{investor.pin}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">Investment Amount</span>
-              <span className="invmgmt-detail-value">{investor.investment}</span>
-            </div>
-            <div className="invmgmt-detail-card">
-              <span className="invmgmt-detail-label">Current KYC Status</span>
-              <span className={`im-badge im-badge-${investor.kyc.toLowerCase()}`}>{investor.kyc}</span>
-            </div>
-          </div>
-
-          <div className="im-form-row">
-            <label>Branch (assign / change)</label>
-            <select
-              className="invmgmt-branch-select"
-              value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-            >
-              {BRANCHES.map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="im-form-row">
-            <label>Remarks (optional)</label>
-            <textarea
-              className="invmgmt-remarks"
-              placeholder="Add remarks..."
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <div className="im-modal-actions">
-            <button type="button" className="btn btn-outline" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={() => onReject(investor.email, remarks)}
-            >
-              <XCircle size={14} /> Reject
-            </button>
-            <button
-              type="button"
-              className="btn btn-success"
-              onClick={() => onApprove(investor.email, branch, remarks)}
-            >
-              <CheckCircle2 size={14} /> Approve KYC &amp; Activate
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    investorStatus ===
+    selectedStatus
   );
-}
-
-function RejectConfirmModal({ investor, onClose, onConfirm }) {
-  return (
-    <div className="im-modal-overlay" onClick={onClose}>
-      <div className="im-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="im-modal-header">
-          <h2>Reject KYC</h2>
-          <button className="im-icon-btn" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="im-modal-form">
-          <p className="invmgmt-confirm-text">
-            Are you sure you want to reject the KYC application for{" "}
-            <strong>{investor.name}</strong>? Their account status will be set to Suspended.
-          </p>
-
-          <div className="im-modal-actions">
-            <button type="button" className="btn btn-outline" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={() => onConfirm(investor.email)}
-            >
-              <XCircle size={14} /> Confirm Reject
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SuperAdminNoticeModal({ notice, onClose }) {
-  const isApprove = notice.type === "approve";
-
-  return (
-    <div className="im-modal-overlay" onClick={onClose}>
-      <div className="im-modal invmgmt-notice-modal" onClick={(e) => e.stopPropagation()}>
-        <div className={`invmgmt-notice-icon${isApprove ? " invmgmt-notice-icon--approve" : " invmgmt-notice-icon--reject"}`}>
-          <Send size={22} />
-        </div>
-        <h2 className="invmgmt-notice-title">
-          {isApprove ? "Sent for Super Admin Approval" : "Rejection Sent to Super Admin"}
-        </h2>
-        <p className="invmgmt-notice-text">
-          {notice.name}'s KYC {isApprove ? "approval" : "rejection"} request has been forwarded to
-          the Super Admin for final review.
-        </p>
-        <div className="im-modal-actions im-modal-actions--center">
-          <button type="button" className="btn btn-primary" onClick={onClose}>
-            OK
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+};
 
 export default function InvestorManagement() {
-  const [investors, setInvestors] = useState(initialInvestors);
-  const [selected, setSelected] = useState([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [form, setForm] = useState(emptyForm);
-  const [errors, setErrors] = useState({});
-  const [searchTerm, setSearchTerm] = useState("");
-  const [kycFilter, setKycFilter] = useState("All KYC Status");
-  const [activeTab, setActiveTab] = useState("Pending");
+  const [
+    investors,
+    setInvestors,
+  ] = useState([]);
 
-  const [viewInvestor, setViewInvestor] = useState(null);
-  const [reviewInvestor, setReviewInvestor] = useState(null);
-  const [rejectInvestor, setRejectInvestor] = useState(null);
-  const [notice, setNotice] = useState(null); // { type: "approve" | "reject", name }
+  const [
+    statusOptions,
+    setStatusOptions,
+  ] = useState([]);
 
-  const tabCounts = STATUS_TABS.reduce((acc, tab) => {
-    acc[tab] = tab === "All" ? investors.length : investors.filter((inv) => inv.status === tab).length;
-    return acc;
-  }, {});
+  const [
+    kycOptions,
+    setKycOptions,
+  ] = useState([]);
 
-  const filteredInvestors = investors.filter((inv) => {
-    const q = searchTerm.trim().toLowerCase();
-    const matchesSearch =
-      !q ||
-      inv.name.toLowerCase().includes(q) ||
-      (inv.id || "").toLowerCase().includes(q) ||
-      inv.mobile.includes(q) ||
-      inv.email.toLowerCase().includes(q);
-    const matchesKyc = kycFilter === "All KYC Status" || inv.kyc === kycFilter;
-    const matchesTab = activeTab === "All" || inv.status === activeTab;
-    return matchesSearch && matchesKyc && matchesTab;
-  });
+  const [
+    activeTab,
+    setActiveTab,
+  ] = useState("All");
 
-  const toggleAll = (e) => {
-    setSelected(e.target.checked ? filteredInvestors.map((i) => i.email) : []);
-  };
+  const [
+    kycFilter,
+    setKycFilter,
+  ] = useState("All KYC Status");
 
-  const toggleOne = (email) => {
-    setSelected((prev) =>
-      prev.includes(email) ? prev.filter((x) => x !== email) : [...prev, email]
+  const [
+    searchInput,
+    setSearchInput,
+  ] = useState("");
+
+  const [
+    searchText,
+    setSearchText,
+  ] = useState("");
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  const [
+    selectedInvestor,
+    setSelectedInvestor,
+  ] = useState(null);
+
+  const [
+    detailsLoading,
+    setDetailsLoading,
+  ] = useState(false);
+
+  const [
+    actionLoading,
+    setActionLoading,
+  ] = useState(null);
+
+  const [
+    showDetails,
+    setShowDetails,
+  ] = useState(false);
+
+  const loadMasters =
+    useCallback(async () => {
+      try {
+        const [
+          statusesResponse,
+          kycResponse,
+        ] = await Promise.all([
+          getInvestorStatuses(),
+          getKycStatuses(),
+        ]);
+
+        setStatusOptions(
+          getArray(
+            statusesResponse
+          )
+        );
+
+        setKycOptions(
+          getArray(
+            kycResponse
+          )
+        );
+      } catch (err) {
+        console.error(
+          "Failed to load investor masters:",
+          err
+        );
+      }
+    }, []);
+
+  const loadInvestors =
+    useCallback(
+      async (showRefresh = false) => {
+        try {
+          if (showRefresh) {
+            setRefreshing(true);
+          } else {
+            setLoading(true);
+          }
+
+          setError("");
+
+          const response =
+            await getInvestors({
+              searchText,
+              limit: 100,
+              offset: 0,
+            });
+
+          const rows =
+            getArray(response);
+
+          const normalized =
+            rows.map(
+              normalizeInvestor
+            );
+
+          setInvestors(
+            normalized
+          );
+        } catch (err) {
+          console.error(
+            "Failed to load investors:",
+            err
+          );
+
+          setError(
+            err?.message ||
+              "Unable to load investors."
+          );
+
+          setInvestors([]);
+        } finally {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      },
+      [searchText]
+    );
+
+  useEffect(() => {
+    loadMasters();
+  }, [loadMasters]);
+
+  useEffect(() => {
+    loadInvestors();
+  }, [loadInvestors]);
+
+  const filteredInvestors =
+    useMemo(() => {
+      let result = investors;
+
+      if (activeTab !== "All") {
+        result =
+          result.filter(
+            (investor) =>
+              statusMatches(
+                investor,
+                activeTab
+              )
+          );
+      }
+
+      if (
+        kycFilter &&
+        kycFilter !==
+          "All KYC Status"
+      ) {
+        result =
+          result.filter(
+            (investor) =>
+              normalizeStatus(
+                investor.kycStatus
+              ) ===
+              normalizeStatus(
+                kycFilter
+              )
+          );
+      }
+
+      return result;
+    }, [
+      investors,
+      activeTab,
+      kycFilter,
+    ]);
+
+  const statusCounts =
+    useMemo(() => {
+      return {
+        All: investors.length,
+
+        Pending:
+          investors.filter(
+            (investor) =>
+              normalizeStatus(
+                investor.status
+              ) === "pending"
+          ).length,
+
+        Active:
+          investors.filter(
+            (investor) => {
+              const status =
+                normalizeStatus(
+                  investor.status
+                );
+
+              return (
+                status ===
+                  "active" ||
+                status ===
+                  "approved"
+              );
+            }
+          ).length,
+
+        Suspended:
+          investors.filter(
+            (investor) =>
+              normalizeStatus(
+                investor.status
+              ) === "suspended"
+          ).length,
+      };
+    }, [investors]);
+
+  const investorStats = useMemo(() => {
+    const totalInvestors = investors.length;
+    const pendingKyc = investors.filter((investor) => {
+      const status = normalizeStatus(investor.kycStatus);
+      return (
+        status === "pending" ||
+        status === "submitted" ||
+        status === "under review"
+      );
+    }).length;
+    const activeInvestors = investors.filter((investor) => {
+      const status = normalizeStatus(investor.status);
+      return status === "active" || status === "approved";
+    }).length;
+    const suspendedInvestors = investors.filter(
+      (investor) => normalizeStatus(investor.status) === "suspended"
+    ).length;
+    const totalInvestment = investors.reduce(
+      (sum, investor) => sum + Number(investor.investment || 0),
+      0
+    );
+    return {
+      totalInvestors,
+      pendingKyc,
+      activeInvestors,
+      suspendedInvestors,
+      totalInvestment,
+    };
+  }, [investors]);
+
+  const handleSearch = () => {
+    setSearchText(
+      searchInput.trim()
     );
   };
 
-  const openAddModal = () => {
-    setForm(emptyForm);
-    setErrors({});
-    setShowAddModal(true);
+  const handleSearchKeyDown = (
+    event
+  ) => {
+    if (event.key === "Enter") {
+      handleSearch();
+    }
   };
 
-  const closeAddModal = () => {
-    setShowAddModal(false);
+  const getDetailsId = (
+    investor
+  ) => {
+    const candidates = [
+      investor?.raw
+        ?.investor_registration_id,
+      investor?.raw
+        ?.registration_id,
+      investor?.raw?.id,
+      investor?.investorRegistrationId,
+    ];
+
+    for (const value of candidates) {
+      if (
+        value !== null &&
+        value !== undefined &&
+        value !== ""
+      ) {
+        const numberValue =
+          Number(value);
+
+        if (
+          Number.isInteger(
+            numberValue
+          ) &&
+          numberValue > 0
+        ) {
+          return numberValue;
+        }
+      }
+    }
+
+    return null;
   };
 
-  const handleChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const handleView = async (
+    investor
+  ) => {
+    const detailsId =
+      getDetailsId(investor);
+
+    setShowDetails(true);
+    setSelectedInvestor(null);
+
+    if (!detailsId) {
+      setSelectedInvestor({
+        ...investor,
+        error:
+          "Investor registration ID is not available.",
+      });
+
+      return;
+    }
+
+    try {
+      setDetailsLoading(true);
+
+      const details =
+        await getInvestorDetails(
+          detailsId
+        );
+
+      const data =
+        details?.data ||
+        details;
+
+      setSelectedInvestor({
+        ...investor,
+        ...data,
+        raw: data,
+      });
+    } catch (err) {
+      console.error(
+        "Failed to load investor details:",
+        err
+      );
+
+      setSelectedInvestor({
+        ...investor,
+        error:
+          err?.message ||
+          "Unable to load details.",
+      });
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
-  const validate = () => {
-    const errs = {};
-    if (!form.name.trim()) errs.name = "Name is required";
-    if (!form.email.trim()) errs.email = "Email is required";
-    else if (!/^\S+@\S+\.\S+$/.test(form.email)) errs.email = "Enter a valid email";
-    if (!form.mobile.trim()) errs.mobile = "Mobile number is required";
-    else if (!/^\d{10}$/.test(form.mobile.trim())) errs.mobile = "Enter a 10-digit mobile number";
-    if (!form.investment.trim()) errs.investment = "Investment amount is required";
-    if (!form.bankName.trim()) errs.bankName = "Bank name is required";
-    if (!form.accountNumber.trim()) errs.accountNumber = "Account number is required";
-    if (!form.ifsc.trim()) errs.ifsc = "IFSC code is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
+  const handleApprove =
+    async (investor) => {
+      let loadingKey = null;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+      try {
+        
+        const userId =
+          investor?.userId ??
+          investor?.raw?.user_id ??
+          investor?.raw?.userId;
 
-    const newInvestor = {
-      email: form.email.trim(),
-      id: nextInvestorId(investors),
-      name: form.name.trim(),
-      mobile: form.mobile.trim(),
-      branch: form.branch,
-      registered: formatToday(),
-      kyc: form.kyc,
-      status: form.status,
-      investment: formatInvestment(form.investment),
-      dob: "",
-      aadhaar: "",
-      address: "",
-      city: "",
-      state: "",
-      pin: "",
-      bank: {
-        accountHolder: form.name.trim(),
-        accountNumber: form.accountNumber.trim(),
-        ifsc: form.ifsc.trim(),
-        bankName: form.bankName.trim(),
-      },
+        const branchId =
+          investor?.branchId ??
+          investor?.raw?.branch_id ??
+          investor?.raw?.branchId ??
+          investor?.raw?.branch?.id ??
+          investor?.raw?.branch?.branch_id;
+
+        if (
+          userId === null ||
+          userId === undefined ||
+          userId === ""
+        ) {
+          throw new Error(
+            "User ID is not available for this investor."
+          );
+        }
+
+        if (
+          branchId === null ||
+          branchId === undefined ||
+          branchId === ""
+        ) {
+          throw new Error(
+            "Branch ID is not available for this investor. Please check the investor details or branch assignment."
+          );
+        }
+
+        const numericUserId = Number(userId);
+        const numericBranchId = Number(branchId);
+
+        if (
+          !Number.isInteger(numericUserId) ||
+          numericUserId <= 0
+        ) {
+          throw new Error(
+            "Invalid user ID for investor approval."
+          );
+        }
+
+        if (
+          !Number.isInteger(numericBranchId) ||
+          numericBranchId <= 0
+        ) {
+          throw new Error(
+            "Invalid branch ID for investor approval."
+          );
+        }
+
+        const confirmed =
+          window.confirm(
+            `Approve investor ${investor.fullName}?`
+          );
+
+        if (!confirmed) {
+          return;
+        }
+
+        loadingKey =
+          investor?.investorId ||
+          String(numericUserId);
+
+        setActionLoading(loadingKey);
+        setError("");
+
+        await approveInvestor(
+          String(numericUserId),
+          {
+            branch_id: numericBranchId,
+            remarks:
+              "Investor approved by admin",
+          }
+        );
+        await loadInvestors(true);
+
+        alert(
+          "Investor approved successfully."
+        );
+      } catch (err) {
+        console.error(
+          "Investor approval failed:",
+          err
+        );
+
+        setError(
+          err?.message ||
+            "Failed to approve investor."
+        );
+
+        alert(
+          err?.message ||
+            "Failed to approve investor."
+        );
+      } finally {
+        setActionLoading(null);
+      }
     };
 
-    setInvestors((prev) => [newInvestor, ...prev]);
-    setShowAddModal(false);
-  };
+  const handleReject =
+    async (investor) => {
+      const investorId =
+        investor?.investorId ||
+        investor?.raw?.investor_id ||
+        investor?.raw?.investor_code;
 
-  const openView = (inv) => {
-    setViewInvestor(inv);
-  };
+      if (!investorId) {
+        alert(
+          "Investor ID is not available."
+        );
 
-  const closeView = () => {
-    setViewInvestor(null);
-  };
+        return;
+      }
 
-  const handleApproveKyc = (email, branch, remarks) => {
-    const name = reviewInvestor?.name;
-    setInvestors((prev) => {
-      const assignedId = nextInvestorId(prev);
-      return prev.map((inv) =>
-        inv.email === email
-          ? { ...inv, id: inv.id || assignedId, branch, kyc: "Approved", status: "Active" }
-          : inv
+      const remarks =
+        window.prompt(
+          "Enter rejection remarks:"
+        );
+
+      if (remarks === null) {
+        return;
+      }
+
+      try {
+        setActionLoading(
+          investorId
+        );
+
+        await rejectInvestor(
+          investorId,
+          {
+            remarks:
+              remarks.trim() ||
+              "Investor rejected by admin",
+          }
+        );
+
+        await loadInvestors(true);
+
+        alert(
+          "Investor rejected successfully."
+        );
+      } catch (err) {
+        console.error(
+          "Investor rejection failed:",
+          err
+        );
+
+        alert(
+          err?.message ||
+            "Investor rejection is not available in the backend."
+        );
+      } finally {
+        setActionLoading(null);
+      }
+    };
+
+  const handleExport = () => {
+    if (
+      !filteredInvestors.length
+    ) {
+      alert(
+        "No investor records to export."
       );
-    });
-    setReviewInvestor(null);
-    setNotice({ type: "approve", name });
+
+      return;
+    }
+
+    const headers = [
+      "Investor ID",
+      "Investor Name",
+      "Email",
+      "Mobile",
+      "Branch",
+      "Registered",
+      "KYC",
+      "Status",
+      "Investment",
+    ];
+
+    const rows =
+      filteredInvestors.map(
+        (investor) => [
+          investor.investorId,
+          investor.fullName,
+          investor.email,
+          investor.mobile,
+          investor.branch,
+          formatDate(
+            investor.registeredDate
+          ),
+          investor.kycStatus,
+          investor.status,
+          formatAmount(
+            investor.investment
+          ),
+        ]
+      );
+
+    const csv = [
+      headers,
+      ...rows,
+    ]
+      .map(
+        (row) =>
+          row
+            .map(
+              (value) =>
+                `"${String(
+                  value ?? ""
+                ).replace(
+                  /"/g,
+                  '""'
+                )}"`
+            )
+            .join(",")
+      )
+      .join("\n");
+
+    const blob =
+      new Blob(
+        [csv],
+        {
+          type:
+            "text/csv;charset=utf-8;",
+        }
+      );
+
+    const url =
+      window.URL.createObjectURL(
+        blob
+      );
+
+    const link =
+      document.createElement(
+        "a"
+      );
+
+    link.href = url;
+    link.download =
+      "investors.csv";
+
+    document.body.appendChild(
+      link
+    );
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(
+      url
+    );
   };
 
-  const handleRejectKyc = (email) => {
-    const name = reviewInvestor?.name || rejectInvestor?.name;
-    setInvestors((prev) =>
-      prev.map((inv) => (inv.email === email ? { ...inv, kyc: "Rejected", status: "Suspended" } : inv))
-    );
-    setReviewInvestor(null);
-    setRejectInvestor(null);
-    setNotice({ type: "reject", name });
+  const getStatusClass =
+    (status) => {
+      const normalized =
+        normalizeStatus(
+          status
+        );
+
+      if (
+        normalized ===
+          "active" ||
+        normalized ===
+          "approved"
+      ) {
+        return "investor-status investor-status--active";
+      }
+
+      if (
+        normalized ===
+        "suspended"
+      ) {
+        return "investor-status investor-status--suspended";
+      }
+
+      if (
+        normalized ===
+        "rejected"
+      ) {
+        return "investor-status investor-status--rejected";
+      }
+
+      return "investor-status investor-status--pending";
+    };
+
+  const getKycClass =
+    (status) => {
+      const normalized =
+        normalizeStatus(
+          status
+        );
+
+      if (
+        normalized ===
+          "approved" ||
+        normalized ===
+          "verified"
+      ) {
+        return "investor-kyc investor-kyc--approved";
+      }
+
+      if (
+        normalized ===
+        "rejected"
+      ) {
+        return "investor-kyc investor-kyc--rejected";
+      }
+
+      return "investor-kyc investor-kyc--pending";
+    };
+
+  const getInitial = (
+    name
+  ) => {
+    if (!name) {
+      return "?";
+    }
+
+    return name
+      .trim()
+      .charAt(0)
+      .toUpperCase();
   };
 
   return (
-    <>
-      <div className="im-header">
-        <div>
-          <h1>Investor Management</h1>
-          <p>Manage all registered investors, KYC status, and account access</p>
+    <div className="investor-management-page">
+      <div className="investor-stat-grid">
+        <div className="investor-stat-card investor-stat-card--blue">
+          <div className="investor-stat-card-top">
+            <span className="investor-stat-label">Total Investors</span>
+            <span className="investor-stat-icon"><Users size={18} /></span>
+          </div>
+          <div className="investor-stat-value">{investorStats.totalInvestors}</div>
+          <span className="investor-stat-note">Registered investors</span>
         </div>
-        <div className="im-header-actions">
-          <button className="btn btn-outline">
-            <Download size={15} /> Export
-          </button>
-          <button className="btn btn-primary" onClick={openAddModal}>
-            <Plus size={15} /> Add Investor
-          </button>
+
+        <div className="investor-stat-card investor-stat-card--amber">
+          <div className="investor-stat-card-top">
+            <span className="investor-stat-label">Pending KYC</span>
+            <span className="investor-stat-icon"><BadgeCheck size={18} /></span>
+          </div>
+          <div className="investor-stat-value">{investorStats.pendingKyc}</div>
+          <span className="investor-stat-note">Awaiting verification</span>
+        </div>
+
+        <div className="investor-stat-card investor-stat-card--green">
+          <div className="investor-stat-card-top">
+            <span className="investor-stat-label">Active Investors</span>
+            <span className="investor-stat-icon"><UserCheck size={18} /></span>
+          </div>
+          <div className="investor-stat-value">{investorStats.activeInvestors}</div>
+          <span className="investor-stat-note">Active accounts</span>
+        </div>
+
+        <div className="investor-stat-card investor-stat-card--red">
+          <div className="investor-stat-card-top">
+            <span className="investor-stat-label">Suspended</span>
+            <span className="investor-stat-icon"><UserX size={18} /></span>
+          </div>
+          <div className="investor-stat-value">{investorStats.suspendedInvestors}</div>
+          <span className="investor-stat-note">Suspended accounts</span>
+        </div>
+
+        <div className="investor-stat-card investor-stat-card--purple">
+          <div className="investor-stat-card-top">
+            <span className="investor-stat-label">Total Investment</span>
+            <span className="investor-stat-icon"><IndianRupee size={18} /></span>
+          </div>
+          <div className="investor-stat-value investor-stat-value--amount">
+            {formatAmount(investorStats.totalInvestment)}
+          </div>
+          <span className="investor-stat-note">Combined investment amount</span>
         </div>
       </div>
 
-      <div className="invmgmt-status-tabs">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            className={`invmgmt-status-tab${activeTab === tab ? " invmgmt-status-tab--active" : ""}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab} <span className="invmgmt-status-tab-count">{tabCounts[tab]}</span>
-          </button>
-        ))}
-      </div>
+      <div className="investor-management-toolbar">
+        <div className="investor-search-box">
+          <Search size={16} />
 
-      <div className="im-toolbar">
-        <div className="im-search">
-          <Search size={15} />
           <input
             type="text"
+            value={searchInput}
+            onChange={(event) =>
+              setSearchInput(event.target.value)
+            }
+            onKeyDown={handleSearchKeyDown}
             placeholder="Search by name, ID, mobile..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
           />
+
+          {searchInput && (
+            <button
+              type="button"
+              className="investor-search-clear"
+              onClick={() => {
+                setSearchInput("");
+                setSearchText("");
+              }}
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
-        <select
-          className="im-select"
-          value={kycFilter}
-          onChange={(e) => setKycFilter(e.target.value)}
-        >
-          <option>All KYC Status</option>
-          {KYC_OPTIONS.map((k) => (
-            <option key={k}>{k}</option>
+
+        <div className="investor-status-tabs">
+          {STATUS_TABS.map((tab) => (
+            <button
+              type="button"
+              key={tab.key}
+              className={
+                activeTab === tab.key
+                  ? "investor-status-tab investor-status-tab--active"
+                  : "investor-status-tab"
+              }
+              onClick={() => setActiveTab(tab.key)}
+            >
+              <span>{tab.label}</span>
+              <span className="investor-tab-count">
+                {statusCounts[tab.key] || 0}
+              </span>
+            </button>
           ))}
+        </div>
+
+        <select
+          value={kycFilter}
+          onChange={(event) =>
+            setKycFilter(event.target.value)
+          }
+          className="investor-kyc-filter"
+        >
+          <option value="All KYC Status">
+            All KYC Status
+          </option>
+
+          {kycOptions.map((option, index) => {
+            const value = getValue(
+              option,
+              [
+                "status_name",
+                "name",
+                "kyc_status_name",
+                "label",
+              ],
+              ""
+            );
+
+            if (!value) {
+              return null;
+            }
+
+            return (
+              <option
+                key={option.id || value || index}
+                value={value}
+              >
+                {value}
+              </option>
+            );
+          })}
         </select>
+
+        <button
+          type="button"
+          className="investor-export-btn investor-toolbar-export"
+          onClick={handleExport}
+        >
+          <Download size={14} />
+          Export
+        </button>
       </div>
 
-      <div className="im-table-wrap">
-        <table className="im-table">
-          <thead>
-            <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  onChange={toggleAll}
-                  checked={
-                    selected.length === filteredInvestors.length && filteredInvestors.length > 0
-                  }
-                />
-              </th>
-              <th>INVESTOR ID</th>
-              <th>INVESTOR NAME</th>
-              <th>MOBILE</th>
-              <th>BRANCH</th>
-              <th>REGISTERED</th>
-              <th>KYC</th>
-              <th>STATUS</th>
-              <th>INVESTMENT</th>
-              <th>ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredInvestors.length === 0 && (
+      {error && (
+        <div className="investor-management-error">
+          <span>
+            {error}
+          </span>
+
+          <button
+            type="button"
+            onClick={() =>
+              loadInvestors(
+                true
+              )
+            }
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      <div className="investor-table-card">
+        <div className="investor-table-scroll">
+          <table className="investor-table">
+            <thead>
               <tr>
-                <td colSpan={10} className="im-no-results">
-                  No investors match your search or filters.
-                </td>
+                <th>
+                  Investor Name
+                </th>
+
+                <th>
+                  Mobile
+                </th>
+
+                <th>
+                  Branch
+                </th>
+
+                <th>
+                  Registered
+                </th>
+
+                <th>
+                  KYC
+                </th>
+
+                <th>
+                  Status
+                </th>
+
+                <th>
+                  Investment
+                </th>
+
+                <th>
+                  Actions
+                </th>
               </tr>
-            )}
-            {filteredInvestors.map((inv) => (
-              <tr key={inv.email}>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(inv.email)}
-                    onChange={() => toggleOne(inv.email)}
-                  />
-                </td>
-                <td>
-                  {inv.id ? (
-                    <span className="im-id">{inv.id}</span>
-                  ) : (
-                    <span className="invmgmt-id-pending">
-                      {inv.status === "Pending" ? "Pending..." : "—"}
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="investor-table-loading"
+                  >
+                    <Loader2
+                      size={22}
+                      className="investor-spin"
+                    />
+
+                    <span>
+                      Loading investors...
                     </span>
+                  </td>
+                </tr>
+              ) : filteredInvestors.length ===
+                0 ? (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="investor-table-empty"
+                  >
+                    <Users size={28} />
+
+                    <span>
+                      No investors found.
+                    </span>
+                  </td>
+                </tr>
+              ) : (
+                filteredInvestors.map(
+                  (investor) => {
+                    const loadingAction =
+                      actionLoading ===
+                      (
+                        investor.investorId ||
+                        String(investor.userId || "")
+                      );
+
+                 
+                    const currentKycStatus =
+                      normalizeStatus(
+                        investor.kycStatus
+                      );
+
+                    const canTakeKycAction =
+                      currentKycStatus ===
+                        "pending" ||
+                      currentKycStatus ===
+                        "submitted" ||
+                      currentKycStatus ===
+                        "under review";
+
+                    return (
+                      <tr
+                        key={
+                          investor.investorRegistrationId ||
+                          investor.investorId
+                        }
+                      >
+                        <td>
+                          <div className="investor-name-cell">
+                            <span className="investor-avatar">
+                              {getInitial(
+                                investor.fullName
+                              )}
+                            </span>
+
+                            <div>
+                              <div className="investor-name">
+                                {
+                                  investor.fullName
+                                }
+                              </div>
+
+                              {investor.email && (
+                                <div className="investor-email">
+                                  {
+                                    investor.email
+                                  }
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        <td>
+                          {
+                            investor.mobile
+                          }
+                        </td>
+
+                        <td>
+                          <span className="investor-branch">
+                            {
+                              investor.branch
+                            }
+                          </span>
+                        </td>
+
+                        <td>
+                          {formatDate(
+                            investor.registeredDate
+                          )}
+                        </td>
+
+                        <td>
+                          <span
+                            className={getKycClass(
+                              investor.kycStatus
+                            )}
+                          >
+                            {
+                              investor.kycStatus
+                            }
+                          </span>
+                        </td>
+
+                        <td>
+                          <span
+                            className={getStatusClass(
+                              investor.status
+                            )}
+                          >
+                            {
+                              investor.status
+                            }
+                          </span>
+                        </td>
+
+                        <td className="investor-investment">
+                          {formatAmount(
+                            investor.investment
+                          )}
+                        </td>
+
+                        <td>
+                          <div className="investor-actions">
+                            {canTakeKycAction && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="investor-action-btn investor-action-btn--approve"
+                                  onClick={() =>
+                                    handleApprove(
+                                      investor
+                                    )
+                                  }
+                                  disabled={Boolean(loadingAction)}
+                                >
+                                  {loadingAction ? (
+                                    <Loader2
+                                      size={14}
+                                      className="investor-spin"
+                                    />
+                                  ) : (
+                                    <Check
+                                      size={14}
+                                    />
+                                  )}
+
+                                  {loadingAction
+                                    ? "Approving..."
+                                    : "Approve"}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="investor-action-btn investor-action-btn--reject"
+                                  onClick={() =>
+                                    handleReject(
+                                      investor
+                                    )
+                                  }
+                                  disabled={Boolean(loadingAction)}
+                                >
+                                  {loadingAction ? (
+                                    <Loader2
+                                      size={14}
+                                      className="investor-spin"
+                                    />
+                                  ) : (
+                                    <X
+                                      size={14}
+                                    />
+                                  )}
+
+                                  {loadingAction
+                                    ? "Rejecting..."
+                                    : "Reject"}
+                                </button>
+                              </>
+                            )}
+
+                            <button
+                              type="button"
+                              className="investor-action-btn investor-action-btn--view"
+                              onClick={() =>
+                                handleView(
+                                  investor
+                                )
+                              }
+                              title="View investor"
+                            >
+                              <Eye
+                                size={16}
+                              />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="investor-table-footer">
+          Showing{" "}
+          <strong>
+            {
+              filteredInvestors.length
+            }
+          </strong>{" "}
+          records
+        </div>
+      </div>
+
+      {showDetails && (
+        <div
+          className="investor-details-overlay"
+          onClick={() =>
+            setShowDetails(
+              false
+            )
+          }
+        >
+          <div
+            className="investor-details-modal"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div className="investor-details-header">
+              <div>
+                <h2>
+                  Investor Details
+                </h2>
+
+                <p>
+                  View investor registration
+                  information
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowDetails(
+                    false
+                  )
+                }
+                className="investor-details-close"
+              >
+                <X size={19} />
+              </button>
+            </div>
+
+            {detailsLoading ? (
+              <div className="investor-details-loading">
+                <Loader2
+                  size={26}
+                  className="investor-spin"
+                />
+
+                <span>
+                  Loading details...
+                </span>
+              </div>
+            ) : selectedInvestor?.error ? (
+              <div className="investor-details-error">
+                {
+                  selectedInvestor.error
+                }
+              </div>
+            ) : (
+              <div className="investor-details-content">
+                {Object.entries(
+                  selectedInvestor ||
+                    {}
+                )
+                  .filter(
+                    ([key]) =>
+                      ![
+                        "password",
+                        "hashed_password",
+                        "raw",
+                      ].includes(
+                        key
+                      )
+                  )
+                  .map(
+                    ([
+                      key,
+                      value,
+                    ]) => (
+                      <div
+                        className="investor-detail-item"
+                        key={key}
+                      >
+                        <span>
+                          {key
+                            .replace(
+                              /_/g,
+                              " "
+                            )
+                            .replace(
+                              /\b\w/g,
+                              (
+                                char
+                              ) =>
+                                char.toUpperCase()
+                            )}
+                        </span>
+
+                        <strong>
+                          {value ===
+                            null ||
+                          value ===
+                            undefined ||
+                          value === ""
+                            ? "-"
+                            : typeof value ===
+                                "object"
+                              ? JSON.stringify(
+                                  value
+                                )
+                              : String(
+                                  value
+                                )}
+                        </strong>
+                      </div>
+                    )
                   )}
-                </td>
-                <td>
-                  <div className="im-investor-cell">
-                    <span className="im-avatar">{initials(inv.name)}</span>
-                    <div>
-                      <div className="im-name">{inv.name}</div>
-                      <div className="im-email">{inv.email}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>{inv.mobile}</td>
-                <td className="im-muted">{inv.branch}</td>
-                <td className="im-muted">{inv.registered}</td>
-                <td>
-                  <span className={`im-badge im-badge-${inv.kyc.toLowerCase()}`}>{inv.kyc}</span>
-                </td>
-                <td>
-                  <span className={`im-badge im-badge-${inv.status.toLowerCase()}`}>{inv.status}</span>
-                </td>
-                <td className="im-investment">{inv.investment}</td>
-                <td>
-                  <div className="im-actions">
-                    {inv.status === "Pending" && (
-                      <>
-                        <button className="im-btn im-btn-approve" onClick={() => setReviewInvestor(inv)}>
-                          Approve
-                        </button>
-                        <button className="im-btn im-btn-reject" onClick={() => setRejectInvestor(inv)}>
-                          Reject
-                        </button>
-                      </>
-                    )}
-                    <button className="im-icon-btn" onClick={() => openView(inv)}>
-                      <Eye size={14} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="im-pagination">
-        <span>
-          Showing {filteredInvestors.length === 0 ? 0 : 1}-{filteredInvestors.length} of{" "}
-          {investors.length} records
-        </span>
-        <div className="im-pagination-controls">
-          <button className="im-page-btn" disabled>‹</button>
-          <button className="im-page-btn im-page-btn-active">1</button>
-          <button className="im-page-btn" disabled>›</button>
-        </div>
-      </div>
-
-      {showAddModal && (
-        <div className="im-modal-overlay" onClick={closeAddModal}>
-          <div className="im-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="im-modal-header">
-              <h2>Add Investor</h2>
-              <button className="im-icon-btn" onClick={closeAddModal}>
-                <X size={16} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="im-modal-form">
-              <div className="im-form-row">
-                <label>Full Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={handleChange("name")}
-                  placeholder="e.g. Anjali Rao"
-                />
-                {errors.name && <span className="im-error">{errors.name}</span>}
               </div>
-
-              <div className="im-form-row">
-                <label>Email</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange("email")}
-                  placeholder="e.g. anjali@email.com"
-                />
-                {errors.email && <span className="im-error">{errors.email}</span>}
-              </div>
-
-              <div className="im-form-row">
-                <label>Mobile</label>
-                <input
-                  type="text"
-                  value={form.mobile}
-                  onChange={handleChange("mobile")}
-                  placeholder="10-digit mobile number"
-                />
-                {errors.mobile && <span className="im-error">{errors.mobile}</span>}
-              </div>
-
-              <div className="im-form-row">
-                <label>Branch</label>
-                <select value={form.branch} onChange={handleChange("branch")}>
-                  {BRANCHES.map((b) => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="im-form-row-split">
-                <div className="im-form-row">
-                  <label>KYC Status</label>
-                  <select value={form.kyc} onChange={handleChange("kyc")}>
-                    {KYC_OPTIONS.map((k) => (
-                      <option key={k} value={k}>
-                        {k}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="im-form-row">
-                  <label>Account Status</label>
-                  <select value={form.status} onChange={handleChange("status")}>
-                    {STATUS_TABS.filter((s) => s !== "All").map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="im-form-row">
-                <label>Investment Amount (₹)</label>
-                <input
-                  type="text"
-                  value={form.investment}
-                  onChange={handleChange("investment")}
-                  placeholder="e.g. 500000"
-                />
-                {errors.investment && <span className="im-error">{errors.investment}</span>}
-              </div>
-
-              <div className="im-form-row">
-                <label>Bank Name</label>
-                <input
-                  type="text"
-                  value={form.bankName}
-                  onChange={handleChange("bankName")}
-                  placeholder="e.g. HDFC Bank"
-                />
-                {errors.bankName && <span className="im-error">{errors.bankName}</span>}
-              </div>
-
-              <div className="im-form-row-split">
-                <div className="im-form-row">
-                  <label>Account Number</label>
-                  <input
-                    type="text"
-                    value={form.accountNumber}
-                    onChange={handleChange("accountNumber")}
-                    placeholder="e.g. 500123456789"
-                  />
-                  {errors.accountNumber && <span className="im-error">{errors.accountNumber}</span>}
-                </div>
-
-                <div className="im-form-row">
-                  <label>IFSC Code</label>
-                  <input
-                    type="text"
-                    value={form.ifsc}
-                    onChange={handleChange("ifsc")}
-                    placeholder="e.g. HDFC0001234"
-                  />
-                  {errors.ifsc && <span className="im-error">{errors.ifsc}</span>}
-                </div>
-              </div>
-
-              <div className="im-modal-actions">
-                <button type="button" className="btn btn-outline" onClick={closeAddModal}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Add Investor
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
       )}
-
-      {viewInvestor && (
-        <div className="im-modal-overlay" onClick={closeView}>
-          <div className="im-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="im-modal-header">
-              <h2>Investor Details</h2>
-              <button className="im-icon-btn" onClick={closeView}>
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="im-modal-form">
-              <div className="im-form-row">
-                <label>Investor ID</label>
-                <span className="im-id">{viewInvestor.id || "Pending"}</span>
-              </div>
-              <div className="im-form-row">
-                <label>Full Name</label>
-                <span>{viewInvestor.name}</span>
-              </div>
-              <div className="im-form-row">
-                <label>Email</label>
-                <span>{viewInvestor.email}</span>
-              </div>
-              <div className="im-form-row">
-                <label>Mobile</label>
-                <span>{viewInvestor.mobile}</span>
-              </div>
-              <div className="im-form-row">
-                <label>Branch</label>
-                <span>{viewInvestor.branch}</span>
-              </div>
-              <div className="im-form-row-split">
-                <div className="im-form-row">
-                  <label>KYC Status</label>
-                  <span className={`im-badge im-badge-${viewInvestor.kyc.toLowerCase()}`}>{viewInvestor.kyc}</span>
-                </div>
-                <div className="im-form-row">
-                  <label>Account Status</label>
-                  <span className={`im-badge im-badge-${viewInvestor.status.toLowerCase()}`}>{viewInvestor.status}</span>
-                </div>
-              </div>
-              <div className="im-form-row">
-                <label>Investment Amount</label>
-                <span className="im-investment">{viewInvestor.investment}</span>
-              </div>
-
-              <p className="im-modal-section-title">Bank Details</p>
-              <div className="im-form-row">
-                <label>Account Holder</label>
-                <span>{viewInvestor.bank.accountHolder}</span>
-              </div>
-              <div className="im-form-row">
-                <label>Bank Name</label>
-                <span>{viewInvestor.bank.bankName}</span>
-              </div>
-              <div className="im-form-row-split">
-                <div className="im-form-row">
-                  <label>Account Number</label>
-                  <span>{viewInvestor.bank.accountNumber}</span>
-                </div>
-                <div className="im-form-row">
-                  <label>IFSC Code</label>
-                  <span>{viewInvestor.bank.ifsc}</span>
-                </div>
-              </div>
-
-              <div className="im-modal-actions">
-                <button type="button" className="btn btn-outline" onClick={closeView}>
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {reviewInvestor && (
-        <ReviewKycModal
-          investor={reviewInvestor}
-          onClose={() => setReviewInvestor(null)}
-          onApprove={handleApproveKyc}
-          onReject={handleRejectKyc}
-        />
-      )}
-
-      {rejectInvestor && (
-        <RejectConfirmModal
-          investor={rejectInvestor}
-          onClose={() => setRejectInvestor(null)}
-          onConfirm={handleRejectKyc}
-        />
-      )}
-
-      {notice && (
-        <SuperAdminNoticeModal notice={notice} onClose={() => setNotice(null)} />
-      )}
-    </>
+    </div>
   );
 }

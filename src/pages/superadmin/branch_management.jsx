@@ -158,9 +158,9 @@ export default function BranchManagement() {
                       <button type="button" className="sa-icon-btn" onClick={() => openEdit(row)} title="Edit">
                         <Pencil size={15} />
                       </button>
-                      <button type="button" className="sa-icon-btn sa-icon-btn-danger" onClick={() => openDelete(row)} title="Delete">
+                      {/* <button type="button" className="sa-icon-btn sa-icon-btn-danger" onClick={() => openDelete(row)} title="Delete">
                         <Trash2 size={15} />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>

@@ -1,316 +1,635 @@
+
 .bond-certificate-page {
-  background: #f5f7fb;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px 24px 34px;
+  background: #f4f6fb;
+  color: #18233a;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
 }
 
-.bond-cert-topbar {
+
+/* =========================================================
+   TOP TOOLBAR
+   ========================================================= */
+
+.bond-certificate-toolbar {
+  width: 100%;
+  margin: 0 0 10px;
+  min-height: 36px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-.spin {
-  animation: bond-spin 0.8s linear infinite;
-}
-
-@keyframes bond-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.bond-cert-back {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  font-size: 13px;
-  color: #64748b;
-  cursor: pointer;
-  padding: 0;
-}
-.bond-cert-back:hover {
-  color: #0f1729;
-}
-
-.bond-cert-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f1729;
-  margin: 0;
-  flex: 1;
-}
-
-.bond-cert-topbar__actions {
-  display: flex;
+  justify-content: space-between;
   gap: 10px;
 }
 
-.bond-cert-wrap {
-  display: flex;
-  flex-direction: column;
+.bond-certificate-back {
+  border: 0;
+  background: transparent;
+  color: #68748a;
+  padding: 5px 3px;
+  display: inline-flex;
   align-items: center;
-  gap: 18px;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
 }
 
-.bond-cert-card {
-  width: 100%;
-  max-width: 520px;
-  background: #fdf9ef;
-  border: 1.5px solid #e7cf8a;
-  border-radius: 10px;
-  padding: 28px 30px;
+.bond-certificate-back:hover {
+  color: #2457d6;
+}
+
+.bond-certificate-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.bond-certificate-btn {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid #b8c4d7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17233b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
   box-sizing: border-box;
 }
 
-.bond-cert-header {
+.bond-certificate-btn:hover {
+  border-color: #315be7;
+  color: #315be7;
+}
+
+.bond-certificate-btn--primary {
+  border-color: #315be7;
+  background: #315be7;
+  color: #ffffff;
+}
+
+.bond-certificate-btn--primary:hover {
+  background: #254bc9;
+  border-color: #254bc9;
+  color: #ffffff;
+}
+
+.bond-certificate-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   PAGE HEADING
+   ========================================================= */
+
+.bond-certificate-heading {
+  margin: 5px 0 12px;
   text-align: center;
-  border-bottom: 1px solid #ecdfb0;
-  padding-bottom: 16px;
-  margin-bottom: 20px;
-}
-
-.bond-cert-heading {
-  font-size: 17px;
-  font-weight: 800;
-  color: #1e3a8a;
-  letter-spacing: 0.03em;
-  margin: 0 0 6px;
-  line-height: 1.3;
-}
-
-.bond-cert-tagline {
-  font-size: 9.5px;
-  letter-spacing: 0.05em;
-  color: #94a3b8;
-  margin: 0 0 10px;
-}
-
-.bond-cert-number {
-  display: inline-block;
-  background: #eef1ff;
-  color: #2f5cf0;
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.2;
   font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 6px;
+  color: #17233b;
 }
 
-.bond-cert-amount-box {
-  background: linear-gradient(135deg, #2f5cf0, #1e3a8a);
-  color: #fff;
+
+/* =========================================================
+   CERTIFICATE CARD
+   ========================================================= */
+
+.bond-certificate-card {
+  width: 320px;
+  max-width: calc(100vw - 30px);
+  margin: 0 auto;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #fffdf7;
+  border: 1px solid #e4c46a;
   border-radius: 8px;
-  text-align: center;
-  padding: 16px;
-  margin-bottom: 18px;
+  box-shadow: 0 5px 18px rgba(30, 45, 75, 0.09);
 }
 
-.bond-cert-amount-label {
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  color: #c3d0ff;
-  margin: 0 0 4px;
+.bond-certificate-body {
+  padding: 16px 16px 14px;
+  box-sizing: border-box;
 }
 
-.bond-cert-amount-value {
-  font-size: 26px;
-  font-weight: 800;
-  margin: 0;
-}
 
-.bond-cert-amount-words {
-  font-size: 11px;
-  color: #dbe4ff;
-  margin: 4px 0 0;
-}
+/* =========================================================
+   BRAND
+   ========================================================= */
 
-.bond-cert-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 20px;
-  margin-bottom: 20px;
-}
-
-.bond-cert-field-label {
-  font-size: 9.5px;
-  letter-spacing: 0.05em;
-  color: #a3915a;
-  margin: 0 0 3px;
-}
-
-.bond-cert-field-value {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #0f1729;
-  margin: 0;
-}
-
-.bond-cert-qr-wrap {
-  text-align: center;
-  margin-bottom: 18px;
-}
-
-.bond-qr {
-  display: grid;
-  grid-template-columns: repeat(7, 8px);
-  grid-template-rows: repeat(7, 8px);
-  gap: 1px;
-  margin: 0 auto 8px;
-  width: fit-content;
-  padding: 6px;
-  background: #fff;
-  border: 1px solid #ecdfb0;
-  border-radius: 4px;
-}
-
-.bond-qr__cell {
-  width: 8px;
-  height: 8px;
-  background: transparent;
-}
-.bond-qr__cell--on {
-  background: #1e3a8a;
-}
-
-.bond-cert-qr-label {
-  font-size: 9.5px;
-  color: #94a3b8;
-  margin: 0;
-}
-
-.bond-cert-qr-link {
-  font-size: 9.5px;
-  color: #2f5cf0;
-  margin: 2px 0 0;
-}
-
-.bond-cert-note {
-  font-size: 10.5px;
-  line-height: 1.5;
-  color: #6b7280;
-  background: #fbf5e4;
-  border: 1px solid #ecdfb0;
-  border-radius: 6px;
-  padding: 10px 12px;
-  margin-bottom: 20px;
-}
-
-.bond-cert-sign {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: end;
-  gap: 12px;
-  border-top: 1px solid #ecdfb0;
-  padding-top: 20px;
-  margin-bottom: 12px;
-}
-
-.bond-cert-sign-line span {
-  display: block;
-  border-top: 1px solid #cbb877;
-  margin-bottom: 4px;
-  height: 24px;
-}
-
-.bond-cert-sign-line p {
-  font-size: 10px;
-  color: #94a3b8;
-  margin: 0;
-  text-align: center;
-}
-
-.bond-cert-seal {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  border: 1.5px solid #2f5cf0;
+.bond-certificate-brand-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 7px;
-  font-weight: 800;
-  color: #2f5cf0;
-  line-height: 1.3;
+  gap: 5px;
+  margin-bottom: 7px;
 }
 
-.bond-cert-footer {
-  text-align: center;
-  font-size: 9px;
-  color: #a3915a;
-  line-height: 1.6;
-  margin: 0;
-}
-
-.bond-cert-actions {
+.bond-certificate-logo {
+  width: 17px;
+  height: 17px;
+  border-radius: 3px;
+  background: #315be7;
+  color: #ffffff;
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  font-size: 5px;
+  font-weight: 800;
 }
+
+.bond-certificate-brand {
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 800;
+  color: #172c62;
+}
+
+.bond-certificate-brand-sub {
+  margin-top: 3px;
+  font-size: 4px;
+  line-height: 1;
+  color: #9097a5;
+}
+
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.bond-certificate-title {
+  margin: 7px 0 3px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #2450c3;
+}
+
+.bond-certificate-subtitle {
+  margin: 0 0 9px;
+  text-align: center;
+  font-size: 4.5px;
+  line-height: 1.2;
+  color: #9098a9;
+  letter-spacing: 0.04em;
+}
+
+
+/* =========================================================
+   BOND NUMBER
+   ========================================================= */
+
+.bond-certificate-number {
+  width: fit-content;
+  margin: 0 auto 10px;
+  padding: 4px 9px;
+  border-radius: 4px;
+  background: #edf2ff;
+  color: #315be7;
+  font-size: 6px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+
+/* =========================================================
+   AMOUNT BOX
+   ========================================================= */
+
+.bond-certificate-amount-box {
+  margin: 0 0 10px;
+  padding: 11px 9px 10px;
+  border-radius: 5px;
+  background: linear-gradient(
+    135deg,
+    #315be7 0%,
+    #2447b9 100%
+  );
+  text-align: center;
+}
+
+.bond-certificate-amount-label {
+  color: rgba(255,255,255,0.78);
+  font-size: 4.5px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+.bond-certificate-amount {
+  margin-top: 5px;
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.bond-certificate-amount-words {
+  margin-top: 4px;
+  color: rgba(255,255,255,0.80);
+  font-size: 4.2px;
+  line-height: 1.1;
+}
+
+
+/* =========================================================
+   INFORMATION GRID
+   ========================================================= */
+
+.bond-certificate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+  row-gap: 0;
+}
+
+.bond-certificate-field {
+  min-width: 0;
+  padding: 5px 0 4px;
+  border-bottom: 1px dotted #d9d1bc;
+}
+
+.bond-certificate-field-label {
+  display: block;
+  margin-bottom: 3px;
+  color: #8c897f;
+  font-size: 4.4px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.bond-certificate-field-value {
+  display: block;
+  min-height: 6px;
+  color: #1f2a42;
+  font-size: 6.1px;
+  line-height: 1.25;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.bond-certificate-status {
+  color: #15803d;
+}
+
+
+/* =========================================================
+   VERIFICATION / QR
+   ========================================================= */
+
+.bond-certificate-verification-area {
+  padding-top: 9px;
+  text-align: center;
+}
+
+.bond-certificate-qr {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 4px;
+  border: 2px solid #ffffff;
+  background:
+    linear-gradient(
+      90deg,
+      #2148a9 25%,
+      transparent 25% 50%,
+      #2148a9 50% 75%,
+      transparent 75%
+    ),
+    linear-gradient(
+      #2148a9 25%,
+      transparent 25% 50%,
+      #2148a9 50% 75%,
+      transparent 75%
+    );
+  background-size: 10px 10px;
+  box-shadow: 0 0 0 1px #315be7;
+  overflow: hidden;
+}
+
+.qr-square {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border: 2px solid #2148a9;
+  box-sizing: border-box;
+}
+
+.qr-square::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  left: 1px;
+  top: 1px;
+  background: #2148a9;
+}
+
+.qr-a {
+  left: 2px;
+  top: 2px;
+}
+
+.qr-b {
+  right: 2px;
+  top: 2px;
+}
+
+.qr-c {
+  left: 2px;
+  bottom: 2px;
+}
+
+.qr-dots {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.bond-certificate-verification {
+  color: #7e8aa0;
+  font-size: 4.3px;
+  line-height: 1.2;
+}
+
+.bond-certificate-verification-code {
+  margin-top: 3px;
+  color: #315be7;
+  font-size: 4px;
+  line-height: 1.2;
+}
+
+
+/* =========================================================
+   LEGAL TEXT
+   ========================================================= */
+
+.bond-certificate-legal {
+  margin: 9px 0;
+  padding: 6px 7px;
+  border: 1px solid #eadfbe;
+  border-radius: 4px;
+  background: #fffaf0;
+  color: #77746c;
+  text-align: center;
+  font-size: 4.3px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   SIGNATURES
+   ========================================================= */
+
+.bond-certificate-signatures {
+  display: grid;
+  grid-template-columns: 1fr 42px 1fr;
+  align-items: end;
+  column-gap: 8px;
+  margin-top: 9px;
+}
+
+.bond-certificate-signature {
+  text-align: center;
+}
+
+.bond-certificate-signature-line {
+  width: 100%;
+  border-top: 1px solid #d5b75d;
+}
+
+.bond-certificate-signature-name {
+  margin-top: 4px;
+  color: #8c897f;
+  font-size: 4px;
+  line-height: 1;
+}
+
+.bond-certificate-seal {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  border: 1px solid #315be7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #315be7;
+  font-size: 5px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.bond-certificate-footer {
+  margin-top: 9px;
+  padding-top: 6px;
+  border-top: 1px solid #eadfbe;
+  text-align: center;
+  color: #989286;
+  font-size: 4px;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   BOTTOM ACTIONS
+   ========================================================= */
+
+.bond-certificate-bottom-actions {
+  width: 320px;
+  max-width: calc(100vw - 30px);
+  margin: 10px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+
+/* =========================================================
+   LOADING / ERROR
+   ========================================================= */
+
+.bond-certificate-loading {
+  width: 320px;
+  max-width: calc(100vw - 30px);
+  margin: 60px auto;
+  padding: 36px 18px;
+  box-sizing: border-box;
+  border: 1px solid #dfe5ee;
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #69758a;
+  font-size: 12px;
+}
+
+.bond-certificate-loading-icon {
+  animation: bond-certificate-spin 1s linear infinite;
+}
+
+.bond-certificate-error-card {
+  width: 460px;
+  max-width: calc(100vw - 30px);
+  margin: 60px auto;
+  padding: 36px 24px;
+  box-sizing: border-box;
+  border: 1px solid #dfe5ee;
+  border-radius: 9px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.bond-certificate-error {
+  margin-bottom: 18px;
+  color: #c0392b;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   SPINNER
+   ========================================================= */
+
+.bond-certificate-spin {
+  animation: bond-certificate-spin 1s linear infinite;
+}
+
+@keyframes bond-certificate-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   PRINT
+   ========================================================= */
 
 @media print {
-  @page {
-    margin: 12mm;
-  }
-
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  html, body {
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    position: static !important;
-    background: #fff !important;
-  }
-
-  body * {
-    visibility: hidden !important;
-  }
-
-  #root, #root * {
-    position: static !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  .bond-cert-card,
-  .bond-cert-card * {
-    visibility: visible !important;
-  }
-
-  .bond-cert-card {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
+  html,
+  body {
     margin: 0 !important;
-    box-shadow: none !important;
-    page-break-inside: avoid;
+    padding: 0 !important;
+    background: #ffffff !important;
   }
 
-  .bond-cert-topbar,
-  .bond-cert-actions,
-  .bond-cert-wrap > *:not(.bond-cert-card) {
+  .bond-certificate-page {
+    min-height: auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .bond-certificate-toolbar,
+  .bond-certificate-heading,
+  .bond-certificate-bottom-actions {
     display: none !important;
+  }
+
+  .bond-certificate-card {
+    width: 320px !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
   }
 }
 
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
 @media (max-width: 600px) {
-  .bond-cert-card {
-    padding: 20px 16px;
+  .bond-certificate-page {
+    padding: 12px 8px 22px;
   }
-  .bond-cert-grid {
-    grid-template-columns: 1fr;
+
+  .bond-certificate-toolbar {
+    align-items: flex-start;
   }
-  .bond-cert-topbar {
-    flex-wrap: wrap;
-  }
-  .bond-cert-topbar__actions {
+
+  .bond-certificate-toolbar-right {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .bond-certificate-card {
+    width: 320px;
+  }
+
+  .bond-certificate-bottom-actions {
+    width: 320px;
+  }
+}
+
+
+@media (max-width: 380px) {
+  .bond-certificate-card,
+  .bond-certificate-bottom-actions {
+    width: 290px;
+  }
+
+  .bond-certificate-body {
+    padding: 14px;
+  }
+
+  .bond-certificate-grid {
+    column-gap: 10px;
+  }
+
+  .bond-certificate-title {
+    font-size: 11px;
+  }
+
+  .bond-certificate-amount {
+    font-size: 17px;
+  }
+
+  .bond-certificate-field-value {
+    font-size: 5.7px;
   }
 }
