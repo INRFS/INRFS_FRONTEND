@@ -4,7 +4,6 @@ import {
   CalendarDays,
   CircleAlert,
   CircleCheck,
-  Clock3,
   Download,
   Eye,
   IndianRupee,
@@ -110,7 +109,7 @@ export default function InvestorDashboard() {
 
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
   const loadDashboard = useCallback(async (isRefresh = false) => {

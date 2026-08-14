@@ -80,8 +80,8 @@ export default function InvestNow() {
 
   const [selectedBank, setSelectedBank] = useState("");
 
-  const [showPaymentNotice, setShowPaymentNotice] =
-    useState(false);
+  // const [showPaymentNotice, setShowPaymentNotice] =
+  //   useState(false);
 
   useEffect(() => {
     loadTenures();
@@ -1090,7 +1090,7 @@ export default function InvestNow() {
 
             {workflowSteps.map(
               (item, index) => {
-                const Icon = item.icon;
+                // const Icon = item.icon;
 
                 return (
                   <div

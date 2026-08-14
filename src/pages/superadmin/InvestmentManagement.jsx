@@ -13,7 +13,7 @@ import {
   TrendingUp,
   Clock3,
   CheckCircle2,
-  XCircle,
+  
   IndianRupee,
 } from "lucide-react";
 import "../../Styles/SuperAdmin/InvestmentManagement.css";

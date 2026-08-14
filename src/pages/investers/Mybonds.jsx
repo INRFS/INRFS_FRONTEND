@@ -22,7 +22,6 @@ import {
 import {
   getMyInvestments,
   getMyInvestmentBond,
-  getInvestmentTenures,
   requestTenureExtension,
   requestPreClose,
 } from "../../services/investment_service";
