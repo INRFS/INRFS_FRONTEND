@@ -495,12 +495,37 @@ export default function InvestmentManagement() {
     }
   };
 
-  const openApprove = (id) => {
+  const openApprove = async (id) => {
+    const row = investments.find(
+      (item) =>
+        String(getValue(item, ["investment_id", "id"])) ===
+        String(id)
+    );
+
+    setSelectedInvestment(row || null);
     setSelectedInvestmentId(id);
     setInterestRate("");
     setRemarks("");
     setError("");
     setApproveOpen(true);
+
+    try {
+      const response = await getInvestmentDetails(id);
+      const details = response?.data || row || null;
+      setSelectedInvestment(details);
+
+      const rate = getValue(
+        details,
+        ["interest_rate", "rate", "initial_rate", "current_rate"],
+        3
+      );
+
+      setInterestRate(
+        String(rate).match(/[\d.]+/)?.[0] || "3"
+      );
+    } catch (err) {
+      setError(err?.message || "Failed to load investment details");
+    }
   };
 
   const openReject = (id) => {
@@ -1511,57 +1536,31 @@ export default function InvestmentManagement() {
                         </td>
 
                         <td>
-
                           <div className="investment-actions">
-
-                            <button
-                              type="button"
-                              className="action-view"
-                              onClick={() =>
-                                openDetails(
-                                  id
-                                )
-                              }
-                            >
-                              View
-                            </button>
-
                             {isPending && (
                               <>
                                 <button
                                   type="button"
                                   className="action-approve"
-                                  onClick={() =>
-                                    openApprove(
-                                      id
-                                    )
-                                  }
-                                  disabled={
-                                    actionLoading
-                                  }
+                                  onClick={() => openApprove(id)}
+                                  disabled={actionLoading}
                                 >
-                                  Approve
+                                  <span className="action-approve-icon">✎</span>
+                                  Review &amp; Approve
                                 </button>
 
                                 <button
                                   type="button"
                                   className="action-reject"
-                                  onClick={() =>
-                                    openReject(
-                                      id
-                                    )
-                                  }
-                                  disabled={
-                                    actionLoading
-                                  }
+                                  onClick={() => openReject(id)}
+                                  disabled={actionLoading}
+                                  aria-label="Reject investment"
                                 >
-                                  Reject
+                                  ×
                                 </button>
                               </>
                             )}
-
                           </div>
-
                         </td>
 
                       </tr>
@@ -1682,102 +1681,210 @@ export default function InvestmentManagement() {
           onClick={closeApprove}
         >
           <div
-            className="investment-modal investment-action-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            className="im-review-modal"
+            onClick={(event) => event.stopPropagation()}
           >
-
             <div className="investment-modal-header">
-
-              <div>
-                <h2>
-                  Approve Investment
-                </h2>
-
-                <p>
-                  Set the approved interest
-                  rate
-                </p>
-              </div>
-
+              <h2>Review &amp; Approve Investment</h2>
               <button
                 type="button"
                 onClick={closeApprove}
-                disabled={
-                  actionLoading
-                }
+                disabled={actionLoading}
               >
                 ×
               </button>
-
             </div>
 
-            <div className="investment-form">
+            <div className="im-review-body">
+              <div className="im-review-details">
+                <h3>Investment Details</h3>
 
-              <label>
-                Interest Rate
-              </label>
+                <div className="im-review-grid">
+                  <div>
+                    <span>Investor</span>
+                    <strong>
+                      {getValue(selectedInvestment, [
+                        "investor_name",
+                        "investor_full_name",
+                        "full_name",
+                      ])}
+                    </strong>
+                  </div>
 
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={interestRate}
-                onChange={(event) =>
-                  setInterestRate(
-                    event.target.value
-                  )
-                }
-                placeholder="Enter interest rate"
-              />
+                  <div>
+                    <span>Investor ID</span>
+                    <strong>
+                      {getValue(selectedInvestment, [
+                        "investor_id",
+                        "investor_code",
+                      ])}
+                    </strong>
+                  </div>
 
-              <label>
-                Remarks
-              </label>
+                  <div>
+                    <span>Branch</span>
+                    <strong>
+                      {getValue(selectedInvestment, [
+                        "branch_name",
+                        "branch",
+                        "service_location_name",
+                      ])}
+                    </strong>
+                  </div>
 
-              <textarea
-                value={remarks}
-                onChange={(event) =>
-                  setRemarks(
-                    event.target.value
-                  )
-                }
-                placeholder="Enter remarks"
-              />
+                  <div>
+                    <span>Amount</span>
+                    <strong>
+                      {formatAmount(
+                        getValue(selectedInvestment, [
+                          "investment_amount",
+                          "amount",
+                          "principal_amount",
+                          "invested_amount",
+                        ])
+                      )}
+                    </strong>
+                  </div>
 
-              <div className="investment-modal-actions">
+                  <div>
+                    <span>Tenure</span>
+                    <strong>
+                      {(() => {
+                        const value = getValue(selectedInvestment, [
+                          "tenure",
+                          "tenure_months",
+                          "investment_tenure",
+                          "duration_months",
+                        ]);
+                        return String(value).toLowerCase().includes("month")
+                          ? value
+                          : `${value} months`;
+                      })()}
+                    </strong>
+                  </div>
 
-                <button
-                  type="button"
-                  className="modal-cancel"
-                  onClick={closeApprove}
-                  disabled={
-                    actionLoading
-                  }
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  className="modal-approve"
-                  onClick={
-                    handleApprove
-                  }
-                  disabled={
-                    actionLoading
-                  }
-                >
-                  {actionLoading
-                    ? "Approving..."
-                    : "Approve"}
-                </button>
-
+                  <div>
+                    <span>Transaction Ref</span>
+                    <strong>
+                      {getValue(selectedInvestment, [
+                        "transaction_ref",
+                        "transaction_reference",
+                        "txn_ref",
+                        "utr_number",
+                        "utr",
+                      ])}
+                    </strong>
+                  </div>
+                </div>
               </div>
 
+              <div className="im-rate-box">
+                <h3>Set Final Interest Rate</h3>
+
+                <p>
+                  Investor submitted at <strong>
+                    {getValue(
+                      selectedInvestment,
+                      ["interest_rate", "rate", "initial_rate"],
+                      interestRate || 3
+                    )}
+                    % per month
+                  </strong>. You can adjust the rate before approving.
+                </p>
+
+                <div className="im-rate-input-row">
+                  <div className="im-rate-input-field">
+                    <label>Interest Rate (% per month)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={interestRate}
+                      onChange={(event) =>
+                        setInterestRate(event.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className="im-rate-preview">
+                    <span>Monthly Interest</span>
+                    <strong>
+                      {formatAmount(
+                        Number(
+                          getValue(
+                            selectedInvestment,
+                            [
+                              "investment_amount",
+                              "amount",
+                              "principal_amount",
+                              "invested_amount",
+                            ],
+                            0
+                          )
+                        ) * Number(interestRate || 0) / 100
+                      )}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="im-rate-quick-row">
+                  {[2, 2.5, 3, 3.5, 4].map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      className={
+                        Number(interestRate) === rate
+                          ? "im-rate-quick-btn im-rate-quick-btn--active"
+                          : "im-rate-quick-btn"
+                      }
+                      onClick={() => setInterestRate(String(rate))}
+                    >
+                      {rate}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="im-info-box">
+                Approving will <strong>activate the investment</strong>,
+                assign a bond number, and generate the digital bond
+                certificate at <strong>{interestRate || 0}% per month</strong>.
+                The investor will be notified automatically.
+              </div>
             </div>
 
+            <div className="im-review-actions">
+              <button
+                type="button"
+                className="admin-btn admin-btn--outline"
+                onClick={closeApprove}
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="admin-btn modal-reject"
+                onClick={() => {
+                  const id = selectedInvestmentId;
+                  closeApprove();
+                  openReject(id);
+                }}
+                disabled={actionLoading}
+              >
+                ⊗ Reject
+              </button>
+
+              <button
+                type="button"
+                className="admin-btn admin-btn--approve"
+                onClick={handleApprove}
+                disabled={actionLoading}
+              >
+                ✓ {actionLoading ? "Approving..." : "Approve & Generate Bond"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1890,201 +1997,199 @@ export default function InvestmentManagement() {
       {tenureApproveOpen &&
         selectedTenureRequest && (
           <div
-            className="investment-modal-overlay"
-            onClick={
-              closeTenureApprove
-            }
+            className="investment-modal-overlay tenure-modal-overlay"
+            onClick={closeTenureApprove}
           >
             <div
-              className="investment-modal investment-action-modal"
-              onClick={(event) =>
-                event.stopPropagation()
-              }
+              className="tenure-review-modal"
+              onClick={(event) => event.stopPropagation()}
             >
-
-              <div className="investment-modal-header">
-
+              <div className="tenure-review-header">
                 <div>
-                  <h2>
-                    Review & Approve
-                  </h2>
-
-                  <p>
-                    Tenure extension request
-                  </p>
+                  <h2>Review &amp; Approve Extension</h2>
+                  <p>Review the tenure extension request before approval</p>
                 </div>
 
                 <button
                   type="button"
-                  onClick={
-                    closeTenureApprove
-                  }
-                  disabled={
-                    tenureActionLoading
-                  }
+                  className="tenure-review-close"
+                  onClick={closeTenureApprove}
+                  disabled={tenureActionLoading}
                 >
                   ×
                 </button>
-
               </div>
 
-              <div className="investment-review-grid">
+              <div className="tenure-review-body">
+                <div className="tenure-request-card">
+                  <div className="tenure-card-title">
+                    <span>Tenure Extension Request</span>
+                    <span className="tenure-pending-badge">Pending</span>
+                  </div>
 
-                <div>
-                  <span>
-                    Investor
-                  </span>
+                  <div className="tenure-detail-grid">
+                    <div className="tenure-detail">
+                      <span>Investor</span>
+                      <strong>
+                        {getValue(
+                          selectedTenureRequest,
+                          [
+                            "investor_name",
+                            "investor_full_name",
+                            "full_name",
+                          ]
+                        )}
+                      </strong>
+                    </div>
 
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "investor_name",
-                        "investor_full_name",
-                        "full_name",
-                      ]
-                    )}
-                  </strong>
+                    <div className="tenure-detail">
+                      <span>Investor ID</span>
+                      <strong>
+                        {getValue(
+                          selectedTenureRequest,
+                          ["investor_id", "investor_code"]
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="tenure-detail">
+                      <span>Bond Number</span>
+                      <strong>
+                        {getValue(
+                          selectedTenureRequest,
+                          [
+                            "bond_number",
+                            "bond_code",
+                            "bond_id",
+                          ]
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="tenure-detail">
+                      <span>Current Maturity</span>
+                      <strong>
+                        {formatDate(
+                          getValue(
+                            selectedTenureRequest,
+                            [
+                              "current_maturity_date",
+                              "maturity_date",
+                            ],
+                            null
+                          )
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="tenure-detail">
+                      <span>Current Rate</span>
+                      <strong>
+                        {getValue(
+                          selectedTenureRequest,
+                          [
+                            "current_rate",
+                            "interest_rate",
+                            "rate",
+                          ]
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="tenure-detail tenure-detail--highlight">
+                      <span>Requested Extension</span>
+                      <strong>
+                        {getValue(
+                          selectedTenureRequest,
+                          [
+                            "requested_extension",
+                            "extension_months",
+                            "requested_months",
+                            "extension_tenure",
+                          ]
+                        )}
+                      </strong>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <span>
-                    Investor ID
-                  </span>
-
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "investor_id",
-                        "investor_code",
-                      ]
-                    )}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>
-                    Bond Number
-                  </span>
-
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "bond_number",
-                        "bond_code",
-                        "bond_id",
-                      ]
-                    )}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>
-                    Current Maturity
-                  </span>
-
-                  <strong>
-                    {formatDate(
-                      getValue(
+                <div className="tenure-new-maturity">
+                  <div>
+                    <span>Extension Request</span>
+                    <strong>
+                      {getValue(
                         selectedTenureRequest,
                         [
-                          "current_maturity_date",
-                          "maturity_date",
-                        ],
-                        null
-                      )
-                    )}
-                  </strong>
+                          "requested_extension",
+                          "extension_months",
+                          "requested_months",
+                          "extension_tenure",
+                        ]
+                      )}
+                    </strong>
+                  </div>
+
+                  <div className="tenure-arrow">→</div>
+
+                  <div>
+                    <span>Current Maturity</span>
+                    <strong>
+                      {formatDate(
+                        getValue(
+                          selectedTenureRequest,
+                          [
+                            "current_maturity_date",
+                            "maturity_date",
+                          ],
+                          null
+                        )
+                      )}
+                    </strong>
+                  </div>
                 </div>
 
-                <div>
-                  <span>
-                    Current Rate
-                  </span>
-
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "current_rate",
-                        "interest_rate",
-                        "rate",
-                      ]
-                    )}
-                  </strong>
+                <div className="tenure-remarks">
+                  <label>Remarks <span>(optional)</span></label>
+                  <textarea
+                    value={tenureRemarks}
+                    onChange={(event) =>
+                      setTenureRemarks(event.target.value)
+                    }
+                    placeholder="Enter remarks for this approval..."
+                  />
                 </div>
 
-                <div>
-                  <span>
-                    Requested Extension
-                  </span>
-
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "requested_extension",
-                        "extension_months",
-                        "requested_months",
-                      ]
-                    )}
-                  </strong>
+                <div className="tenure-approval-note">
+                  <span className="tenure-note-icon">✓</span>
+                  <p>
+                    Approving this request will update the bond tenure
+                    and maturity date. The investor will be notified
+                    automatically.
+                  </p>
                 </div>
-
               </div>
 
-              <div className="investment-form">
+              <div className="tenure-review-footer">
+                <button
+                  type="button"
+                  className="tenure-cancel-btn"
+                  onClick={closeTenureApprove}
+                  disabled={tenureActionLoading}
+                >
+                  Cancel
+                </button>
 
-                <label>
-                  Remarks
-                </label>
-
-                <textarea
-                  value={tenureRemarks}
-                  onChange={(event) =>
-                    setTenureRemarks(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Enter remarks"
-                />
-
-                <div className="investment-modal-actions">
-
-                  <button
-                    type="button"
-                    className="modal-cancel"
-                    onClick={
-                      closeTenureApprove
-                    }
-                    disabled={
-                      tenureActionLoading
-                    }
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    className="modal-approve"
-                    onClick={
-                      handleTenureApprove
-                    }
-                    disabled={
-                      tenureActionLoading
-                    }
-                  >
-                    {tenureActionLoading
-                      ? "Approving..."
-                      : "Approve Extension"}
-                  </button>
-
-                </div>
-
+                <button
+                  type="button"
+                  className="tenure-approve-btn"
+                  onClick={handleTenureApprove}
+                  disabled={tenureActionLoading}
+                >
+                  {tenureActionLoading
+                    ? "Approving..."
+                    : "✓ Approve Extension"}
+                </button>
               </div>
-
             </div>
           </div>
         )}

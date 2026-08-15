@@ -9,7 +9,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import "../../Styles/Reports.css";
+import "../../Styles/SuperAdmin/Reports.css";
 
 const STATS = [
   { label: "NEW INVESTMENTS", value: "₹4.8Cr", trend: "+18% vs last month", up: true },
@@ -27,7 +27,7 @@ const MONTHLY_DATA = [
   { month: "Jul", Invested: 55, Interest: 4 },
 ];
 
-export default function Reports() {
+export default function SuperAdminReports() {
   const handleExportExcel = () => console.log("Export Excel");
   const handleExportPdf = () => console.log("Export PDF");
 
