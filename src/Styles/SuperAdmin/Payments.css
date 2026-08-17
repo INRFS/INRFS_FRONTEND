@@ -1,4 +1,4 @@
- .pq-page {
+.pq-page {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -250,6 +250,7 @@
   font-weight: 750;
   white-space: nowrap;
   cursor: pointer;
+  transition: 0.18s ease;
 }
 
 .pq-approve-btn {
@@ -279,6 +280,7 @@
   background: #ef4444;
   color: #fff;
   cursor: pointer;
+  transition: 0.18s ease;
 }
 
 .pq-reject-btn:hover {
@@ -500,6 +502,7 @@
   font-size: 11.5px;
   font-weight: 750;
   cursor: pointer;
+  transition: 0.18s ease;
 }
 
 .pq-modal-cancel {
@@ -536,6 +539,158 @@
 .pq-modal-cancel:disabled,
 .pq-modal-reject:disabled,
 .pq-modal-approve:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Confirmation Modal */
+
+.pq-confirm-modal {
+  width: 100%;
+  max-width: 460px;
+  padding: 4px 2px 2px;
+  text-align: center;
+}
+
+.pq-confirm-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.pq-confirm-icon-approve {
+  background: #e8f9f1;
+  color: #10b981;
+  border: 1px solid #bcebd8;
+}
+
+.pq-confirm-icon-reject {
+  background: #fff0f1;
+  color: #dc2626;
+  border: 1px solid #f4c5c8;
+}
+
+.pq-confirm-icon-paid {
+  background: #eaf0ff;
+  color: #315bea;
+  border: 1px solid #cbd9ff;
+}
+
+.pq-confirm-modal h3 {
+  margin: 0 0 8px;
+  color: #17223d;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.pq-confirm-message {
+  max-width: 400px;
+  margin: 0 auto;
+  color: #475467;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.pq-confirm-submessage {
+  max-width: 400px;
+  margin: 7px auto 0;
+  color: #8b98ad;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.pq-confirm-payment {
+  margin-top: 18px;
+  padding: 13px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  text-align: left;
+  border: 1px solid #e1e7f0;
+  border-radius: 11px;
+  background: #f8fafc;
+}
+
+.pq-confirm-payment div {
+  min-width: 0;
+}
+
+.pq-confirm-payment span {
+  display: block;
+  margin-bottom: 4px;
+  color: #8b98ad;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.pq-confirm-payment strong {
+  display: block;
+  color: #17223d;
+  font-size: 11.5px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.pq-confirm-actions {
+  margin-top: 18px;
+  padding-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #edf0f5;
+}
+
+.pq-confirm-action {
+  min-height: 38px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.pq-confirm-approve {
+  background: #10b981;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.18);
+}
+
+.pq-confirm-approve:hover {
+  background: #059669;
+}
+
+.pq-confirm-reject {
+  background: #dc2626;
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.16);
+}
+
+.pq-confirm-reject:hover {
+  background: #b91c1c;
+}
+
+.pq-confirm-paid {
+  background: #315bea;
+  box-shadow: 0 4px 10px rgba(49, 91, 234, 0.18);
+}
+
+.pq-confirm-paid:hover {
+  background: #2448cf;
+}
+
+.pq-confirm-action:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -586,6 +741,24 @@
   .pq-modal-approve {
     flex: 1;
   }
+
+  .pq-confirm-modal {
+    max-width: 100%;
+  }
+
+  .pq-confirm-payment {
+    grid-template-columns: 1fr;
+  }
+
+  .pq-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .pq-confirm-actions .pq-modal-cancel,
+  .pq-confirm-action {
+    width: 100%;
+    flex: none;
+  }
 }
 
 @media (max-width: 480px) {
@@ -634,5 +807,26 @@
 
   .pq-modal-approve {
     grid-column: 1 / -1;
+  }
+
+  .pq-confirm-modal h3 {
+    font-size: 16px;
+  }
+
+  .pq-confirm-message {
+    font-size: 11.5px;
+  }
+
+  .pq-confirm-submessage {
+    font-size: 10px;
+  }
+
+  .pq-confirm-payment {
+    margin-top: 14px;
+    padding: 11px;
+  }
+
+  .pq-confirm-actions {
+    margin-top: 14px;
   }
 }
