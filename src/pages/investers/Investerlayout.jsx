@@ -15,10 +15,9 @@ import {
   LayoutGrid,
   Plus,
   TrendingUp,
-  Bell,
   User,
   LogOut,
-  Search,
+  
   Menu,
   X,
 } from "lucide-react";
@@ -35,8 +34,8 @@ export default function InvestorLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { notifications } =
-    useInvestorData();
+  // const { notifications } =
+  //   useInvestorData();
 
   const [sidebarOpen, setSidebarOpen] =
     useState(false);
@@ -50,10 +49,10 @@ export default function InvestorLayout() {
   const [profileError, setProfileError] =
     useState("");
 
-  const unreadCount =
-    notifications.filter(
-      (n) => n.isNew
-    ).length;
+  // const unreadCount =
+  //   notifications.filter(
+  //     (n) => n.isNew
+  //   ).length;
 
   const navItems = [
     {

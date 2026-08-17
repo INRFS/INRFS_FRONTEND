@@ -292,7 +292,7 @@ export default function Myinvestments() {
   ] = useState(true);
 
   const [
-    refreshing,
+    ,
     setRefreshing,
   ] = useState(false);
 

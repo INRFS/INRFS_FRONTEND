@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Plus, Search, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Eye, Pencil } from "lucide-react";
 import Modal from "./Modal";
 import Toast, { useToast } from "./Toast";
 import "../../Styles/SuperAdmin/BranchManagement.css";
@@ -49,10 +49,10 @@ export default function BranchManagement() {
     setModalMode("view");
   };
 
-  const openDelete = (row) => {
-    setActiveRow(row);
-    setModalMode("delete");
-  };
+  // const openDelete = (row) => {
+  //   setActiveRow(row);
+  //   setModalMode("delete");
+  // };
 
   const closeModal = () => {
     setModalMode(null);
