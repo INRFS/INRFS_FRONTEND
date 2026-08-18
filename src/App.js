@@ -43,6 +43,7 @@ import SystemSettings from "./pages/superadmin/SystemSettings";
 import Notifications from "./pages/superadmin/Notifications";
 import InvestmentManagement from "./pages/superadmin/InvestmentManagement";
 import Payments from "./pages/superadmin/Payments";
+import SuperAdminReports from "./pages/superadmin/Reports";
 
 function App() {
   return (
@@ -89,7 +90,7 @@ function App() {
           <Route path="users" element={<UserManagement title="User Management" />} />
           <Route path="roles" element={<RolesPermissions title="Roles & Permissions" />} />
           <Route path="audit-logs" element={<AuditLogs title="Audit Logs" />} />
-          <Route path="reports" element={<Reports title="Reports" />} />
+          <Route path="reports" element={<SuperAdminReports title="Reports" />} />
           <Route path="system-settings" element={<SystemSettings title="System Settings" />} />
           <Route path="notifications" element={<Notifications title="Notifications" />} />
           <Route path="profile" element={<Profile title="Profile" />} />
