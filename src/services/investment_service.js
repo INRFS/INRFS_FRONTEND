@@ -9,17 +9,23 @@ const getToken = () => {
     "token",
     "auth_token",
     "authToken",
-    "admin_token",
+    "investor_token",
   ];
 
   for (const key of keys) {
-    const localValue = localStorage.getItem(key);
+    const localValue =
+      localStorage.getItem(key);
 
-    if (localValue && localValue !== "null" && localValue !== "undefined") {
+    if (
+      localValue &&
+      localValue !== "null" &&
+      localValue !== "undefined"
+    ) {
       return localValue;
     }
 
-    const sessionValue = sessionStorage.getItem(key);
+    const sessionValue =
+      sessionStorage.getItem(key);
 
     if (
       sessionValue &&
@@ -30,37 +36,51 @@ const getToken = () => {
     }
   }
 
-  return null;
+  return "";
 };
 
-const apiRequest = async (endpoint, options = {}) => {
+const apiRequest = async (
+  endpoint,
+  options = {}
+) => {
   const token = getToken();
 
   const headers = {
     Accept: "application/json",
     ...(options.body
       ? {
-          "Content-Type": "application/json",
+          "Content-Type":
+            "application/json",
         }
       : {}),
     ...(options.headers || {}),
   };
 
   if (token) {
-    headers.Authorization = `Bearer ${token}`;
+    headers.Authorization =
+      `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const response = await fetch(
+    `${API_URL}${endpoint}`,
+    {
+      ...options,
+      headers,
+    }
+  );
 
   const contentType =
-    response.headers.get("content-type") || "";
+    response.headers.get(
+      "content-type"
+    ) || "";
 
   let data = null;
 
-  if (contentType.includes("application/json")) {
+  if (
+    contentType.includes(
+      "application/json"
+    )
+  ) {
     try {
       data = await response.json();
     } catch {
@@ -68,7 +88,9 @@ const apiRequest = async (endpoint, options = {}) => {
     }
   } else {
     try {
-      const text = await response.text();
+      const text =
+        await response.text();
+
       data = text || null;
     } catch {
       data = null;
@@ -79,10 +101,14 @@ const apiRequest = async (endpoint, options = {}) => {
     let message =
       `Request failed with status ${response.status}`;
 
-    if (response.status === 401) {
+    if (
+      response.status === 401
+    ) {
       message =
         "Authentication failed. Please login again.";
-    } else if (Array.isArray(data?.detail)) {
+    } else if (
+      Array.isArray(data?.detail)
+    ) {
       message = data.detail
         .map(
           (item) =>
@@ -91,9 +117,15 @@ const apiRequest = async (endpoint, options = {}) => {
             String(item)
         )
         .join(", ");
-    } else if (typeof data?.detail === "string") {
+    } else if (
+      typeof data?.detail ===
+      "string"
+    ) {
       message = data.detail;
-    } else if (typeof data?.message === "string") {
+    } else if (
+      typeof data?.message ===
+      "string"
+    ) {
       message = data.message;
     } else if (
       typeof data === "string" &&
@@ -113,30 +145,46 @@ const getList = (response) => {
     return response;
   }
 
-  if (Array.isArray(response?.data)) {
+  if (
+    Array.isArray(response?.data)
+  ) {
     return response.data;
   }
 
-  if (Array.isArray(response?.items)) {
+  if (
+    Array.isArray(response?.items)
+  ) {
     return response.items;
   }
 
-  if (Array.isArray(response?.investments)) {
+  if (
+    Array.isArray(
+      response?.investments
+    )
+  ) {
     return response.investments;
   }
 
-  if (Array.isArray(response?.tenures)) {
+  if (
+    Array.isArray(
+      response?.tenures
+    )
+  ) {
     return response.tenures;
   }
 
-  if (Array.isArray(response?.bonds)) {
+  if (
+    Array.isArray(response?.bonds)
+  ) {
     return response.bonds;
   }
 
   return [];
 };
 
-const getStatusId = (investment) => {
+const getStatusId = (
+  investment
+) => {
   const values = [
     investment?.status_id,
     investment?.investment_status_id,
@@ -153,7 +201,8 @@ const getStatusId = (investment) => {
       value !== null &&
       value !== ""
     ) {
-      const number = Number(value);
+      const number =
+        Number(value);
 
       if (!Number.isNaN(number)) {
         return number;
@@ -164,7 +213,9 @@ const getStatusId = (investment) => {
   return null;
 };
 
-const getStatusName = (investment) => {
+const getStatusName = (
+  investment
+) => {
   const values = [
     investment?.status_name,
     investment?.investment_status_name,
@@ -203,15 +254,19 @@ const normalizeStatus = (
   statusId
 ) => {
   if (statusName) {
-    const value = String(statusName)
-      .trim()
-      .toLowerCase();
+    const value =
+      String(statusName)
+        .trim()
+        .toLowerCase();
 
     if (
       value === "pending" ||
-      value === "pending approval" ||
-      value === "pending_approval" ||
-      value === "pending-approval"
+      value ===
+        "pending approval" ||
+      value ===
+        "pending_approval" ||
+      value ===
+        "pending-approval"
     ) {
       return "Pending Approval";
     }
@@ -245,17 +300,30 @@ const normalizeStatus = (
     }
 
     if (
-      value === "extension requested" ||
-      value === "tenure extension requested"
+      value ===
+        "extension requested" ||
+      value ===
+        "tenure extension requested"
     ) {
       return "Extension Requested";
     }
 
     if (
-      value === "pre-close requested" ||
-      value === "preclose requested"
+      value ===
+        "pre-close requested" ||
+      value ===
+        "preclose requested"
     ) {
       return "Pre-Close Requested";
+    }
+
+    if (
+      value ===
+        "settlement requested" ||
+      value ===
+        "tenure timeout settlement requested"
+    ) {
+      return "Settlement Requested";
     }
 
     return statusName;
@@ -330,7 +398,8 @@ export const getMyInvestments =
     statuses.forEach(
       (status) => {
         if (
-          status?.id !== undefined &&
+          status?.id !==
+            undefined &&
           status?.id !== null
         ) {
           statusMap[
@@ -373,7 +442,8 @@ export const getMyInvestments =
 export const getMyInvestment =
   async (investmentId) => {
     if (
-      investmentId === undefined ||
+      investmentId ===
+        undefined ||
       investmentId === null ||
       investmentId === ""
     ) {
@@ -407,7 +477,8 @@ export const getMyInvestment =
     statuses.forEach(
       (status) => {
         if (
-          status?.id !== undefined &&
+          status?.id !==
+            undefined &&
           status?.id !== null
         ) {
           statusMap[
@@ -428,18 +499,13 @@ export const getMyInvestment =
         investment
       );
 
-    const mappedStatus =
-      normalized.status_id !== null
-        ? statusMap[
-            normalized.status_id
-          ]
-        : null;
-
     return {
       ...normalized,
       status_name:
         normalizeStatus(
-          mappedStatus ||
+          statusMap[
+            normalized.status_id
+          ] ||
             normalized.status_name,
           normalized.status_id
         ),
@@ -449,7 +515,8 @@ export const getMyInvestment =
 export const getMyInvestmentBond =
   async (investmentId) => {
     if (
-      investmentId === undefined ||
+      investmentId ===
+        undefined ||
       investmentId === null ||
       investmentId === ""
     ) {
@@ -458,27 +525,13 @@ export const getMyInvestmentBond =
       );
     }
 
-    const token = getToken();
-
-    if (!token) {
-      throw new Error(
-        "Authentication token not found. Please login again."
-      );
-    }
-
-    const response =
-      await apiRequest(
-        `/investments/my-investments/${encodeURIComponent(
-          investmentId
-        )}/bond`,
-        {
-          method: "GET",
-        }
-      );
-
-    return (
-      response?.data ||
-      response
+    return apiRequest(
+      `/investments/my-investments/${encodeURIComponent(
+        investmentId
+      )}/bond`,
+      {
+        method: "GET",
+      }
     );
   };
 
@@ -494,27 +547,13 @@ export const getMyBond =
       );
     }
 
-    const token = getToken();
-
-    if (!token) {
-      throw new Error(
-        "Authentication token not found. Please login again."
-      );
-    }
-
-    const response =
-      await apiRequest(
-        `/investments/my-bonds/${encodeURIComponent(
-          bondId
-        )}`,
-        {
-          method: "GET",
-        }
-      );
-
-    return (
-      response?.data ||
-      response
+    return apiRequest(
+      `/investments/my-bonds/${encodeURIComponent(
+        bondId
+      )}`,
+      {
+        method: "GET",
+      }
     );
   };
 
@@ -565,7 +604,8 @@ export const calculateInvestment =
       {
         method: "POST",
         body: JSON.stringify({
-          investment_amount: amount,
+          investment_amount:
+            amount,
           tenure_id: tenure,
         }),
       }
@@ -606,7 +646,8 @@ export const createInvestment =
       {
         method: "POST",
         body: JSON.stringify({
-          investment_amount: amount,
+          investment_amount:
+            amount,
           tenure_id: tenure,
         }),
       }
@@ -620,7 +661,8 @@ export const requestTenureExtension =
     remarks = ""
   ) => {
     if (
-      investmentId === undefined ||
+      investmentId ===
+        undefined ||
       investmentId === null ||
       investmentId === ""
     ) {
@@ -662,7 +704,8 @@ export const requestPreClose =
     reason
   ) => {
     if (
-      investmentId === undefined ||
+      investmentId ===
+        undefined ||
       investmentId === null ||
       investmentId === ""
     ) {
@@ -693,6 +736,29 @@ export const requestPreClose =
     );
   };
 
+export const requestTenureTimeoutSettlement =
+  async (investmentId) => {
+    if (
+      investmentId ===
+        undefined ||
+      investmentId === null ||
+      investmentId === ""
+    ) {
+      throw new Error(
+        "Investment ID is required"
+      );
+    }
+
+    return apiRequest(
+      `/investments/my-investments/${encodeURIComponent(
+        investmentId
+      )}/tenure-timeout-settlement`,
+      {
+        method: "POST",
+      }
+    );
+  };
+
 export const approveInvestment =
   async (
     investmentId,
@@ -700,7 +766,8 @@ export const approveInvestment =
     remarks = ""
   ) => {
     if (
-      investmentId === undefined ||
+      investmentId ===
+        undefined ||
       investmentId === null ||
       investmentId === ""
     ) {
@@ -742,7 +809,8 @@ export const rejectInvestment =
     remarks
   ) => {
     if (
-      investmentId === undefined ||
+      investmentId ===
+        undefined ||
       investmentId === null ||
       investmentId === ""
     ) {
@@ -775,6 +843,8 @@ export const rejectInvestment =
     );
   };
 
+export { API_URL };
+
 export default {
   getInvestmentStatuses,
   getMyInvestments,
@@ -786,6 +856,7 @@ export default {
   createInvestment,
   requestTenureExtension,
   requestPreClose,
+  requestTenureTimeoutSettlement,
   approveInvestment,
   rejectInvestment,
 };

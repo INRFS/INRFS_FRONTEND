@@ -1,4 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import {
   CheckCircle2,
   XCircle,
@@ -14,9 +19,14 @@ import {
 import { formatINR } from "../../shared/Shared";
 
 import {
-  getPendingTenureExtensions,
-  approveTenureExtension,
-  rejectTenureExtension,
+  getTenureTimeoutSettlements,
+  getPrecloseRequests,
+  getClosedSettlements,
+  approveTenureTimeoutSettlement,
+  rejectTenureTimeoutSettlement,
+  approvePrecloseRequest,
+  rejectPrecloseRequest,
+  getList,
 } from "../../services/admin/settlementService";
 
 import "../../Styles/Admin/Settlement.css";
@@ -25,12 +35,17 @@ const GST_RATE = 0.18;
 
 const STATUS = {
   PENDING: "Pending",
-  AWAITING_SUPERADMIN: "Awaiting Super Admin",
+  AWAITING_SUPERADMIN:
+    "Awaiting Super Admin",
   APPROVED: "Approved",
   REJECTED: "Rejected",
 };
 
-const getValue = (row, keys, fallback = null) => {
+const getValue = (
+  row,
+  keys,
+  fallback = null
+) => {
   for (const key of keys) {
     if (
       row &&
@@ -45,14 +60,23 @@ const getValue = (row, keys, fallback = null) => {
   return fallback;
 };
 
-const toNumber = (value, fallback = 0) => {
-  if (value === null || value === undefined || value === "") {
+const toNumber = (
+  value,
+  fallback = 0
+) => {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return fallback;
   }
 
   const number = Number(value);
 
-  return Number.isFinite(number) ? number : fallback;
+  return Number.isFinite(number)
+    ? number
+    : fallback;
 };
 
 const normalizeStatus = (value) => {
@@ -67,24 +91,34 @@ const normalizeStatus = (value) => {
   if (
     status === "approved" ||
     status === "settled" ||
-    status === "completed"
+    status === "completed" ||
+    status === "paid"
   ) {
     return STATUS.APPROVED;
   }
 
   if (
     status === "rejected" ||
-    status === "declined"
+    status === "declined" ||
+    status === "reject"
   ) {
     return STATUS.REJECTED;
   }
 
   if (
     status.includes("awaiting") ||
-    status.includes("super admin") ||
-    status.includes("sent")
+    status.includes("super admin")
   ) {
     return STATUS.AWAITING_SUPERADMIN;
+  }
+
+  if (
+    status.includes("pending") ||
+    status.includes("requested") ||
+    status.includes("submitted") ||
+    status.includes("created")
+  ) {
+    return STATUS.PENDING;
   }
 
   return STATUS.PENDING;
@@ -95,17 +129,25 @@ const formatDate = (value) => {
     return "-";
   }
 
-  const parsedDate = new Date(value);
+  const parsedDate =
+    new Date(value);
 
-  if (Number.isNaN(parsedDate.getTime())) {
+  if (
+    Number.isNaN(
+      parsedDate.getTime()
+    )
+  ) {
     return String(value);
   }
 
-  return parsedDate.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return parsedDate.toLocaleDateString(
+    "en-GB",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
 };
 
 const statusClass = (status) =>
@@ -113,7 +155,10 @@ const statusClass = (status) =>
     .toLowerCase()
     .replace(/\s+/g, "-");
 
-function InfoItem({ label, value }) {
+function InfoItem({
+  label,
+  value,
+}) {
   return (
     <div className="settlement-info-item">
       <span className="settlement-info-item__label">
@@ -149,8 +194,13 @@ function BreakdownRow({
   );
 }
 
-function StatusPill({ status }) {
-  if (status === STATUS.AWAITING_SUPERADMIN) {
+function StatusPill({
+  status,
+}) {
+  if (
+    status ===
+    STATUS.AWAITING_SUPERADMIN
+  ) {
     return (
       <span className="admin-action-muted admin-action-muted--waiting">
         <Clock size={14} />
@@ -159,7 +209,9 @@ function StatusPill({ status }) {
     );
   }
 
-  if (status === STATUS.APPROVED) {
+  if (
+    status === STATUS.APPROVED
+  ) {
     return (
       <span className="admin-action-muted">
         <CheckCircle2 size={14} />
@@ -168,7 +220,9 @@ function StatusPill({ status }) {
     );
   }
 
-  if (status === STATUS.REJECTED) {
+  if (
+    status === STATUS.REJECTED
+  ) {
     return (
       <span className="admin-action-muted">
         <XCircle size={14} />
@@ -178,304 +232,747 @@ function StatusPill({ status }) {
   }
 
   return null;
-}
+};
 
-const normalizeTenureItem = (row, index) => {
-  const principal = toNumber(
-    getValue(
-      row,
-      [
-        "principal",
-        "principal_amount",
-        "investment_amount",
-        "amount",
-        "invested_amount",
-        "investment_value",
-        "principalAmount",
-      ],
-      0
-    )
-  );
+const normalizeTenureItem = (
+  row,
+  index
+) => {
+  const source =
+    row?.settlement ||
+    row?.details ||
+    row;
 
-  const interestEarned = toNumber(
-    getValue(
-      row,
-      [
-        "interest_earned",
-        "interestEarned",
-        "total_interest",
-        "interest_amount",
-        "earned_interest",
-        "expected_interest_amount",
-        "interest",
-        "total_interest_earned",
-      ],
-      0
-    )
-  );
+  const principal =
+    toNumber(
+      getValue(
+        source,
+        [
+          "principal_amount",
+          "principal",
+          "investment_amount",
+          "amount",
+        ],
+        0
+      )
+    );
 
-  const backendGst = getValue(
-    row,
-    [
-      "gst",
-      "gst_amount",
-      "gstAmount",
-      "gst_on_interest",
-      "gst_amount_on_interest",
-    ],
-    null
-  );
+  const interestEarned =
+    toNumber(
+      getValue(
+        source,
+        [
+          "interest_amount",
+          "interest_earned",
+          "interestEarned",
+          "expected_interest_amount",
+          "total_interest",
+        ],
+        0
+      )
+    );
 
   const gstAmount =
-    backendGst !== null
-      ? toNumber(backendGst)
-      : Number(
+    toNumber(
+      getValue(
+        source,
+        [
+          "gst_amount",
+          "gst",
+          "gstAmount",
+        ],
+        Number(
           (
-            interestEarned * GST_RATE
+            interestEarned *
+            GST_RATE
           ).toFixed(2)
-        );
+        )
+      )
+    );
 
-  const backendNet = getValue(
-    row,
-    [
-      "net_settlement_amount",
-      "net_settlement",
-      "netSettlementAmount",
-      "net_payable",
-      "net_amount",
-      "settlement_amount",
-    ],
-    null
-  );
+  const penalty =
+    toNumber(
+      getValue(
+        source,
+        [
+          "penalty_amount",
+          "penalty",
+        ],
+        0
+      )
+    );
 
   const netSettlementAmount =
-    backendNet !== null
-      ? toNumber(backendNet)
-      : Number(
+    toNumber(
+      getValue(
+        source,
+        [
+          "net_settlement_amount",
+          "netSettlementAmount",
+          "net_settlement",
+          "net_payable",
+        ],
+        Number(
           (
             principal +
             interestEarned -
-            gstAmount
+            gstAmount -
+            penalty
           ).toFixed(2)
-        );
+        )
+      )
+    );
 
   return {
     id: getValue(
-      row,
+      source,
       [
-        "request_id",
-        "requestId",
         "settlement_id",
-        "settlementId",
         "id",
       ],
       index
     ),
 
-    investmentId: getValue(
-      row,
-      [
-        "investment_id",
-        "investmentId",
-        "investment_code",
-      ],
-      "-"
-    ),
+    investmentId:
+      getValue(
+        source,
+        [
+          "investment_id",
+          "investment_code",
+        ],
+        "-"
+      ),
 
-    bondNumber: getValue(
-      row,
-      [
-        "bond_number",
-        "bondNumber",
-        "bond_id",
-        "bond",
-        "bond_code",
-        "bond_no",
-      ],
-      "-"
-    ),
+    investor:
+      getValue(
+        source,
+        [
+          "investor_name",
+          "investorName",
+          "full_name",
+          "investor",
+        ],
+        "-"
+      ),
 
-    investor: getValue(
-      row,
-      [
-        "investor_name",
-        "investorName",
-        "full_name",
-        "investor_full_name",
-        "name",
-        "investor",
-        "customer_name",
-      ],
-      "-"
-    ),
+    investorId:
+      getValue(
+        source,
+        [
+          "investor_id",
+          "investorId",
+        ],
+        "-"
+      ),
 
-    investorId: getValue(
-      row,
-      [
-        "investor_id",
-        "investorId",
-        "investor_registration_id",
-        "investor_registration_number",
-        "investor_code",
-        "registration_id",
-        "customer_id",
-      ],
-      "-"
-    ),
+    branch:
+      getValue(
+        source,
+        [
+          "branch_name",
+          "branch",
+          "location_name",
+        ],
+        "-"
+      ),
 
-    branch: getValue(
-      row,
-      [
-        "branch_name",
-        "branchName",
-        "branch",
-        "branch_name_text",
-        "service_location_name",
-        "location_name",
-        "branchNameText",
-      ],
-      "-"
-    ),
+    bondNumber:
+      getValue(
+        source,
+        [
+          "bond_number",
+          "bond_id",
+        ],
+        "-"
+      ),
 
-    maturedOn: getValue(
-      row,
-      [
-        "matured_on",
-        "maturedOn",
-        "maturity_date",
-        "maturityDate",
-        "mature_date",
-        "matured_date",
-      ],
-      null
-    ),
+    investmentDate:
+      getValue(
+        source,
+        [
+          "investment_date",
+        ],
+        null
+      ),
 
-    investmentDate: getValue(
-      row,
-      [
-        "investment_date",
-        "invested_on",
-        "investmentDate",
-        "start_date",
-        "bond_start_date",
-      ],
-      null
-    ),
+    maturedOn:
+      getValue(
+        source,
+        [
+          "maturity_date",
+          "matured_on",
+        ],
+        null
+      ),
+
+    date:
+      getValue(
+        source,
+        [
+          "approved_date",
+          "paid_date",
+          "created_date",
+        ],
+        null
+      ),
 
     principal,
+
     interestEarned,
+
     gstAmount,
+
+    penalty,
+
     netSettlementAmount,
 
-    status: normalizeStatus(
+    status:
+      normalizeStatus(
+        getValue(
+          source,
+          [
+            "status_name",
+            "status",
+            "settlement_status",
+          ],
+          STATUS.PENDING
+        )
+      ),
+
+    type: "Tenure Timeout",
+
+    raw: source,
+  };
+};
+
+const normalizePrecloseItem = (
+  row,
+  index
+) => {
+  const source =
+    row?.request ||
+    row?.preclose ||
+    row?.details ||
+    row;
+
+  const principal =
+    toNumber(
       getValue(
-        row,
+        source,
         [
-          "status",
-          "status_name",
-          "approval_status",
-          "settlement_status",
-          "settlement_status_name",
+          "principal_amount",
+          "investment_amount",
+          "principal",
+          "amount",
         ],
-        STATUS.PENDING
+        0
       )
+    );
+
+  const interestEarned =
+    toNumber(
+      getValue(
+        source,
+        [
+          "interest_amount",
+          "interest_earned",
+          "expected_interest_amount",
+        ],
+        0
+      )
+    );
+
+  const penalty =
+    toNumber(
+      getValue(
+        source,
+        [
+          "penalty_amount",
+          "penalty",
+        ],
+        0
+      )
+    );
+
+  const gstAmount =
+    toNumber(
+      getValue(
+        source,
+        [
+          "gst_amount",
+          "gst",
+        ],
+        Number(
+          (
+            interestEarned *
+            GST_RATE
+          ).toFixed(2)
+        )
+      )
+    );
+
+  const netSettlementAmount =
+    toNumber(
+      getValue(
+        source,
+        [
+          "net_settlement_amount",
+          "net_payable",
+          "settlement_amount",
+        ],
+        Number(
+          (
+            principal +
+            interestEarned -
+            gstAmount -
+            penalty
+          ).toFixed(2)
+        )
+      )
+    );
+
+  return {
+    id: getValue(
+      source,
+      [
+        "request_id",
+        "preclose_request_id",
+        "id",
+      ],
+      index
     ),
 
-    raw: row,
+    investmentId:
+      getValue(
+        source,
+        [
+          "investment_id",
+          "investment_code",
+        ],
+        "-"
+      ),
+
+    investor:
+      getValue(
+        source,
+        [
+          "investor_name",
+          "full_name",
+          "investor",
+        ],
+        "-"
+      ),
+
+    investorId:
+      getValue(
+        source,
+        [
+          "investor_id",
+        ],
+        "-"
+      ),
+
+    branch:
+      getValue(
+        source,
+        [
+          "branch_name",
+          "branch",
+        ],
+        "-"
+      ),
+
+    bondNumber:
+      getValue(
+        source,
+        [
+          "bond_number",
+          "bond_id",
+        ],
+        "-"
+      ),
+
+    investmentDate:
+      getValue(
+        source,
+        [
+          "investment_date",
+        ],
+        null
+      ),
+
+    requestedDate:
+      getValue(
+        source,
+        [
+          "requested_date",
+        ],
+        null
+      ),
+
+    reason:
+      getValue(
+        source,
+        [
+          "preclose_reason",
+          "reason",
+          "remarks",
+        ],
+        "-"
+      ),
+
+    principal,
+
+    interestEarned,
+
+    gstAmount,
+
+    penalty,
+
+    netSettlementAmount,
+
+    status:
+      normalizeStatus(
+        getValue(
+          source,
+          [
+            "request_status",
+            "status_name",
+            "status",
+          ],
+          STATUS.PENDING
+        )
+      ),
+
+    type: "Pre-Close",
+
+    raw: source,
+  };
+};
+
+const normalizeClosedItem = (
+  row,
+  index
+) => {
+  const source =
+    row?.settlement ||
+    row?.details ||
+    row;
+
+  const typeValue =
+    String(
+      getValue(
+        source,
+        [
+          "settlement_type",
+          "type",
+        ],
+        ""
+      )
+    )
+      .trim()
+      .toUpperCase();
+
+  const type =
+    typeValue === "PRECLOSE" ||
+    typeValue === "PRE_CLOSE" ||
+    typeValue === "PRE-CLOSE"
+      ? "Pre-Close"
+      : "Tenure Timeout";
+
+  const principal =
+    toNumber(
+      getValue(
+        source,
+        [
+          "principal_amount",
+          "principal",
+          "investment_amount",
+        ],
+        0
+      )
+    );
+
+  const interestEarned =
+    toNumber(
+      getValue(
+        source,
+        [
+          "interest_amount",
+          "interest_earned",
+        ],
+        0
+      )
+    );
+
+  const gstAmount =
+    toNumber(
+      getValue(
+        source,
+        [
+          "gst_amount",
+          "gst",
+        ],
+        Number(
+          (
+            interestEarned *
+            GST_RATE
+          ).toFixed(2)
+        )
+      )
+    );
+
+  const penalty =
+    toNumber(
+      getValue(
+        source,
+        [
+          "penalty_amount",
+          "penalty",
+        ],
+        0
+      )
+    );
+
+  const netSettlementAmount =
+    toNumber(
+      getValue(
+        source,
+        [
+          "net_settlement_amount",
+          "net_settlement",
+          "net_payable",
+        ],
+        Number(
+          (
+            principal +
+            interestEarned -
+            gstAmount -
+            penalty
+          ).toFixed(2)
+        )
+      )
+    );
+
+  return {
+    id: getValue(
+      source,
+      [
+        "settlement_id",
+        "id",
+      ],
+      index
+    ),
+
+    investmentId:
+      getValue(
+        source,
+        [
+          "investment_id",
+          "investment_code",
+        ],
+        "-"
+      ),
+
+    investor:
+      getValue(
+        source,
+        [
+          "investor_name",
+          "full_name",
+          "investor",
+        ],
+        "-"
+      ),
+
+    investorId:
+      getValue(
+        source,
+        [
+          "investor_id",
+        ],
+        "-"
+      ),
+
+    branch:
+      getValue(
+        source,
+        [
+          "branch_name",
+          "branch",
+        ],
+        "-"
+      ),
+
+    bondNumber:
+      getValue(
+        source,
+        [
+          "bond_number",
+          "bond_id",
+        ],
+        "-"
+      ),
+
+    date:
+      getValue(
+        source,
+        [
+          "approved_date",
+          "paid_date",
+          "created_date",
+        ],
+        null
+      ),
+
+    principal,
+
+    interestEarned,
+
+    gstAmount,
+
+    penalty,
+
+    netSettlementAmount,
+
+    status:
+      normalizeStatus(
+        getValue(
+          source,
+          [
+            "status_name",
+            "status",
+          ],
+          STATUS.APPROVED
+        )
+      ),
+
+    type,
+
+    raw: source,
   };
 };
 
 export default function Settlement() {
-  const [activeTab, setActiveTab] =
-    useState("tenure");
+  const [
+    activeTab,
+    setActiveTab,
+  ] = useState("tenure");
 
-  const [tenureItems, setTenureItems] =
-    useState([]);
+  const [
+    tenureItems,
+    setTenureItems,
+  ] = useState([]);
 
-  const [precloseItems, setPrecloseItems] =
-    useState([]);
+  const [
+    precloseItems,
+    setPrecloseItems,
+  ] = useState([]);
 
-  const [closedItems, setClosedItems] =
-    useState([]);
+  const [
+    closedItems,
+    setClosedItems,
+  ] = useState([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [actionLoading, setActionLoading] =
-    useState(false);
+  const [
+    actionLoading,
+    setActionLoading,
+  ] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [
+    error,
+    setError,
+  ] = useState("");
 
-  const [confirmAction, setConfirmAction] =
-    useState(null);
+  const [
+    confirmAction,
+    setConfirmAction,
+  ] = useState(null);
 
-  const loadTenureItems = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadSettlementData =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const response =
-        await getPendingTenureExtensions({
-          limit: 100,
-          offset: 0,
-        });
+        const [
+          tenureResponse,
+          precloseResponse,
+          closedResponse,
+        ] =
+          await Promise.all([
+            getTenureTimeoutSettlements(
+              {
+                limit: 100,
+                offset: 0,
+              }
+            ),
 
-      console.log(
-        "Settlement API response:",
-        response
-      );
+            getPrecloseRequests({
+              limit: 100,
+              offset: 0,
+            }),
 
-      let list = [];
+            getClosedSettlements({
+              limit: 100,
+              offset: 0,
+            }),
+          ]);
 
-      if (Array.isArray(response)) {
-        list = response;
-      } else if (
-        Array.isArray(response?.data)
-      ) {
-        list = response.data;
-      } else if (
-        Array.isArray(response?.items)
-      ) {
-        list = response.items;
-      }
+        const tenureList =
+          getList(
+            tenureResponse
+          );
 
-      console.log(
-        "Settlement raw list:",
-        list
-      );
+        const precloseList =
+          getList(
+            precloseResponse
+          );
 
-      const normalized =
-        list.map(
-          normalizeTenureItem
+        const closedList =
+          getList(
+            closedResponse
+          );
+
+        setTenureItems(
+          tenureList.map(
+            normalizeTenureItem
+          )
         );
 
-      console.log(
-        "Settlement normalized list:",
-        normalized
-      );
+        setPrecloseItems(
+          precloseList.map(
+            normalizePrecloseItem
+          )
+        );
 
-      setTenureItems(normalized);
-    } catch (err) {
-      console.error(
-        "Failed to load settlements:",
-        err
-      );
+        setClosedItems(
+          closedList.map(
+            normalizeClosedItem
+          )
+        );
+      } catch (err) {
+        console.error(
+          "Failed to load settlement data:",
+          err
+        );
 
-      setError(
-        err?.response?.data?.detail ||
+        setError(
           err?.message ||
-          "Failed to load settlement requests."
-      );
-
-      setTenureItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+            "Failed to load settlement data."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
-    loadTenureItems();
+    loadSettlementData();
   }, []);
 
   const openConfirm = (
@@ -496,159 +993,200 @@ export default function Settlement() {
     setConfirmAction(null);
   };
 
-  const handleConfirm = async () => {
-    if (!confirmAction) {
-      return;
-    }
-
-    try {
-      setActionLoading(true);
-      setError("");
-
-      const {
-        kind,
-        item,
-      } = confirmAction;
-
-      if (
-        kind === "tenureApprove"
-      ) {
-        await approveTenureExtension(
-          item.id,
-          null
-        );
+  const handleConfirm =
+    async () => {
+      if (!confirmAction) {
+        return;
       }
 
-      if (
-        kind === "tenureReject"
-      ) {
-        await rejectTenureExtension(
-          item.id,
-          "Rejected by Admin"
+      try {
+        setActionLoading(true);
+        setError("");
+
+        const {
+          kind,
+          item,
+        } = confirmAction;
+
+        if (
+          kind ===
+          "tenureApprove"
+        ) {
+          await approveTenureTimeoutSettlement(
+            item.id
+          );
+        }
+
+        if (
+          kind ===
+          "tenureReject"
+        ) {
+          await rejectTenureTimeoutSettlement(
+            item.id
+          );
+        }
+
+        if (
+          kind ===
+          "precloseApprove"
+        ) {
+          await approvePrecloseRequest(
+            item.id
+          );
+        }
+
+        if (
+          kind ===
+          "precloseReject"
+        ) {
+          await rejectPrecloseRequest(
+            item.id
+          );
+        }
+
+        setConfirmAction(null);
+
+        await loadSettlementData();
+      } catch (err) {
+        console.error(
+          "Settlement action failed:",
+          err
         );
-      }
 
-      setConfirmAction(null);
-
-      await loadTenureItems();
-    } catch (err) {
-      console.error(
-        "Settlement action failed:",
-        err
-      );
-
-      setError(
-        err?.response?.data?.detail ||
+        setError(
           err?.message ||
-          "Settlement action failed."
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
+            "Settlement action failed."
+        );
+      } finally {
+        setActionLoading(false);
+      }
+    };
 
-  const closed = useMemo(() => {
-    return [
-      ...tenureItems
-        .filter(
-          (item) =>
-            item.status ===
-              STATUS.APPROVED ||
-            item.status ===
-              STATUS.REJECTED
-        )
-        .map((item) => ({
-          ...item,
-          type: "Tenure",
-          date: item.maturedOn,
-          penalty: 0,
-        })),
+  const pendingTenureCount =
+    tenureItems.filter(
+      (item) =>
+        item.status ===
+        STATUS.PENDING
+    ).length;
 
-      ...closedItems,
-    ];
-  }, [
-    tenureItems,
-    closedItems,
-  ]);
-
-  const activeItem =
-    confirmAction?.item;
+  const pendingPrecloseCount =
+    precloseItems.filter(
+      (item) =>
+        item.status ===
+        STATUS.PENDING
+    ).length;
 
   const totalRequests =
-    tenureItems.length;
-
-  const pendingCount =
-    tenureItems.filter(
-      (item) => item.status === STATUS.PENDING
-    ).length;
-
-  const awaitingCount =
-    tenureItems.filter(
-      (item) => item.status === STATUS.AWAITING_SUPERADMIN
-    ).length;
+    tenureItems.length +
+    precloseItems.length;
 
   const approvedCount =
-    tenureItems.filter(
-      (item) => item.status === STATUS.APPROVED
+    closedItems.filter(
+      (item) =>
+        item.status ===
+        STATUS.APPROVED
     ).length;
 
   const rejectedCount =
     tenureItems.filter(
-      (item) => item.status === STATUS.REJECTED
+      (item) =>
+        item.status ===
+        STATUS.REJECTED
     ).length;
 
   const totalNetSettlement =
-    tenureItems.reduce(
+    closedItems.reduce(
       (sum, item) =>
-        sum + Number(item.netSettlementAmount || 0),
+        sum +
+        Number(
+          item.netSettlementAmount ||
+            0
+        ),
       0
     );
 
+  const activeItem =
+    confirmAction?.item;
+
   return (
     <div className="admin-page settlement-page">
+
       <div className="settlement-stat-grid">
+
         <div className="settlement-stat-card settlement-stat-card--blue">
-          <span>Total Requests</span>
-          <strong>{totalRequests}</strong>
-          <small>All tenure requests</small>
+          <span>
+            Total Requests
+          </span>
+
+          <strong>
+            {totalRequests}
+          </strong>
+
+          <small>
+            Tenure + Pre-Close
+          </small>
         </div>
 
-        <div className="settlement-stat-card settlement-stat-card--amber">
-          <span>Pending</span>
-          <strong>{pendingCount}</strong>
-          <small>Waiting for admin action</small>
-        </div>
+        <div className="settlement-stat-card settlement-stat-card--yellow">
+          <span>
+            Pending
+          </span>
 
-        <div className="settlement-stat-card settlement-stat-card--purple">
-          <span>Awaiting Approval</span>
-          <strong>{awaitingCount}</strong>
-          <small>Sent to Super Admin</small>
+          <strong>
+            {pendingTenureCount +
+              pendingPrecloseCount}
+          </strong>
+
+          <small>
+            Awaiting admin action
+          </small>
         </div>
 
         <div className="settlement-stat-card settlement-stat-card--green">
-          <span>Approved</span>
-          <strong>{approvedCount}</strong>
-          <small>Settled requests</small>
+          <span>
+            Approved
+          </span>
+
+          <strong>
+            {approvedCount}
+          </strong>
+
+          <small>
+            Closed settlements
+          </small>
         </div>
 
         <div className="settlement-stat-card settlement-stat-card--red">
-          <span>Rejected</span>
-          <strong>{rejectedCount}</strong>
-          <small>Rejected requests</small>
+          <span>
+            Rejected
+          </span>
+
+          <strong>
+            {rejectedCount}
+          </strong>
+
+          <small>
+            Rejected requests
+          </small>
         </div>
 
         <div className="settlement-stat-card settlement-stat-card--teal">
-          <span>Net Settlement</span>
-          <strong>{formatINR(totalNetSettlement)}</strong>
-          <small>Current request value</small>
+          <span>
+            Net Settlement
+          </span>
+
+          <strong>
+            {formatINR(
+              totalNetSettlement
+            )}
+          </strong>
+
+          <small>
+            Closed settlements
+          </small>
         </div>
+
       </div>
-
-   
-
-
-
-      {}
 
       {error && (
         <div className="admin-error-box">
@@ -656,10 +1194,8 @@ export default function Settlement() {
         </div>
       )}
 
-      {}
-
       <div className="settlement-tabs">
-        {}
+
         <button
           type="button"
           className={`settlement-tab ${
@@ -674,17 +1210,10 @@ export default function Settlement() {
           Tenure Timeout
 
           <span className="settlement-tab__count">
-            {
-              tenureItems.filter(
-                (item) =>
-                  item.status ===
-                  STATUS.PENDING
-              ).length
-            }
+            {pendingTenureCount}
           </span>
         </button>
 
-        {}
         <button
           type="button"
           className={`settlement-tab ${
@@ -699,11 +1228,10 @@ export default function Settlement() {
           Pre-Close Requests
 
           <span className="settlement-tab__count">
-            {precloseItems.length}
+            {pendingPrecloseCount}
           </span>
         </button>
 
-        {}
         <button
           type="button"
           className={`settlement-tab ${
@@ -718,12 +1246,11 @@ export default function Settlement() {
           Closed Settlements
 
           <span className="settlement-tab__count">
-            {closed.length}
+            {closedItems.length}
           </span>
         </button>
-      </div>
 
-      {}
+      </div>
 
       {loading ? (
         <div className="settlement-empty-state">
@@ -739,15 +1266,13 @@ export default function Settlement() {
         </div>
       ) : (
         <>
-          {}
 
           {activeTab === "tenure" && (
             <div className="settlement-card-list">
+
               {tenureItems.length === 0 && (
                 <div className="settlement-empty-state">
-                  <Archive
-                    size={20}
-                  />
+                  <Archive size={20} />
 
                   <p>
                     No tenure timeout
@@ -757,380 +1282,542 @@ export default function Settlement() {
               )}
 
               {tenureItems.map(
-                (item) => {
-                  const gstAmount =
-                    item.gstAmount;
+                (item) => (
+                  <div
+                    className="settlement-card"
+                    key={`tenure-${item.id}`}
+                  >
 
-                  const net =
-                    item.netSettlementAmount;
+                    <div className="settlement-card-header">
 
-                  return (
-                    <div
-                      className="settlement-card"
-                      key={item.id}
-                    >
-                      {}
+                      <div className="settlement-card-header__left">
 
-                      <div className="settlement-card-header">
-                        <div className="settlement-card-header__left">
-                          <span className="settlement-bond-link">
-                            {item.bondNumber}
-                          </span>
+                        <span className="settlement-bond-link">
+                          {item.bondNumber}
+                        </span>
 
-                          <span
-                            className={`settlement-badge settlement-badge--${statusClass(
-                              item.status
-                            )}`}
-                          >
-                            {item.status}
-                          </span>
-                        </div>
+                        <span
+                          className={`settlement-badge settlement-badge--${statusClass(
+                            item.status
+                          )}`}
+                        >
+                          {item.status}
+                        </span>
 
-                        <div className="settlement-card-header__actions">
-                          {item.status ===
-                            STATUS.PENDING && (
-                            <>
-                              <button
-                                type="button"
-                                className="admin-btn admin-btn--success admin-btn--pill"
-                                disabled={
-                                  actionLoading
-                                }
-                                onClick={() =>
-                                  openConfirm(
-                                    "tenureApprove",
-                                    item
-                                  )
-                                }
-                              >
-                                <Send
-                                  size={14}
-                                />
+                        <span className="settlement-badge settlement-badge--preclose">
+                          Tenure Timeout
+                        </span>
 
-                                Approve Settlement
-                              </button>
-
-                              <button
-                                type="button"
-                                className="admin-btn admin-btn--danger admin-btn--pill"
-                                disabled={
-                                  actionLoading
-                                }
-                                onClick={() =>
-                                  openConfirm(
-                                    "tenureReject",
-                                    item
-                                  )
-                                }
-                              >
-                                <Ban
-                                  size={14}
-                                />
-
-                                Reject
-                              </button>
-                            </>
-                          )}
-
-                          <StatusPill
-                            status={
-                              item.status
-                            }
-                          />
-                        </div>
                       </div>
 
-                      {}
+                      <div className="settlement-card-header__actions">
 
-                      <div className="settlement-card-body">
-                        {}
+                        {item.status ===
+                          STATUS.PENDING && (
+                          <>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn--success admin-btn--pill"
+                              disabled={
+                                actionLoading
+                              }
+                              onClick={() =>
+                                openConfirm(
+                                  "tenureApprove",
+                                  item
+                                )
+                              }
+                            >
+                              <Send
+                                size={14}
+                              />
+                              Approve
+                            </button>
 
-                        <div className="settlement-info-grid">
-                          <InfoItem
-                            label="Investor"
-                            value={
-                              item.investor
-                            }
-                          />
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn--danger admin-btn--pill"
+                              disabled={
+                                actionLoading
+                              }
+                              onClick={() =>
+                                openConfirm(
+                                  "tenureReject",
+                                  item
+                                )
+                              }
+                            >
+                              <Ban
+                                size={14}
+                              />
+                              Reject
+                            </button>
+                          </>
+                        )}
 
-                          <InfoItem
-                            label="Investor ID"
-                            value={
-                              item.investorId
-                            }
-                          />
+                        <StatusPill
+                          status={
+                            item.status
+                          }
+                        />
 
-                          <InfoItem
-                            label="Branch"
-                            value={
-                              item.branch
-                            }
-                          />
-
-                          <InfoItem
-                            label="Bond Number"
-                            value={
-                              item.bondNumber
-                            }
-                          />
-
-                          <InfoItem
-                            label="Investment Date"
-                            value={formatDate(
-                              item.investmentDate
-                            )}
-                          />
-
-                          <InfoItem
-                            label="Matured On"
-                            value={formatDate(
-                              item.maturedOn
-                            )}
-                          />
-                        </div>
-
-                        {}
-
-                        <div className="settlement-breakdown-list">
-                          <BreakdownRow
-                            label="Principal"
-                            value={formatINR(
-                              item.principal
-                            )}
-                          />
-
-                          <BreakdownRow
-                            label="Total Interest Earned"
-                            value={formatINR(
-                              item.interestEarned
-                            )}
-                          />
-
-                          <BreakdownRow
-                            label="GST (18% on interest)"
-                            value={`-${formatINR(
-                              gstAmount
-                            )}`}
-                            tone="penalty"
-                          />
-
-                          <BreakdownRow
-                            label="Net Settlement Amount"
-                            value={formatINR(
-                              net
-                            )}
-                            tone="total"
-                          />
-                        </div>
                       </div>
+
                     </div>
-                  );
-                }
+
+                    <div className="settlement-card-body">
+
+                      <div className="settlement-info-grid">
+
+                        <InfoItem
+                          label="Investor"
+                          value={
+                            item.investor
+                          }
+                        />
+
+                        <InfoItem
+                          label="Investor ID"
+                          value={
+                            item.investorId
+                          }
+                        />
+
+                        <InfoItem
+                          label="Branch"
+                          value={
+                            item.branch
+                          }
+                        />
+
+                        <InfoItem
+                          label="Bond Number"
+                          value={
+                            item.bondNumber
+                          }
+                        />
+
+                        <InfoItem
+                          label="Investment Date"
+                          value={formatDate(
+                            item.investmentDate
+                          )}
+                        />
+
+                        <InfoItem
+                          label="Matured On"
+                          value={formatDate(
+                            item.maturedOn
+                          )}
+                        />
+
+                      </div>
+
+                      <div className="settlement-breakdown-list">
+
+                        <BreakdownRow
+                          label="Principal"
+                          value={formatINR(
+                            item.principal
+                          )}
+                        />
+
+                        <BreakdownRow
+                          label="Interest Earned"
+                          value={formatINR(
+                            item.interestEarned
+                          )}
+                        />
+
+                        <BreakdownRow
+                          label="GST (18% on interest)"
+                          value={`-${formatINR(
+                            item.gstAmount
+                          )}`}
+                          tone="penalty"
+                        />
+
+                        <BreakdownRow
+                          label="Net Settlement"
+                          value={formatINR(
+                            item.netSettlementAmount
+                          )}
+                          tone="total"
+                        />
+
+                      </div>
+
+                    </div>
+
+                  </div>
+                )
               )}
+
             </div>
           )}
 
-          {}
-
-          {activeTab ===
-            "preclose" && (
+          {activeTab === "preclose" && (
             <div className="settlement-card-list">
-              <div className="settlement-empty-state">
-                <Archive
-                  size={20}
-                />
 
-                <p>
-                  No pre-close settlement
-                  requests available.
-                </p>
-              </div>
+              {precloseItems.length === 0 && (
+                <div className="settlement-empty-state">
+                  <Archive size={20} />
+
+                  <p>
+                    No pre-close
+                    requests available.
+                  </p>
+                </div>
+              )}
+
+              {precloseItems.map(
+                (item) => (
+                  <div
+                    className="settlement-card"
+                    key={`preclose-${item.id}`}
+                  >
+
+                    <div className="settlement-card-header">
+
+                      <div className="settlement-card-header__left">
+
+                        <span className="settlement-bond-link">
+                          {item.bondNumber}
+                        </span>
+
+                        <span
+                          className={`settlement-badge settlement-badge--${statusClass(
+                            item.status
+                          )}`}
+                        >
+                          {item.status}
+                        </span>
+
+                        <span className="settlement-badge settlement-badge--preclose">
+                          Pre-Close
+                        </span>
+
+                      </div>
+
+                      <div className="settlement-card-header__actions">
+
+                        {item.status ===
+                          STATUS.PENDING && (
+                          <>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn--success admin-btn--pill"
+                              disabled={
+                                actionLoading
+                              }
+                              onClick={() =>
+                                openConfirm(
+                                  "precloseApprove",
+                                  item
+                                )
+                              }
+                            >
+                              <Send
+                                size={14}
+                              />
+                              Approve
+                            </button>
+
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn--danger admin-btn--pill"
+                              disabled={
+                                actionLoading
+                              }
+                              onClick={() =>
+                                openConfirm(
+                                  "precloseReject",
+                                  item
+                                )
+                              }
+                            >
+                              <Ban
+                                size={14}
+                              />
+                              Reject
+                            </button>
+                          </>
+                        )}
+
+                        <StatusPill
+                          status={
+                            item.status
+                          }
+                        />
+
+                      </div>
+
+                    </div>
+
+                    <div className="settlement-card-body">
+
+                      <div className="settlement-info-grid">
+
+                        <InfoItem
+                          label="Investor"
+                          value={
+                            item.investor
+                          }
+                        />
+
+                        <InfoItem
+                          label="Investor ID"
+                          value={
+                            item.investorId
+                          }
+                        />
+
+                        <InfoItem
+                          label="Branch"
+                          value={
+                            item.branch
+                          }
+                        />
+
+                        <InfoItem
+                          label="Bond Number"
+                          value={
+                            item.bondNumber
+                          }
+                        />
+
+                        <InfoItem
+                          label="Investment Date"
+                          value={formatDate(
+                            item.investmentDate
+                          )}
+                        />
+
+                        <InfoItem
+                          label="Requested Date"
+                          value={formatDate(
+                            item.requestedDate
+                          )}
+                        />
+
+                      </div>
+
+                      <div className="settlement-breakdown-list">
+
+                        <BreakdownRow
+                          label="Principal"
+                          value={formatINR(
+                            item.principal
+                          )}
+                        />
+
+                        <BreakdownRow
+                          label="Interest Earned"
+                          value={formatINR(
+                            item.interestEarned
+                          )}
+                        />
+
+                        <BreakdownRow
+                          label="GST (18% on interest)"
+                          value={`-${formatINR(
+                            item.gstAmount
+                          )}`}
+                          tone="penalty"
+                        />
+
+                        <BreakdownRow
+                          label="Penalty"
+                          value={`-${formatINR(
+                            item.penalty
+                          )}`}
+                          tone="penalty"
+                        />
+
+                        <BreakdownRow
+                          label="Net Settlement"
+                          value={formatINR(
+                            item.netSettlementAmount
+                          )}
+                          tone="total"
+                        />
+
+                      </div>
+
+                      <div className="settlement-reason-box">
+                        <strong>
+                          Reason:
+                        </strong>
+
+                        <span>
+                          {item.reason}
+                        </span>
+                      </div>
+
+                    </div>
+
+                  </div>
+                )
+              )}
+
             </div>
           )}
-
-          {}
 
           {activeTab === "closed" && (
             <div className="settlement-card-list">
-              {closed.length === 0 ? (
+
+              {closedItems.length === 0 && (
                 <div className="settlement-empty-state">
-                  <Archive
-                    size={20}
-                  />
+                  <Archive size={20} />
 
                   <p>
                     No closed settlements
                     yet.
                   </p>
                 </div>
-              ) : (
-                closed.map(
-                  (item) => {
-                    const gstAmount =
-                      toNumber(
-                        item.gstAmount,
-                        Number(
-                          (
-                            item.interestEarned *
-                            GST_RATE
-                          ).toFixed(2)
-                        )
-                      );
+              )}
 
-                    const netAfterGst =
-                      toNumber(
-                        item.netSettlementAmount,
-                        Number(
-                          (
-                            item.principal +
-                            item.interestEarned -
-                            gstAmount -
-                            (item.penalty ||
-                              0)
-                          ).toFixed(2)
-                        )
-                      );
+              {closedItems.map(
+                (item) => (
+                  <div
+                    className="settlement-card"
+                    key={`closed-${item.type}-${item.id}`}
+                  >
 
-                    return (
-                      <div
-                        className="settlement-card"
-                        key={`${item.type}-${item.id}`}
-                      >
-                        {}
+                    <div className="settlement-card-header">
 
-                        <div className="settlement-card-header">
-                          <div className="settlement-card-header__left">
-                            <span className="settlement-bond-link">
-                              {
-                                item.bondNumber
-                              }
-                            </span>
+                      <div className="settlement-card-header__left">
 
-                            <span
-                              className={`settlement-badge settlement-badge--${statusClass(
-                                item.status
-                              )}`}
-                            >
-                              {
-                                item.status
-                              }
-                            </span>
+                        <span className="settlement-bond-link">
+                          {item.bondNumber}
+                        </span>
 
-                            <span className="settlement-badge settlement-badge--preclose">
-                              {
-                                item.type
-                              }
-                            </span>
-                          </div>
+                        <span
+                          className={`settlement-badge settlement-badge--${statusClass(
+                            item.status
+                          )}`}
+                        >
+                          {item.status}
+                        </span>
 
-                          <StatusPill
-                            status={
-                              item.status
-                            }
-                          />
-                        </div>
+                        <span className="settlement-badge settlement-badge--preclose">
+                          {item.type}
+                        </span>
 
-                        {}
-
-                        <div className="settlement-card-body">
-                          <div className="settlement-info-grid">
-                            <InfoItem
-                              label="Investor"
-                              value={
-                                item.investor
-                              }
-                            />
-
-                            <InfoItem
-                              label="Investor ID"
-                              value={
-                                item.investorId
-                              }
-                            />
-
-                            <InfoItem
-                              label="Branch"
-                              value={
-                                item.branch
-                              }
-                            />
-
-                            <InfoItem
-                              label="Bond Number"
-                              value={
-                                item.bondNumber
-                              }
-                            />
-
-                            <InfoItem
-                              label="Date"
-                              value={formatDate(
-                                item.date
-                              )}
-                            />
-
-                            <InfoItem
-                              label="Type"
-                              value={
-                                item.type
-                              }
-                            />
-                          </div>
-
-                          <div className="settlement-breakdown-list">
-                            <BreakdownRow
-                              label="Principal"
-                              value={formatINR(
-                                item.principal
-                              )}
-                            />
-
-                            <BreakdownRow
-                              label="Interest Earned"
-                              value={formatINR(
-                                item.interestEarned
-                              )}
-                            />
-
-                            <BreakdownRow
-                              label="GST (18% on interest)"
-                              value={`-${formatINR(
-                                gstAmount
-                              )}`}
-                              tone="penalty"
-                            />
-
-                            {item.penalty >
-                              0 && (
-                              <BreakdownRow
-                                label="Early Penalty"
-                                value={`-${formatINR(
-                                  item.penalty
-                                )}`}
-                                tone="penalty"
-                              />
-                            )}
-
-                            <BreakdownRow
-                              label="Net Payable"
-                              value={formatINR(
-                                netAfterGst
-                              )}
-                              tone="total"
-                            />
-                          </div>
-                        </div>
                       </div>
-                    );
-                  }
+
+                      <StatusPill
+                        status={
+                          item.status
+                        }
+                      />
+
+                    </div>
+
+                    <div className="settlement-card-body">
+
+                      <div className="settlement-info-grid">
+
+                        <InfoItem
+                          label="Investor"
+                          value={
+                            item.investor
+                          }
+                        />
+
+                        <InfoItem
+                          label="Investor ID"
+                          value={
+                            item.investorId
+                          }
+                        />
+
+                        <InfoItem
+                          label="Branch"
+                          value={
+                            item.branch
+                          }
+                        />
+
+                        <InfoItem
+                          label="Bond Number"
+                          value={
+                            item.bondNumber
+                          }
+                        />
+
+                        <InfoItem
+                          label="Settlement Date"
+                          value={formatDate(
+                            item.date
+                          )}
+                        />
+
+                        <InfoItem
+                          label="Type"
+                          value={
+                            item.type
+                          }
+                        />
+
+                      </div>
+
+                      <div className="settlement-breakdown-list">
+
+                        <BreakdownRow
+                          label="Principal"
+                          value={formatINR(
+                            item.principal
+                          )}
+                        />
+
+                        <BreakdownRow
+                          label="Interest Earned"
+                          value={formatINR(
+                            item.interestEarned
+                          )}
+                        />
+
+                        <BreakdownRow
+                          label="GST (18% on interest)"
+                          value={`-${formatINR(
+                            item.gstAmount
+                          )}`}
+                          tone="penalty"
+                        />
+
+                        {item.penalty >
+                          0 && (
+                          <BreakdownRow
+                            label="Early Penalty"
+                            value={`-${formatINR(
+                              item.penalty
+                            )}`}
+                            tone="penalty"
+                          />
+                        )}
+
+                        <BreakdownRow
+                          label="Net Payable"
+                          value={formatINR(
+                            item.netSettlementAmount
+                          )}
+                          tone="total"
+                        />
+
+                      </div>
+
+                    </div>
+
+                  </div>
                 )
               )}
+
             </div>
           )}
+
         </>
       )}
-
-      {}
 
       {confirmAction && (
         <div
@@ -1143,49 +1830,59 @@ export default function Settlement() {
               event.stopPropagation()
             }
           >
-            {}
 
             <div className="settlement-modal-header">
+
               <div className="settlement-modal-header__title">
+
                 <AlertTriangle
                   size={18}
                 />
 
                 <h3>
                   {confirmAction.kind ===
-                  "tenureReject"
+                    "tenureReject" ||
+                  confirmAction.kind ===
+                    "precloseReject"
                     ? "Reject Settlement"
-                    : "Send Settlement for Super Admin Approval"}
+                    : confirmAction.kind ===
+                      "precloseApprove"
+                    ? "Approve Pre-Close Settlement"
+                    : "Approve Tenure Timeout Settlement"}
                 </h3>
+
               </div>
 
               <button
                 type="button"
                 className="settlement-modal-close-btn"
-                onClick={closeConfirm}
+                onClick={
+                  closeConfirm
+                }
                 disabled={
                   actionLoading
                 }
               >
                 <X size={16} />
               </button>
+
             </div>
 
-            {}
-
             <div className="settlement-modal-body">
+
               {activeItem && (
                 <>
                   <p>
                     {confirmAction.kind ===
-                    "tenureReject"
+                      "tenureReject" ||
+                    confirmAction.kind ===
+                      "precloseReject"
                       ? `Reject settlement for ${activeItem.investor} on bond ${activeItem.bondNumber}?`
-                      : `Send the settlement for ${activeItem.investor} on bond ${activeItem.bondNumber} to Super Admin for approval?`}
+                      : `Approve ${activeItem.type || "settlement"} for ${activeItem.investor} on bond ${activeItem.bondNumber}?`}
                   </p>
 
-                  {}
-
                   <div className="settlement-confirm-info">
+
                     <div>
                       <span>
                         Investor
@@ -1212,18 +1909,6 @@ export default function Settlement() {
 
                     <div>
                       <span>
-                        Branch
-                      </span>
-
-                      <strong>
-                        {
-                          activeItem.branch
-                        }
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>
                         Bond
                       </span>
 
@@ -1233,11 +1918,23 @@ export default function Settlement() {
                         }
                       </strong>
                     </div>
+
+                    <div>
+                      <span>
+                        Type
+                      </span>
+
+                      <strong>
+                        {
+                          activeItem.type
+                        }
+                      </strong>
+                    </div>
+
                   </div>
 
-                  {}
-
                   <div className="settlement-confirm-breakdown">
+
                     <div className="settlement-confirm-breakdown__row">
                       <span>
                         Principal
@@ -1264,10 +1961,7 @@ export default function Settlement() {
 
                     <div className="settlement-confirm-breakdown__row settlement-confirm-breakdown__row--gst">
                       <span>
-                        GST{" "}
-                        <em>
-                          (18% on interest)
-                        </em>
+                        GST
                       </span>
 
                       <span className="mono">
@@ -1289,14 +1983,15 @@ export default function Settlement() {
                         )}
                       </span>
                     </div>
+
                   </div>
                 </>
               )}
+
             </div>
 
-            {}
-
             <div className="settlement-modal-footer">
+
               <button
                 type="button"
                 className="admin-btn admin-btn--outline"
@@ -1314,7 +2009,9 @@ export default function Settlement() {
                 type="button"
                 className={`admin-btn ${
                   confirmAction.kind ===
-                  "tenureReject"
+                    "tenureReject" ||
+                  confirmAction.kind ===
+                    "precloseReject"
                     ? "admin-btn--danger"
                     : "admin-btn--success"
                 }`}
@@ -1328,14 +2025,19 @@ export default function Settlement() {
                 {actionLoading
                   ? "Processing..."
                   : confirmAction.kind ===
-                    "tenureReject"
+                      "tenureReject" ||
+                    confirmAction.kind ===
+                      "precloseReject"
                   ? "Reject"
-                  : "Confirm & Send"}
+                  : "Confirm & Approve"}
               </button>
+
             </div>
+
           </div>
         </div>
       )}
+
     </div>
   );
 }
