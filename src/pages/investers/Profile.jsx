@@ -26,56 +26,47 @@ import {
   updateInvestorProfile,
 } from "../../services/investorProfileService";
 
-
-/* =========================================================
-   EMPTY PROFILE
-========================================================= */
-
 const emptyProfile = {
   investorId: "",
-
   name: "",
   email: "",
   mobile: "",
-
   dateOfBirth: "",
   address: "",
   city: "",
   stateId: "",
   stateName: "",
   pincode: "",
-
   branchId: "",
   branch: "",
-
   role: "Investor Portal",
   status: "",
   kyc: "",
-
   initial: "A",
 
   bank: {
+    id: "",
+    accountHolderName: "",
     name: "",
+    bankName: "",
     accountNumber: "",
     ifsc: "",
+    accountTypeId: "",
     accountType: "",
+    isPrimary: false,
   },
 };
 
-
-/* =========================================================
-   MAP API RESPONSE
-========================================================= */
-
 const mapProfileResponse = (data) => {
-  const fullName =
-    data?.full_name || "";
+  const fullName = data?.full_name || "";
+  const bankData = data?.bank || {};
 
   return {
     investorId:
       data?.investor_id || "",
 
-    name: fullName,
+    name:
+      fullName,
 
     email:
       data?.email || "",
@@ -93,7 +84,7 @@ const mapProfileResponse = (data) => {
       data?.city || "",
 
     stateId:
-      data?.state_id || "",
+      data?.state_id ?? "",
 
     stateName:
       data?.state_name || "",
@@ -102,7 +93,7 @@ const mapProfileResponse = (data) => {
       data?.pincode || "",
 
     branchId:
-      data?.branch_id || "",
+      data?.branch_id ?? "",
 
     branch:
       data?.branch_name || "",
@@ -120,39 +111,45 @@ const mapProfileResponse = (data) => {
 
     initial:
       fullName
-        ? fullName
-            .charAt(0)
-            .toUpperCase()
+        ? fullName.charAt(0).toUpperCase()
         : "A",
 
     bank: {
+      id:
+        bankData?.id ?? "",
+
+      accountHolderName:
+        bankData?.account_holder_name ||
+        "",
+
       name:
-        data?.bank?.name ||
-        data?.bank_name ||
+        bankData?.bank_name ||
+        "",
+
+      bankName:
+        bankData?.bank_name ||
+        "",
+
+      accountTypeId:
+        bankData?.account_type_id ?? "",
+
+      accountType:
+        bankData?.account_type ||
         "",
 
       accountNumber:
-        data?.bank?.accountNumber ||
-        data?.account_number ||
+        bankData?.account_number ||
         "",
 
       ifsc:
-        data?.bank?.ifsc ||
-        data?.ifsc_code ||
+        bankData?.ifsc_code ||
         "",
 
-      accountType:
-        data?.bank?.accountType ||
-        data?.account_type ||
-        "",
+      isPrimary:
+        Boolean(bankData?.is_primary),
     },
   };
 };
-
-
-/* =========================================================
-   PROFILE COMPONENT
-========================================================= */
 
 export default function Profile() {
   const [profile, setProfile] =
@@ -176,11 +173,6 @@ export default function Profile() {
   const [success, setSuccess] =
     useState("");
 
-
-  /* =======================================================
-     LOAD PROFILE
-  ======================================================= */
-
   const loadProfile = async () => {
     try {
       setLoading(true);
@@ -194,11 +186,27 @@ export default function Profile() {
         response
       );
 
-      const mappedProfile =
+      const mapped =
         mapProfileResponse(response);
 
-      setProfile(mappedProfile);
-      setDraft(mappedProfile);
+      console.log(
+        "Mapped investor profile:",
+        mapped
+      );
+
+      console.log(
+        "Mapped bank details:",
+        mapped.bank
+      );
+
+      setProfile(mapped);
+
+      setDraft({
+        ...mapped,
+        bank: {
+          ...mapped.bank,
+        },
+      });
     } catch (err) {
       console.error(
         "Get investor profile error:",
@@ -206,7 +214,7 @@ export default function Profile() {
       );
 
       setError(
-        err.message ||
+        err?.message ||
           "Unable to load investor profile."
       );
     } finally {
@@ -214,19 +222,9 @@ export default function Profile() {
     }
   };
 
-
-  /* =======================================================
-     INITIAL LOAD
-  ======================================================= */
-
   useEffect(() => {
     loadProfile();
   }, []);
-
-
-  /* =======================================================
-     EDIT
-  ======================================================= */
 
   const handleEditClick = () => {
     setDraft({
@@ -241,11 +239,6 @@ export default function Profile() {
     setIsEditing(true);
   };
 
-
-  /* =======================================================
-     CANCEL
-  ======================================================= */
-
   const handleCancel = () => {
     setDraft({
       ...profile,
@@ -259,11 +252,6 @@ export default function Profile() {
     setIsEditing(false);
   };
 
-
-  /* =======================================================
-     FIELD CHANGE
-  ======================================================= */
-
   const handleFieldChange = (
     field,
     value
@@ -274,10 +262,48 @@ export default function Profile() {
     }));
   };
 
+  const handleBankFieldChange = (
+    field,
+    value
+  ) => {
+    setDraft((previous) => ({
+      ...previous,
 
-  /* =======================================================
-     SAVE
-  ======================================================= */
+      bank: {
+        ...(previous.bank || {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  const validateProfile = () => {
+    if (!draft.name?.trim()) {
+      return "Full name is required.";
+    }
+
+    if (!draft.mobile?.trim()) {
+      return "Mobile number is required.";
+    }
+
+    if (
+      !/^[0-9]{10,20}$/.test(
+        draft.mobile.trim()
+      )
+    ) {
+      return "Please enter a valid mobile number.";
+    }
+
+    if (
+      draft.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        draft.email.trim()
+      )
+    ) {
+      return "Please enter a valid email address.";
+    }
+
+    return "";
+  };
 
   const handleSave = async () => {
     try {
@@ -285,21 +311,46 @@ export default function Profile() {
       setError("");
       setSuccess("");
 
+      const validationError =
+        validateProfile();
+
+      if (validationError) {
+        setError(validationError);
+        setSaving(false);
+        return;
+      }
+
+      console.log(
+        "Saving investor profile:",
+        draft
+      );
+
+      console.log(
+        "Saving bank details:",
+        draft.bank
+      );
+
       const response =
         await updateInvestorProfile(
           draft
         );
 
       console.log(
-        "Update investor profile response:",
+        "Updated investor profile:",
         response
       );
 
-      const updatedProfile =
+      const updated =
         mapProfileResponse(response);
 
-      setProfile(updatedProfile);
-      setDraft(updatedProfile);
+      setProfile(updated);
+
+      setDraft({
+        ...updated,
+        bank: {
+          ...updated.bank,
+        },
+      });
 
       setIsEditing(false);
 
@@ -313,18 +364,13 @@ export default function Profile() {
       );
 
       setError(
-        err.message ||
+        err?.message ||
           "Unable to update profile."
       );
     } finally {
       setSaving(false);
     }
   };
-
-
-  /* =======================================================
-     LOADING
-  ======================================================= */
 
   if (loading) {
     return (
@@ -343,17 +389,8 @@ export default function Profile() {
     );
   }
 
-
-  /* =======================================================
-     RENDER
-  ======================================================= */
-
   return (
     <div className="investor-page">
-
-      {/* ===================================================
-          TOP ACTIONS
-      =================================================== */}
 
       <div className="investor-page-actions investor-page-actions--end">
 
@@ -366,7 +403,6 @@ export default function Profile() {
               disabled={saving}
             >
               <X size={14} />
-
               Cancel
             </button>
 
@@ -388,7 +424,6 @@ export default function Profile() {
               ) : (
                 <>
                   <Save size={14} />
-
                   Save Changes
                 </>
               )}
@@ -401,53 +436,27 @@ export default function Profile() {
             onClick={handleEditClick}
           >
             <Edit2 size={14} />
-
             Edit Profile
           </button>
         )}
 
       </div>
 
-
-      {/* ===================================================
-          ERROR
-      =================================================== */}
-
       {error && (
         <div className="profile-alert profile-alert--error">
           <AlertCircle size={17} />
-
-          <span>
-            {error}
-          </span>
+          <span>{error}</span>
         </div>
       )}
-
-
-      {/* ===================================================
-          SUCCESS
-      =================================================== */}
 
       {success && (
         <div className="profile-alert profile-alert--success">
           <CheckCircle2 size={17} />
-
-          <span>
-            {success}
-          </span>
+          <span>{success}</span>
         </div>
       )}
 
-
-      {/* ===================================================
-          PROFILE LAYOUT
-      =================================================== */}
-
       <div className="profile-layout">
-
-        {/* =================================================
-            LEFT PROFILE CARD
-        ================================================= */}
 
         <div className="profile-card">
 
@@ -472,23 +481,13 @@ export default function Profile() {
           {profile.kyc && (
             <span className="profile-role-pill">
               <ShieldCheck size={13} />
-
               {profile.kyc}
             </span>
           )}
 
         </div>
 
-
-        {/* =================================================
-            RIGHT COLUMN
-        ================================================= */}
-
         <div className="profile-right-col">
-
-          {/* ===============================================
-              PERSONAL INFORMATION
-          =============================================== */}
 
           <div className="profile-info-card">
 
@@ -496,16 +495,12 @@ export default function Profile() {
               Personal Information
             </p>
 
-
             <div className="profile-info-grid">
-
-              {/* FULL NAME */}
 
               <div className="profile-info-field">
 
                 <span className="profile-info-label">
                   <User size={13} />
-
                   Full Name
                 </span>
 
@@ -513,9 +508,7 @@ export default function Profile() {
                   <input
                     className="profile-info-input"
                     type="text"
-                    value={
-                      draft.name
-                    }
+                    value={draft.name}
                     onChange={(e) =>
                       handleFieldChange(
                         "name",
@@ -531,14 +524,10 @@ export default function Profile() {
 
               </div>
 
-
-              {/* MOBILE */}
-
               <div className="profile-info-field">
 
                 <span className="profile-info-label">
                   <Phone size={13} />
-
                   Mobile
                 </span>
 
@@ -546,13 +535,15 @@ export default function Profile() {
                   <input
                     className="profile-info-input"
                     type="text"
-                    value={
-                      draft.mobile
-                    }
+                    maxLength={20}
+                    value={draft.mobile}
                     onChange={(e) =>
                       handleFieldChange(
                         "mobile",
-                        e.target.value
+                        e.target.value.replace(
+                          /\D/g,
+                          ""
+                        )
                       )
                     }
                   />
@@ -564,14 +555,10 @@ export default function Profile() {
 
               </div>
 
-
-              {/* EMAIL */}
-
               <div className="profile-info-field">
 
                 <span className="profile-info-label">
                   <Mail size={13} />
-
                   Email
                 </span>
 
@@ -579,9 +566,7 @@ export default function Profile() {
                   <input
                     className="profile-info-input"
                     type="email"
-                    value={
-                      draft.email
-                    }
+                    value={draft.email}
                     onChange={(e) =>
                       handleFieldChange(
                         "email",
@@ -597,9 +582,6 @@ export default function Profile() {
 
               </div>
 
-
-              {/* DATE OF BIRTH */}
-
               <div className="profile-info-field">
 
                 <span className="profile-info-label">
@@ -611,7 +593,7 @@ export default function Profile() {
                     className="profile-info-input"
                     type="date"
                     value={
-                      draft.dateOfBirth
+                      draft.dateOfBirth || ""
                     }
                     onChange={(e) =>
                       handleFieldChange(
@@ -628,9 +610,6 @@ export default function Profile() {
 
               </div>
 
-
-              {/* CITY */}
-
               <div className="profile-info-field">
 
                 <span className="profile-info-label">
@@ -641,9 +620,7 @@ export default function Profile() {
                   <input
                     className="profile-info-input"
                     type="text"
-                    value={
-                      draft.city
-                    }
+                    value={draft.city}
                     onChange={(e) =>
                       handleFieldChange(
                         "city",
@@ -659,9 +636,6 @@ export default function Profile() {
 
               </div>
 
-
-              {/* PINCODE */}
-
               <div className="profile-info-field">
 
                 <span className="profile-info-label">
@@ -673,13 +647,14 @@ export default function Profile() {
                     className="profile-info-input"
                     type="text"
                     maxLength={10}
-                    value={
-                      draft.pincode
-                    }
+                    value={draft.pincode}
                     onChange={(e) =>
                       handleFieldChange(
                         "pincode",
-                        e.target.value
+                        e.target.value.replace(
+                          /\D/g,
+                          ""
+                        )
                       )
                     }
                   />
@@ -691,29 +666,22 @@ export default function Profile() {
 
               </div>
 
-
-              {/* ADDRESS */}
-
               <div
                 className="profile-info-field"
                 style={{
-                  gridColumn:
-                    "1 / -1",
+                  gridColumn: "1 / -1",
                 }}
               >
 
                 <span className="profile-info-label">
                   <MapPin size={13} />
-
                   Address
                 </span>
 
                 {isEditing ? (
                   <textarea
                     className="profile-info-input profile-info-textarea"
-                    value={
-                      draft.address
-                    }
+                    value={draft.address}
                     onChange={(e) =>
                       handleFieldChange(
                         "address",
@@ -730,9 +698,6 @@ export default function Profile() {
 
               </div>
 
-
-              {/* STATE */}
-
               <div className="profile-info-field">
 
                 <span className="profile-info-label">
@@ -744,9 +709,6 @@ export default function Profile() {
                 </span>
 
               </div>
-
-
-              {/* ROLE */}
 
               <div className="profile-info-field">
 
@@ -760,14 +722,10 @@ export default function Profile() {
 
               </div>
 
-
-              {/* BRANCH */}
-
               <div className="profile-info-field">
 
                 <span className="profile-info-label">
                   <Building2 size={13} />
-
                   Branch
                 </span>
 
@@ -776,9 +734,6 @@ export default function Profile() {
                 </span>
 
               </div>
-
-
-              {/* STATUS */}
 
               <div className="profile-info-field">
 
@@ -796,22 +751,14 @@ export default function Profile() {
 
           </div>
 
-
-          {/* ===============================================
-              BANK DETAILS
-          =============================================== */}
-
           <div className="profile-info-card">
 
             <p className="investor-section__title">
               <CreditCard size={17} />
-
               Bank Details
             </p>
 
             <div className="profile-info-grid">
-
-              {/* BANK NAME */}
 
               <div className="profile-info-field">
 
@@ -819,14 +766,65 @@ export default function Profile() {
                   Bank Name
                 </span>
 
-                <span className="profile-info-value">
-                  {profile.bank.name || "—"}
-                </span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    value={
+                      draft.bank?.bankName ||
+                      draft.bank?.name ||
+                      ""
+                    }
+                    onChange={(e) =>
+                      handleBankFieldChange(
+                        "bankName",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Enter bank name"
+                  />
+                ) : (
+                  <span className="profile-info-value">
+                    {profile.bank?.bankName ||
+                      profile.bank?.name ||
+                      "—"}
+                  </span>
+                )}
 
               </div>
 
+              <div className="profile-info-field">
 
-              {/* ACCOUNT NUMBER */}
+                <span className="profile-info-label">
+                  Account Holder Name
+                </span>
+
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    value={
+                      draft.bank
+                        ?.accountHolderName ||
+                      ""
+                    }
+                    onChange={(e) =>
+                      handleBankFieldChange(
+                        "accountHolderName",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Enter account holder name"
+                  />
+                ) : (
+                  <span className="profile-info-value">
+                    {profile.bank
+                      ?.accountHolderName ||
+                      "—"}
+                  </span>
+                )}
+
+              </div>
 
               <div className="profile-info-field">
 
@@ -834,14 +832,35 @@ export default function Profile() {
                   Account Number
                 </span>
 
-                <span className="profile-info-value">
-                  {profile.bank.accountNumber || "—"}
-                </span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={30}
+                    value={
+                      draft.bank
+                        ?.accountNumber || ""
+                    }
+                    onChange={(e) =>
+                      handleBankFieldChange(
+                        "accountNumber",
+                        e.target.value.replace(
+                          /\D/g,
+                          ""
+                        )
+                      )
+                    }
+                    placeholder="Enter account number"
+                  />
+                ) : (
+                  <span className="profile-info-value">
+                    {profile.bank
+                      ?.accountNumber || "—"}
+                  </span>
+                )}
 
               </div>
-
-
-              {/* IFSC */}
 
               <div className="profile-info-field">
 
@@ -849,14 +868,34 @@ export default function Profile() {
                   IFSC Code
                 </span>
 
-                <span className="profile-info-value">
-                  {profile.bank.ifsc || "—"}
-                </span>
+                {isEditing ? (
+                  <input
+                    className="profile-info-input"
+                    type="text"
+                    maxLength={11}
+                    value={
+                      draft.bank?.ifsc || ""
+                    }
+                    onChange={(e) =>
+                      handleBankFieldChange(
+                        "ifsc",
+                        e.target.value
+                          .toUpperCase()
+                          .replace(
+                            /[^A-Z0-9]/g,
+                            ""
+                          )
+                      )
+                    }
+                    placeholder="Enter IFSC code"
+                  />
+                ) : (
+                  <span className="profile-info-value">
+                    {profile.bank?.ifsc || "—"}
+                  </span>
+                )}
 
               </div>
-
-
-              {/* ACCOUNT TYPE */}
 
               <div className="profile-info-field">
 
@@ -864,8 +903,66 @@ export default function Profile() {
                   Account Type
                 </span>
 
+                {isEditing ? (
+                  <select
+                    className="profile-info-input"
+                    value={
+                      draft.bank
+                        ?.accountType || ""
+                    }
+                    onChange={(e) => {
+                      const value =
+                        e.target.value;
+
+                      const accountTypeId =
+                        value === "Savings"
+                          ? 1
+                          : value === "Current"
+                          ? 2
+                          : "";
+
+                      handleBankFieldChange(
+                        "accountType",
+                        value
+                      );
+
+                      handleBankFieldChange(
+                        "accountTypeId",
+                        accountTypeId
+                      );
+                    }}
+                  >
+                    <option value="">
+                      Select account type
+                    </option>
+
+                    <option value="Savings">
+                      Savings
+                    </option>
+
+                    <option value="Current">
+                      Current
+                    </option>
+                  </select>
+                ) : (
+                  <span className="profile-info-value">
+                    {profile.bank
+                      ?.accountType || "—"}
+                  </span>
+                )}
+
+              </div>
+
+              <div className="profile-info-field">
+
+                <span className="profile-info-label">
+                  Primary Account
+                </span>
+
                 <span className="profile-info-value">
-                  {profile.bank.accountType || "—"}
+                  {profile.bank?.isPrimary
+                    ? "Yes"
+                    : "No"}
                 </span>
 
               </div>
