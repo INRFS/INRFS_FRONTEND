@@ -18,7 +18,7 @@ import "../../Styles/login/Login.css";
 
 const API_URL =
   process.env.REACT_APP_API_URL ||
-  "http://187.52.115.32:8000";
+   "http://187.52.115.32:8000";
 
 const features = [
   {
@@ -130,7 +130,19 @@ export default function Login() {
       "role",
       data.role || ""
     );
+if (data.branch_id !== undefined && data.branch_id !== null) {
+  localStorage.setItem(
+    "branch_id",
+    String(data.branch_id)
+  );
+}
 
+if (data.branch_name) {
+  localStorage.setItem(
+    "branch_name",
+    data.branch_name
+  );
+}
     if (data.role_id !== undefined) {
       localStorage.setItem(
         "role_id",

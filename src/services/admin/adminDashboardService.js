@@ -30,31 +30,48 @@ const apiRequest = async (endpoint, options = {}) => {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    credentials: "include",
-    headers,
-  });
+  const response = await fetch(
+    `${API_URL}${endpoint}`,
+    {
+      ...options,
+      credentials: "include",
+      headers,
+    }
+  );
 
   const contentType =
     response.headers.get("content-type") || "";
 
   let data;
 
-  if (contentType.includes("application/json")) {
+  if (
+    contentType.includes(
+      "application/json"
+    )
+  ) {
     data = await response.json();
   } else {
     data = await response.text();
   }
 
   if (!response.ok) {
-    let message = `Request failed with status ${response.status}`;
+    let message =
+      `Request failed with status ${response.status}`;
 
-    if (typeof data === "string" && data) {
+    if (
+      typeof data === "string" &&
+      data
+    ) {
       message = data;
-    } else if (Array.isArray(data?.detail)) {
+    } else if (
+      Array.isArray(data?.detail)
+    ) {
       message = data.detail
-        .map((item) => item?.msg || "Validation error")
+        .map(
+          (item) =>
+            item?.msg ||
+            "Validation error"
+        )
         .join(", ");
     } else if (data?.detail) {
       message = data.detail;
@@ -69,48 +86,69 @@ const apiRequest = async (endpoint, options = {}) => {
 };
 
 const getData = (response) => {
-  if (response?.data !== undefined) {
+  if (
+    response?.data !== undefined
+  ) {
     return response.data;
   }
 
   return response;
 };
 
-export const getAdminDashboardSummary = async () => {
-  return apiRequest("/admin/dashboard/summary", {
-    method: "GET",
-  });
-};
-
-export const getAdminInvestorGrowth = async () => {
-  return apiRequest("/admin/dashboard/investor-growth", {
-    method: "GET",
-  });
-};
-
-export const getAdminMonthlyInvestmentTrend = async () => {
-  return apiRequest(
-    "/admin/dashboard/monthly-investment-trend",
-    {
-      method: "GET",
-    }
-  );
-};
-
-export const getAdminDashboardData = async () => {
-  const [
-    summaryResponse,
-    investorGrowthResponse,
-    investmentTrendResponse,
-  ] = await Promise.all([
-    getAdminDashboardSummary(),
-    getAdminInvestorGrowth(),
-    getAdminMonthlyInvestmentTrend(),
-  ]);
-
-  return {
-    summary: getData(summaryResponse),
-    investorGrowth: getData(investorGrowthResponse),
-    investmentTrend: getData(investmentTrendResponse),
+export const getAdminDashboardSummary =
+  async () => {
+    return apiRequest(
+      "/admin/dashboard/summary",
+      {
+        method: "GET",
+      }
+    );
   };
-};
+
+export const getAdminInvestorGrowth =
+  async () => {
+    return apiRequest(
+      "/admin/dashboard/investor-growth",
+      {
+        method: "GET",
+      }
+    );
+  };
+
+export const getAdminMonthlyInvestmentTrend =
+  async () => {
+    return apiRequest(
+      "/admin/dashboard/monthly-investment-trend",
+      {
+        method: "GET",
+      }
+    );
+  };
+
+export const getAdminDashboardData =
+  async () => {
+    const [
+      summaryResponse,
+      investorGrowthResponse,
+      investmentTrendResponse,
+    ] = await Promise.all([
+      getAdminDashboardSummary(),
+      getAdminInvestorGrowth(),
+      getAdminMonthlyInvestmentTrend(),
+    ]);
+
+    return {
+      summary:
+        getData(summaryResponse),
+
+      investorGrowth:
+        getData(
+          investorGrowthResponse
+        ),
+
+      investmentTrend:
+        getData(
+          investmentTrendResponse
+        ),
+    };
+  };

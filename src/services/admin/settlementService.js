@@ -13,7 +13,8 @@ const getToken = () => {
   ];
 
   for (const key of keys) {
-    const localValue = localStorage.getItem(key);
+    const localValue =
+      localStorage.getItem(key);
 
     if (
       localValue &&
@@ -23,7 +24,8 @@ const getToken = () => {
       return localValue;
     }
 
-    const sessionValue = sessionStorage.getItem(key);
+    const sessionValue =
+      sessionStorage.getItem(key);
 
     if (
       sessionValue &&
@@ -45,13 +47,15 @@ const getHeaders = (json = false) => {
 
     ...(json
       ? {
-          "Content-Type": "application/json",
+          "Content-Type":
+            "application/json",
         }
       : {}),
 
     ...(token
       ? {
-          Authorization: `Bearer ${token}`,
+          Authorization:
+            `Bearer ${token}`,
         }
       : {}),
   };
@@ -66,7 +70,9 @@ const apiRequest = async (
     {
       ...options,
       headers: {
-        ...getHeaders(Boolean(options.body)),
+        ...getHeaders(
+          Boolean(options.body)
+        ),
         ...(options.headers || {}),
       },
     }
@@ -87,7 +93,9 @@ const apiRequest = async (
     if (response.status === 401) {
       message =
         "Authentication failed. Please login again.";
-    } else if (Array.isArray(data?.detail)) {
+    } else if (
+      Array.isArray(data?.detail)
+    ) {
       message = data.detail
         .map(
           (item) =>
@@ -168,22 +176,21 @@ const makePagination = (
   limit = 100,
   offset = 0
 ) => {
-  const params = new URLSearchParams();
+  const params =
+    new URLSearchParams();
 
-  params.set("limit", String(limit));
-  params.set("offset", String(offset));
+  params.set(
+    "limit",
+    String(limit)
+  );
+
+  params.set(
+    "offset",
+    String(offset)
+  );
 
   return params.toString();
 };
-
-/* =========================================================
-   AUTOMATIC TENURE TIMEOUT SETTLEMENTS
-
-   These are NOT investor requests.
-
-   Backend should return investments whose
-   maturity date has been completed.
-========================================================= */
 
 export const getTenureTimeoutSettlements =
   async ({
@@ -200,10 +207,6 @@ export const getTenureTimeoutSettlements =
       }
     );
   };
-
-/* =========================================================
-   TENURE TIMEOUT DETAILS
-========================================================= */
 
 export const getTenureTimeoutSettlementDetails =
   async (settlementId) => {
@@ -226,10 +229,6 @@ export const getTenureTimeoutSettlementDetails =
       }
     );
   };
-
-/* =========================================================
-   APPROVE AUTOMATIC TENURE TIMEOUT
-========================================================= */
 
 export const approveTenureTimeoutSettlement =
   async (settlementId) => {
@@ -254,10 +253,6 @@ export const approveTenureTimeoutSettlement =
     );
   };
 
-/* =========================================================
-   REJECT AUTOMATIC TENURE TIMEOUT
-========================================================= */
-
 export const rejectTenureTimeoutSettlement =
   async (settlementId) => {
     if (
@@ -281,12 +276,6 @@ export const rejectTenureTimeoutSettlement =
     );
   };
 
-/* =========================================================
-   PRE-CLOSE REQUESTS
-
-   These ARE investor requests.
-========================================================= */
-
 export const getPrecloseRequests =
   async ({
     limit = 100,
@@ -302,10 +291,6 @@ export const getPrecloseRequests =
       }
     );
   };
-
-/* =========================================================
-   PRE-CLOSE DETAILS
-========================================================= */
 
 export const getPrecloseRequestDetails =
   async (requestId) => {
@@ -328,10 +313,6 @@ export const getPrecloseRequestDetails =
       }
     );
   };
-
-/* =========================================================
-   APPROVE PRE-CLOSE
-========================================================= */
 
 export const approvePrecloseRequest =
   async (requestId) => {
@@ -356,10 +337,6 @@ export const approvePrecloseRequest =
     );
   };
 
-/* =========================================================
-   REJECT PRE-CLOSE
-========================================================= */
-
 export const rejectPrecloseRequest =
   async (requestId) => {
     if (
@@ -382,10 +359,6 @@ export const rejectPrecloseRequest =
       }
     );
   };
-
-/* =========================================================
-   CLOSED SETTLEMENTS
-========================================================= */
 
 export const getClosedSettlements =
   async ({
