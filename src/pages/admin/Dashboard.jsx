@@ -576,7 +576,7 @@ export default function Dashboard() {
             }
           >
             <Plus size={15} />
-            Add Investment
+            View Investments
           </button>
 
         

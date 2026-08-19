@@ -226,6 +226,7 @@ const getTodayISO = () => {
 export default function MonthlyInterest() {
   const [rows, setRows] = useState([]);
   const [filterDate, setFilterDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
@@ -264,10 +265,36 @@ export default function MonthlyInterest() {
     loadData();
   }, [filterDate]);
 
+  const statusFilteredRows = useMemo(() => {
+    if (statusFilter === "pending") {
+      return rows.filter(
+        (row) =>
+          row.status === "Pending" ||
+          row.status === "Awaiting Approval"
+      );
+    }
+
+    if (statusFilter === "approved") {
+      return rows.filter(
+        (row) =>
+          row.status === "Approved" ||
+          row.status === "Paid"
+      );
+    }
+
+    if (statusFilter === "rejected") {
+      return rows.filter(
+        (row) => row.status === "Rejected"
+      );
+    }
+
+    return rows;
+  }, [rows, statusFilter]);
+
   const groups = useMemo(() => {
     const map = {};
 
-    rows.forEach((row) => {
+    statusFilteredRows.forEach((row) => {
       const key = row.due || "unknown";
 
       if (!map[key]) {
@@ -298,7 +325,7 @@ export default function MonthlyInterest() {
           0
         ),
       }));
-  }, [rows]);
+  }, [statusFilteredRows]);
 
   const visibleGroups = groups;
 
@@ -387,6 +414,13 @@ export default function MonthlyInterest() {
       }
 
       closeConfirm();
+
+      if (type === "approve" || type === "approveAllPending") {
+        setStatusFilter("approved");
+      } else if (type === "reject") {
+        setStatusFilter("rejected");
+      }
+
       await loadData();
     } catch (err) {
       setError(
@@ -435,52 +469,59 @@ export default function MonthlyInterest() {
         </div>
       </div>
 
-      <div className="admin-page-actions admin-page-actions--between monthly-interest-header">
+      <div className="monthly-interest-header">
+        <div className="monthly-interest-filter-row">
+          <div className="monthly-interest-status-tabs">
+            {[
+              {
+                key: "pending",
+                label: "Pending",
+                count: pendingCount,
+              },
+              {
+                key: "approved",
+                label: "Approved",
+                count: approvedCount,
+              },
+              {
+                key: "rejected",
+                label: "Rejected",
+                count: rejectedCount,
+              },
+              {
+                key: "all",
+                label: "All",
+                count: rows.length,
+              },
+            ].map((tab) => {
+              const active = statusFilter === tab.key;
 
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.key)}
+                  className={`monthly-interest-status-tab ${
+                    active ? "monthly-interest-status-tab--active" : ""
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className="monthly-interest-status-count">
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="admin-header-actions">
-          <label className="admin-date-filter">
+          <label className="admin-date-filter monthly-interest-date-filter">
             <Filter size={14} />
-
             <input
               type="date"
               value={filterDate}
-              onChange={(e) =>
-                setFilterDate(e.target.value)
-              }
+              onChange={(e) => setFilterDate(e.target.value)}
             />
           </label>
-
-          {filterDate && (
-            <button
-              className="admin-btn admin-btn--outline"
-              onClick={() =>
-                setFilterDate("")
-              }
-            >
-              <X size={14} />
-              Clear Filter
-            </button>
-          )}
-
- 
-{/* 
-          <button
-            className="admin-btn admin-btn--primary"
-            disabled={
-              pendingRows.length === 0 ||
-              actionLoading
-            }
-            onClick={() =>
-              openConfirm(
-                "approveAllPending",
-                pendingRows
-              )
-            }
-          >
-            <Send size={14} />
-            Approve All Pending
-          </button> */}
         </div>
       </div>
 
@@ -509,29 +550,38 @@ export default function MonthlyInterest() {
             key={group.due}
           >
             <div className="due-group-header">
-              <span className="due-group-header__date">
+              <div className="due-group-header__date">
                 {group.dueLabel}
-              </span>
+              </div>
+
+              <div className="due-group-header__meta">
+                <span>{group.rows.length} payment{group.rows.length > 1 ? "s" : ""}</span>
+                <span>·</span>
+                <span>{formatINR(group.total)} gross</span>
+                <span>·</span>
+                <span>{formatINR(group.netTotal)} net of GST</span>
+              </div>
 
               {group.due === getTodayISO() && (
-                <span className="due-badge due-badge--today">
+                <div className="due-badge due-badge--today">
                   Due Today
-                </span>
+                </div>
               )}
-
-              <span className="due-group-header__meta">
-                {group.rows.length} payment
-                {group.rows.length > 1
-                  ? "s"
-                  : ""}{" "}
-                · {formatINR(group.total)} gross ·{" "}
-                {formatINR(group.netTotal)} net of GST
-              </span>
             </div>
 
             <div className="admin-table-card monthly-interest-table-card">
               <div className="monthly-interest-table-scroll">
                 <table className="data-table monthly-interest-data-table">
+                  <colgroup className="monthly-interest-colgroup">
+                    <col className="monthly-col-investor" />
+                    <col className="monthly-col-bond" />
+                    <col className="monthly-col-interest" />
+                    <col className="monthly-col-gst" />
+                    <col className="monthly-col-net" />
+                    <col className="monthly-col-due" />
+                    <col className="monthly-col-status" />
+                    <col className="monthly-col-actions" />
+                  </colgroup>
                 <thead>
                   <tr>
                     <th>Investor</th>
