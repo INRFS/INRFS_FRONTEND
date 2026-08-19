@@ -327,6 +327,71 @@ const statusMatches = (
   );
 };
 
+const getDetailValue = (obj, keys, fallback = "-") => {
+  for (const key of keys) {
+    if (
+      obj &&
+      obj[key] !== undefined &&
+      obj[key] !== null &&
+      obj[key] !== ""
+    ) {
+      return obj[key];
+    }
+  }
+
+  return fallback;
+};
+
+const getInvestorDetailFields = (investor) => {
+  const data = investor || {};
+
+  return [
+    { label: "Investor ID", value: getDetailValue(data, ["investor_id", "investorId", "investor_code"]) },
+    { label: "Investor Name", value: getDetailValue(data, ["investor_name", "full_name", "investor_full_name", "name", "fullName"]) },
+    { label: "Mobile", value: getDetailValue(data, ["mobile", "mobile_number", "phone", "phone_number"]) },
+    { label: "Email", value: getDetailValue(data, ["email", "email_address", "investor_email"]) },
+    { label: "Branch Name", value: getDetailValue(data, ["branch_name", "branch", "branchName"]) },
+    {
+      label: "Registered Date",
+      value: formatDate(getDetailValue(data, ["registered_date", "registration_date", "created_date", "created_at", "registered_on"], null)),
+    },
+    { label: "KYC Status", value: getDetailValue(data, ["kyc_status_name", "kyc_status", "kycStatus"]) },
+    {
+      label: "Account Status",
+      value: getDetailValue(data, ["account_status", "status_name", "status", "request_status_name", "request_status"]),
+    },
+    {
+      label: "Investment Amount",
+      value: formatAmount(getDetailValue(data, ["investment_amount", "total_investment", "total_invested", "investment"], 0)),
+    },
+    { label: "Date of Birth", value: getDetailValue(data, ["date_of_birth", "dob", "birth_date"]) },
+    { label: "Aadhaar Number", value: getDetailValue(data, ["aadhaar_number", "aadhaar", "aadhar_number", "aadhar"]) },
+    { label: "Address", value: getDetailValue(data, ["address", "full_address"]) },
+    { label: "City", value: getDetailValue(data, ["city", "city_name"]) },
+    { label: "State", value: getDetailValue(data, ["state_name", "state", "stateName"]) },
+    { label: "Pincode", value: getDetailValue(data, ["pincode", "pin_code", "postal_code"]) },
+    {
+      label: "Account Holder Name",
+      value: getDetailValue(data, ["account_holder_name", "accountHolderName", "bank_account_holder_name"]),
+    },
+    { label: "Bank Name", value: getDetailValue(data, ["bank_name", "bankName"]) },
+    { label: "Account Type", value: getDetailValue(data, ["account_type", "accountType"]) },
+    {
+      label: "Account Number",
+      value: getDetailValue(data, ["account_number", "accountNumber", "bank_account_number"]),
+    },
+    { label: "IFSC Code", value: getDetailValue(data, ["ifsc_code", "ifsc", "ifscCode"]) },
+    {
+      label: "Approved Date",
+      value: formatDate(getDetailValue(data, ["approved_date", "approval_date", "approved_at"], null)),
+    },
+    {
+      label: "Remarks",
+      value: getDetailValue(data, ["remarks", "approval_remarks", "rejection_remarks"]),
+    },
+  ];
+};
+
 export default function InvestorManagement() {
   const [
     investors,
@@ -1080,7 +1145,7 @@ export default function InvestorManagement() {
           <div className="investor-stat-value investor-stat-value--amount">
             {formatAmount(investorStats.totalInvestment)}
           </div>
-          <span className="investor-stat-note">Combined investment amount</span>
+          <span className="investor-stat-note"> investment amounts</span>
         </div>
       </div>
 
@@ -1529,63 +1594,23 @@ export default function InvestorManagement() {
               </div>
             ) : (
               <div className="investor-details-content">
-                {Object.entries(
-                  selectedInvestor ||
-                    {}
-                )
-                  .filter(
-                    ([key]) =>
-                      ![
-                        "password",
-                        "hashed_password",
-                        "raw",
-                      ].includes(
-                        key
-                      )
-                  )
-                  .map(
-                    ([
-                      key,
-                      value,
-                    ]) => (
-                      <div
-                        className="investor-detail-item"
-                        key={key}
-                      >
-                        <span>
-                          {key
-                            .replace(
-                              /_/g,
-                              " "
-                            )
-                            .replace(
-                              /\b\w/g,
-                              (
-                                char
-                              ) =>
-                                char.toUpperCase()
-                            )}
-                        </span>
-
-                        <strong>
-                          {value ===
-                            null ||
-                          value ===
-                            undefined ||
-                          value === ""
-                            ? "-"
-                            : typeof value ===
-                                "object"
-                              ? JSON.stringify(
-                                  value
-                                )
-                              : String(
-                                  value
-                                )}
-                        </strong>
-                      </div>
-                    )
-                  )}
+                {getInvestorDetailFields(
+                  selectedInvestor
+                ).map((field) => (
+                  <div
+                    className="investor-detail-item"
+                    key={field.label}
+                  >
+                    <span>{field.label}</span>
+                    <strong>
+                      {field.value === null ||
+                      field.value === undefined ||
+                      field.value === ""
+                        ? "-"
+                        : String(field.value)}
+                    </strong>
+                  </div>
+                ))}
               </div>
             )}
           </div>

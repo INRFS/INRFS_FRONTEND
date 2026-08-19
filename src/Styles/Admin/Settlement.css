@@ -412,6 +412,17 @@
 .settlement-modal-body p {
   margin: 0 0 16px 0;
 }
+
+.settlement-stat-card strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  color: #111827;
+  font-size: 22px !important;
+  line-height: 1.05;
+  font-weight: 800;
+  white-space: nowrap;
+}
 .settlement-modal-body strong {
   color: #03154a;
 }
@@ -633,15 +644,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .settlement-stat-card small {
   position: relative;
   z-index: 1;
   display: block;
-  margin-top: 4px;
-  color: #9aa3b4;
-  font-size: 6.8px;
-  line-height: 1;
+  margin-top: 6px;
+  color: #8b95a8;
+  font-size: 11px !important;
+  line-height: 1.2;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -1602,5 +1612,74 @@
 
   .settlement-confirm-breakdown__row {
     font-size: 9.5px;
+  }
+}
+
+.settlement-page {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.settlement-stat-grid {
+  width: 100% !important;
+  max-width: none !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.settlement-stat-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.settlement-stat-card strong {
+  font-size: 22px !important;
+  line-height: 1.05 !important;
+}
+
+@media (max-width: 1250px) {
+  .settlement-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .settlement-stat-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+  }
+
+  .settlement-stat-card {
+    flex: 0 0 145px !important;
+    width: 145px !important;
+    min-width: 145px !important;
+  }
+
+  .settlement-stat-card strong {
+    font-size: 20px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .settlement-stat-card {
+    flex-basis: 138px !important;
+    width: 138px !important;
+    min-width: 138px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .settlement-stat-card {
+    flex-basis: 130px !important;
+    width: 130px !important;
+    min-width: 130px !important;
+  }
+
+  .settlement-stat-card strong {
+    font-size: 19px !important;
   }
 }

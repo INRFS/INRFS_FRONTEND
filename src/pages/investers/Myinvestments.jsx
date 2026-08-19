@@ -1244,7 +1244,7 @@ const getActionState =
                       const bond =
                         investment?.bond_number ||
                         investment?.bond ||
-                        "Pending...";
+                        "Pending";
 
                       const extensionOptions =
                         getAvailableExtensions(

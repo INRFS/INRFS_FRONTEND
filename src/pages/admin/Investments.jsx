@@ -940,16 +940,7 @@ export default function InvestmentManagement() {
       </div>
 
       <div className="investment-controls-row">
-        <div className="investment-header-actions">
-        
-          <button
-            type="button"
-            className="investment-add-btn"
-          >
-            + Add Investment
-          </button>
-        </div>
-
+     
         <div className="investment-tabs">
           <button
             type="button"
@@ -1038,7 +1029,7 @@ export default function InvestmentManagement() {
       {activeTab === "tenure" ? (
         <div className="investment-table-wrapper">
 
-          <table className="investment-table">
+          <table className={`investment-table ${activeTab === "tenure" ? "investment-table--tenure" : "investment-table--all"}`}>
 
             <thead>
               <tr>
@@ -1304,7 +1295,7 @@ export default function InvestmentManagement() {
       ) : (
         <div className="investment-table-wrapper">
 
-          <table className="investment-table">
+          <table className={`investment-table ${activeTab === "tenure" ? "investment-table--tenure" : "investment-table--all"}`}>
 
             <thead>
               <tr>
@@ -1536,31 +1527,57 @@ export default function InvestmentManagement() {
                         </td>
 
                         <td>
+
                           <div className="investment-actions">
+
+                            <button
+                              type="button"
+                              className="action-view"
+                              onClick={() =>
+                                openDetails(
+                                  id
+                                )
+                              }
+                            >
+                              View
+                            </button>
+
                             {isPending && (
                               <>
                                 <button
                                   type="button"
                                   className="action-approve"
-                                  onClick={() => openApprove(id)}
-                                  disabled={actionLoading}
+                                  onClick={() =>
+                                    openApprove(
+                                      id
+                                    )
+                                  }
+                                  disabled={
+                                    actionLoading
+                                  }
                                 >
-                                  <span className="action-approve-icon">✎</span>
-                                  Review &amp; Approve
+                                  Approve
                                 </button>
 
                                 <button
                                   type="button"
                                   className="action-reject"
-                                  onClick={() => openReject(id)}
-                                  disabled={actionLoading}
-                                  aria-label="Reject investment"
+                                  onClick={() =>
+                                    openReject(
+                                      id
+                                    )
+                                  }
+                                  disabled={
+                                    actionLoading
+                                  }
                                 >
-                                  ×
+                                  Reject
                                 </button>
                               </>
                             )}
+
                           </div>
+
                         </td>
 
                       </tr>
@@ -1997,199 +2014,201 @@ export default function InvestmentManagement() {
       {tenureApproveOpen &&
         selectedTenureRequest && (
           <div
-            className="investment-modal-overlay tenure-modal-overlay"
-            onClick={closeTenureApprove}
+            className="investment-modal-overlay"
+            onClick={
+              closeTenureApprove
+            }
           >
             <div
-              className="tenure-review-modal"
-              onClick={(event) => event.stopPropagation()}
+              className="investment-modal investment-action-modal"
+              onClick={(event) =>
+                event.stopPropagation()
+              }
             >
-              <div className="tenure-review-header">
+
+              <div className="investment-modal-header">
+
                 <div>
-                  <h2>Review &amp; Approve Extension</h2>
-                  <p>Review the tenure extension request before approval</p>
+                  <h2>
+                    Review & Approve
+                  </h2>
+
+                  <p>
+                    Tenure extension request
+                  </p>
                 </div>
 
                 <button
                   type="button"
-                  className="tenure-review-close"
-                  onClick={closeTenureApprove}
-                  disabled={tenureActionLoading}
+                  onClick={
+                    closeTenureApprove
+                  }
+                  disabled={
+                    tenureActionLoading
+                  }
                 >
                   ×
                 </button>
+
               </div>
 
-              <div className="tenure-review-body">
-                <div className="tenure-request-card">
-                  <div className="tenure-card-title">
-                    <span>Tenure Extension Request</span>
-                    <span className="tenure-pending-badge">Pending</span>
-                  </div>
+              <div className="investment-review-grid">
 
-                  <div className="tenure-detail-grid">
-                    <div className="tenure-detail">
-                      <span>Investor</span>
-                      <strong>
-                        {getValue(
-                          selectedTenureRequest,
-                          [
-                            "investor_name",
-                            "investor_full_name",
-                            "full_name",
-                          ]
-                        )}
-                      </strong>
-                    </div>
+                <div>
+                  <span>
+                    Investor
+                  </span>
 
-                    <div className="tenure-detail">
-                      <span>Investor ID</span>
-                      <strong>
-                        {getValue(
-                          selectedTenureRequest,
-                          ["investor_id", "investor_code"]
-                        )}
-                      </strong>
-                    </div>
-
-                    <div className="tenure-detail">
-                      <span>Bond Number</span>
-                      <strong>
-                        {getValue(
-                          selectedTenureRequest,
-                          [
-                            "bond_number",
-                            "bond_code",
-                            "bond_id",
-                          ]
-                        )}
-                      </strong>
-                    </div>
-
-                    <div className="tenure-detail">
-                      <span>Current Maturity</span>
-                      <strong>
-                        {formatDate(
-                          getValue(
-                            selectedTenureRequest,
-                            [
-                              "current_maturity_date",
-                              "maturity_date",
-                            ],
-                            null
-                          )
-                        )}
-                      </strong>
-                    </div>
-
-                    <div className="tenure-detail">
-                      <span>Current Rate</span>
-                      <strong>
-                        {getValue(
-                          selectedTenureRequest,
-                          [
-                            "current_rate",
-                            "interest_rate",
-                            "rate",
-                          ]
-                        )}
-                      </strong>
-                    </div>
-
-                    <div className="tenure-detail tenure-detail--highlight">
-                      <span>Requested Extension</span>
-                      <strong>
-                        {getValue(
-                          selectedTenureRequest,
-                          [
-                            "requested_extension",
-                            "extension_months",
-                            "requested_months",
-                            "extension_tenure",
-                          ]
-                        )}
-                      </strong>
-                    </div>
-                  </div>
+                  <strong>
+                    {getValue(
+                      selectedTenureRequest,
+                      [
+                        "investor_name",
+                        "investor_full_name",
+                        "full_name",
+                      ]
+                    )}
+                  </strong>
                 </div>
 
-                <div className="tenure-new-maturity">
-                  <div>
-                    <span>Extension Request</span>
-                    <strong>
-                      {getValue(
+                <div>
+                  <span>
+                    Investor ID
+                  </span>
+
+                  <strong>
+                    {getValue(
+                      selectedTenureRequest,
+                      [
+                        "investor_id",
+                        "investor_code",
+                      ]
+                    )}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    Bond Number
+                  </span>
+
+                  <strong>
+                    {getValue(
+                      selectedTenureRequest,
+                      [
+                        "bond_number",
+                        "bond_code",
+                        "bond_id",
+                      ]
+                    )}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    Current Maturity
+                  </span>
+
+                  <strong>
+                    {formatDate(
+                      getValue(
                         selectedTenureRequest,
                         [
-                          "requested_extension",
-                          "extension_months",
-                          "requested_months",
-                          "extension_tenure",
-                        ]
-                      )}
-                    </strong>
-                  </div>
-
-                  <div className="tenure-arrow">→</div>
-
-                  <div>
-                    <span>Current Maturity</span>
-                    <strong>
-                      {formatDate(
-                        getValue(
-                          selectedTenureRequest,
-                          [
-                            "current_maturity_date",
-                            "maturity_date",
-                          ],
-                          null
-                        )
-                      )}
-                    </strong>
-                  </div>
+                          "current_maturity_date",
+                          "maturity_date",
+                        ],
+                        null
+                      )
+                    )}
+                  </strong>
                 </div>
 
-                <div className="tenure-remarks">
-                  <label>Remarks <span>(optional)</span></label>
-                  <textarea
-                    value={tenureRemarks}
-                    onChange={(event) =>
-                      setTenureRemarks(event.target.value)
+                <div>
+                  <span>
+                    Current Rate
+                  </span>
+
+                  <strong>
+                    {getValue(
+                      selectedTenureRequest,
+                      [
+                        "current_rate",
+                        "interest_rate",
+                        "rate",
+                      ]
+                    )}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    Requested Extension
+                  </span>
+
+                  <strong>
+                    {getValue(
+                      selectedTenureRequest,
+                      [
+                        "requested_extension",
+                        "extension_months",
+                        "requested_months",
+                      ]
+                    )}
+                  </strong>
+                </div>
+
+              </div>
+
+              <div className="investment-form">
+
+                <label>
+                  Remarks
+                </label>
+
+                <textarea
+                  value={tenureRemarks}
+                  onChange={(event) =>
+                    setTenureRemarks(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Enter remarks"
+                />
+
+                <div className="investment-modal-actions">
+
+                  <button
+                    type="button"
+                    className="modal-cancel"
+                    onClick={
+                      closeTenureApprove
                     }
-                    placeholder="Enter remarks for this approval..."
-                  />
+                    disabled={
+                      tenureActionLoading
+                    }
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    className="modal-approve"
+                    onClick={
+                      handleTenureApprove
+                    }
+                    disabled={
+                      tenureActionLoading
+                    }
+                  >
+                    {tenureActionLoading
+                      ? "Approving..."
+                      : "Approve Extension"}
+                  </button>
+
                 </div>
 
-                <div className="tenure-approval-note">
-                  <span className="tenure-note-icon">✓</span>
-                  <p>
-                    Approving this request will update the bond tenure
-                    and maturity date. The investor will be notified
-                    automatically.
-                  </p>
-                </div>
               </div>
 
-              <div className="tenure-review-footer">
-                <button
-                  type="button"
-                  className="tenure-cancel-btn"
-                  onClick={closeTenureApprove}
-                  disabled={tenureActionLoading}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  className="tenure-approve-btn"
-                  onClick={handleTenureApprove}
-                  disabled={tenureActionLoading}
-                >
-                  {tenureActionLoading
-                    ? "Approving..."
-                    : "✓ Approve Extension"}
-                </button>
-              </div>
             </div>
           </div>
         )}
