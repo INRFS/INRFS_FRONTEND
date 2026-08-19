@@ -1,4 +1,4 @@
-const API_URL = "http://187.52.115.32:8000";
+const API_URL =  "http://187.52.115.32:8000";
 
 const getHeaders = () => {
   const token =

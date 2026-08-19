@@ -1,6 +1,6 @@
 const API_URL =
   process.env.REACT_APP_API_URL ||
-  "http://187.52.115.32:8000";
+ "http://187.52.115.32:8000";
 
 function getToken() {
   return (
@@ -65,11 +65,15 @@ async function request(endpoint, options = {}) {
 
       if (Array.isArray(data?.detail)) {
         errorMessage = data.detail
-          .map(
-            (item) =>
-              item?.msg ||
-              "Validation error"
-          )
+          .map((item) => {
+            const field = Array.isArray(item?.loc)
+              ? item.loc.join(".")
+              : "field";
+
+            return `${field}: ${
+              item?.msg || "Validation error"
+            }`;
+          })
           .join(", ");
       }
 
@@ -181,34 +185,51 @@ export const getBranches = async (
 export const registerInvestor = async (
   formData
 ) => {
+  const payload = {
+    full_name:
+      formData.fullName,
+
+    mobile:
+      formData.mobile,
+
+    email:
+      formData.email || null,
+
+    password:
+      formData.password,
+
+    date_of_birth:
+      formData.dob,
+
+    aadhaar_number:
+      formData.aadhaar,
+
+    address:
+      formData.address,
+
+    city:
+      formData.city,
+
+    state_id:
+      Number(formData.state),
+
+    pincode:
+      formData.pin,
+
+    branch_id:
+      Number(formData.branch),
+  };
+
+  console.log(
+    "INVESTOR REGISTER PAYLOAD:",
+    payload
+  );
+
   return request(
     "/auth/investor/register",
     {
       method: "POST",
-      body: JSON.stringify({
-        full_name:
-          formData.fullName,
-        mobile:
-          formData.mobile,
-        email:
-          formData.email || null,
-        password:
-          formData.password,
-        date_of_birth:
-          formData.dob,
-        aadhaar_number:
-          formData.aadhaar,
-        address:
-          formData.address,
-        city:
-          formData.city,
-        state_id:
-          Number(formData.state),
-        pincode:
-          formData.pin,
-        branch_id:
-          Number(formData.branch),
-      }),
+      body: JSON.stringify(payload),
     }
   );
 };
@@ -299,7 +320,6 @@ export const getInvestorDetails =
 export const approveInvestor =
   async (
     investorId,
-    branchId,
     remarks = ""
   ) => {
     if (
@@ -312,30 +332,6 @@ export const approveInvestor =
       );
     }
 
-    if (
-      branchId === null ||
-      branchId === undefined ||
-      branchId === ""
-    ) {
-      throw new Error(
-        "Branch is required"
-      );
-    }
-
-    const numericBranchId =
-      Number(branchId);
-
-    if (
-      !Number.isInteger(
-        numericBranchId
-      ) ||
-      numericBranchId <= 0
-    ) {
-      throw new Error(
-        "Invalid branch ID"
-      );
-    }
-
     return request(
       `/admin/investors/${encodeURIComponent(
         investorId
@@ -343,10 +339,8 @@ export const approveInvestor =
       {
         method: "PUT",
         body: JSON.stringify({
-          branch_id:
-            numericBranchId,
           remarks:
-            remarks.trim() ||
+            String(remarks || "").trim() ||
             null,
         }),
       }
@@ -376,7 +370,7 @@ export const rejectInvestor =
         method: "PUT",
         body: JSON.stringify({
           remarks:
-            remarks.trim() ||
+            String(remarks || "").trim() ||
             "Investor rejected by admin",
         }),
       }
