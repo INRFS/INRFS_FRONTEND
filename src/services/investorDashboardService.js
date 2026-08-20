@@ -1,6 +1,6 @@
 const API_URL =
   process.env.REACT_APP_API_URL ||
-  "http://187.52.115.32:8000";
+"http://187.52.115.32:8000";
 
 const getToken = () => {
   const token =

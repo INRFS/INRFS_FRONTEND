@@ -16,9 +16,13 @@ import {
   Activity,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 import getInvestorDashboard from "../../services/investorDashboardService";
+import { getMyInvestmentBond } from "../../services/investment_service";
 import "../../Styles/Investor/Dashboard.css";
+import "../../Styles/Investor/BondCertificate.css";
 
 const formatCurrency = (value) => {
   const number = Number(value || 0);
@@ -111,6 +115,665 @@ export default function InvestorDashboard() {
   const [loading, setLoading] = useState(true);
   const [, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+
+  const getDashboardInvestmentId = (investment) => {
+    if (!investment) return "";
+
+    const rawId =
+      investment?.id ??
+      investment?.investmentId ??
+      investment?.investment_id ??
+      "";
+
+    if (rawId === "" || rawId === null || rawId === undefined) {
+      return "";
+    }
+
+    const numericId = Number(rawId);
+
+    if (!Number.isInteger(numericId) || numericId <= 0) {
+      return "";
+    }
+
+    return numericId;
+  };
+
+  const resolveNumericInvestmentId = async (investment) => {
+    const directId = getDashboardInvestmentId(investment);
+
+    if (directId) {
+      return directId;
+    }
+
+    const displayInvestmentId =
+      investment?.investment_id ??
+      investment?.investmentId ??
+      "";
+
+    const token =
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("access_token") ||
+      sessionStorage.getItem("token") ||
+      "";
+
+    const headers = {
+      Accept: "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${process.env.REACT_APP_API_URL || "http://localhost:8000"}/investments/my-investments`,
+      {
+        method: "GET",
+        headers,
+      }
+    );
+
+    let data = [];
+
+    try {
+      data = await response.json();
+    } catch {
+      data = [];
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        typeof data?.detail === "string"
+          ? data.detail
+          : "Unable to load investment details."
+      );
+    }
+
+    const investments = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.investments)
+          ? data.investments
+          : [];
+
+    const matched = investments.find((item) => {
+      const itemInvestmentId =
+        item?.investment_id ??
+        item?.investmentId ??
+        "";
+
+      return (
+        displayInvestmentId &&
+        String(itemInvestmentId) === String(displayInvestmentId)
+      );
+    });
+
+    const numericId = Number(matched?.id);
+
+    if (!Number.isInteger(numericId) || numericId <= 0) {
+      return "";
+    }
+
+    return numericId;
+  };
+
+  const openBondCertificate = async (investment) => {
+    try {
+      setError("");
+
+      const investmentId = await resolveNumericInvestmentId(investment);
+
+      if (!investmentId) {
+        setError(
+          "Investment ID is missing. Please refresh the dashboard and try again."
+        );
+        return;
+      }
+
+      const response = await getMyInvestmentBond(investmentId);
+      const bond = response?.data ?? response;
+
+      const bondNumber =
+        bond?.bond_number ||
+        bond?.bond_id ||
+        bond?.bondNumber;
+
+      if (!bondNumber) {
+        setError(
+          "Bond certificate has not been generated yet. Please refresh after admin approval."
+        );
+        return;
+      }
+
+      navigate(
+        `/investor/bond-certificate/${encodeURIComponent(
+          investmentId
+        )}`
+      );
+    } catch (err) {
+      console.error("Dashboard bond view error:", err);
+      setError(
+        err?.message ||
+          "Unable to open the bond certificate."
+      );
+    }
+  };
+
+  const downloadBondCertificate = async (investment) => {
+    let printable = null;
+
+    const escapeHtml = (value) =>
+      String(value ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    const certificateDate = (value) => {
+      if (!value) return "—";
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return String(value);
+      }
+
+      return date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    };
+
+    const certificateCurrency = (value) => {
+      const number = Number(value || 0);
+
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 2,
+      }).format(number);
+    };
+
+    try {
+      setError("");
+
+      const investmentId =
+        await resolveNumericInvestmentId(investment);
+
+      if (!investmentId) {
+        setError(
+          "Investment ID is missing. Please refresh the dashboard and try again."
+        );
+        return;
+      }
+
+      const response =
+        await getMyInvestmentBond(investmentId);
+
+      const bond = response?.data ?? response;
+
+      if (!bond) {
+        setError("Bond certificate not found.");
+        return;
+      }
+
+      const bondNumber =
+        bond?.bond_number ||
+        bond?.bond_id ||
+        "—";
+
+      if (bondNumber === "—") {
+        setError(
+          "Bond certificate has not been generated yet. Please refresh after admin approval."
+        );
+        return;
+      }
+
+      const amount =
+        bond?.investment_amount ??
+        bond?.amount ??
+        0;
+
+      const rate =
+        bond?.interest_rate ??
+        bond?.rate ??
+        0;
+
+      const investorName =
+        bond?.investor_name ||
+        bond?.full_name ||
+        "Investor";
+
+      const investmentCode =
+        bond?.investment_code ||
+        bond?.investment_id ||
+        investmentId;
+
+      const investorId =
+        bond?.investor_registration_id ||
+        bond?.investor_id ||
+        "—";
+
+      const monthlyInterest =
+        bond?.monthly_interest ??
+        bond?.expected_monthly_interest ??
+        null;
+
+      const totalInterest =
+        bond?.total_interest ??
+        bond?.expected_interest_amount ??
+        null;
+
+      const tenureMonths =
+        bond?.tenure_months ??
+        bond?.tenure ??
+        null;
+
+      const maturityAmount =
+        bond?.maturity_amount ??
+        0;
+
+      const status =
+        String(
+          bond?.status ||
+          bond?.investment_status ||
+          "ACTIVE"
+        ).toUpperCase();
+
+      printable = document.createElement("div");
+
+      printable.setAttribute(
+        "data-dashboard-bond-download",
+        "true"
+      );
+
+      printable.style.position = "fixed";
+      printable.style.left = "0";
+      printable.style.top = "0";
+      printable.style.width = "760px";
+      printable.style.background = "#ffffff";
+      printable.style.zIndex = "-999999";
+      printable.style.opacity = "0";
+      printable.style.pointerEvents = "none";
+
+      printable.innerHTML = `
+        <div class="bond-certificate-page">
+          <div
+            class="bond-certificate-card"
+            data-print-bond="true"
+          >
+            <div class="bond-certificate-body">
+
+              <div class="bond-certificate-brand-row">
+                <div class="bond-certificate-logo">
+                  IN
+                </div>
+
+                <div>
+                  <div class="bond-certificate-brand">
+                    INRFS
+                  </div>
+
+                  <div class="bond-certificate-brand-sub">
+                    Investor Management &amp; Investment Portal
+                  </div>
+                </div>
+              </div>
+
+              <div class="bond-certificate-title">
+                INVESTMENT BOND CERTIFICATE
+              </div>
+
+              <div class="bond-certificate-subtitle">
+                FIXED INCOME INVESTMENT — GOVERNMENT COMPLIANT
+              </div>
+
+              <div class="bond-certificate-number">
+                ${escapeHtml(bondNumber)}
+              </div>
+
+              <div class="bond-certificate-amount-box">
+                <div class="bond-certificate-amount-label">
+                  INVESTED PRINCIPAL AMOUNT
+                </div>
+
+                <div class="bond-certificate-amount">
+                  ${escapeHtml(certificateCurrency(amount))}
+                </div>
+
+                <div class="bond-certificate-amount-words">
+                  Fixed Income Investment
+                </div>
+              </div>
+
+              <div class="bond-certificate-grid">
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    INVESTOR NAME
+                  </span>
+                  <span class="bond-certificate-field-value">
+                    ${escapeHtml(investorName)}
+                  </span>
+                </div>
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    INVESTMENT ID
+                  </span>
+                  <span class="bond-certificate-field-value">
+                    ${escapeHtml(investmentCode)}
+                  </span>
+                </div>
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    INVESTOR ID
+                  </span>
+                  <span class="bond-certificate-field-value">
+                    ${escapeHtml(investorId)}
+                  </span>
+                </div>
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    MOBILE
+                  </span>
+                  <span class="bond-certificate-field-value">
+                    ${escapeHtml(bond?.mobile || "—")}
+                  </span>
+                </div>
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    INVESTMENT DATE
+                  </span>
+                  <span class="bond-certificate-field-value">
+                    ${escapeHtml(
+                      certificateDate(
+                        bond?.investment_date
+                      )
+                    )}
+                  </span>
+                </div>
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    ISSUE DATE
+                  </span>
+                  <span class="bond-certificate-field-value">
+                    ${escapeHtml(
+                      certificateDate(
+                        bond?.issue_date ||
+                        bond?.investment_date
+                      )
+                    )}
+                  </span>
+                </div>
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    MATURITY DATE
+                  </span>
+                  <span class="bond-certificate-field-value">
+                    ${escapeHtml(
+                      certificateDate(
+                        bond?.maturity_date
+                      )
+                    )}
+                  </span>
+                </div>
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    INTEREST RATE
+                  </span>
+                  <span class="bond-certificate-field-value">
+                    ${escapeHtml(rate)}% p.a.
+                  </span>
+                </div>
+
+                ${
+                  monthlyInterest !== null
+                    ? `
+                    <div class="bond-certificate-field">
+                      <span class="bond-certificate-field-label">
+                        MONTHLY INTEREST
+                      </span>
+                      <span class="bond-certificate-field-value">
+                        ${escapeHtml(
+                          certificateCurrency(
+                            monthlyInterest
+                          )
+                        )}
+                      </span>
+                    </div>
+                    `
+                    : ""
+                }
+
+                ${
+                  totalInterest !== null
+                    ? `
+                    <div class="bond-certificate-field">
+                      <span class="bond-certificate-field-label">
+                        TOTAL INTEREST
+                      </span>
+                      <span class="bond-certificate-field-value">
+                        ${escapeHtml(
+                          certificateCurrency(
+                            totalInterest
+                          )
+                        )}
+                        ${
+                          tenureMonths
+                            ? ` (${escapeHtml(
+                                tenureMonths
+                              )} months)`
+                            : ""
+                        }
+                      </span>
+                    </div>
+                    `
+                    : ""
+                }
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    MATURITY AMOUNT
+                  </span>
+                  <span class="bond-certificate-field-value">
+                    ${escapeHtml(
+                      certificateCurrency(
+                        maturityAmount
+                      )
+                    )}
+                  </span>
+                </div>
+
+                <div class="bond-certificate-field">
+                  <span class="bond-certificate-field-label">
+                    STATUS
+                  </span>
+                  <span class="bond-certificate-field-value bond-certificate-status">
+                    ${escapeHtml(status)}
+                  </span>
+                </div>
+
+              </div>
+
+              <div class="bond-certificate-verification-area">
+                <div class="bond-certificate-qr">
+                  <span class="qr-square qr-a"></span>
+                  <span class="qr-square qr-b"></span>
+                  <span class="qr-square qr-c"></span>
+                  <span class="qr-dots">▦</span>
+                </div>
+
+                <div class="bond-certificate-verification">
+                  QR Verification Code
+                </div>
+
+                <div class="bond-certificate-verification-code">
+                  Verify ${escapeHtml(bondNumber)}
+                </div>
+              </div>
+
+              <div class="bond-certificate-legal">
+                This bond certificate confirms that the above
+                named investor has deposited the stated
+                principal amount with INRFS Investment
+                Management System. This certificate is
+                digitally generated and is valid subject
+                to the applicable investment terms.
+              </div>
+
+              <div class="bond-certificate-signatures">
+
+                <div class="bond-certificate-signature">
+                  <div class="bond-certificate-signature-line"></div>
+                  <div class="bond-certificate-signature-name">
+                    Investor Signature
+                  </div>
+                </div>
+
+                <div class="bond-certificate-seal">
+                  INRFS
+                </div>
+
+                <div class="bond-certificate-signature">
+                  <div class="bond-certificate-signature-line"></div>
+                  <div class="bond-certificate-signature-name">
+                    Authorized Signatory
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="bond-certificate-footer">
+                INRFS Investment Portal • Digital Bond Certificate
+                <br />
+                Verify at the official INRFS investment portal.
+              </div>
+
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(printable);
+
+      await new Promise((resolve) =>
+        requestAnimationFrame(() =>
+          requestAnimationFrame(resolve)
+        )
+      );
+
+      const canvas = await html2canvas(
+        printable.querySelector(
+          '[data-print-bond="true"]'
+        ),
+        {
+          scale: 3,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#fffdf7",
+          logging: false,
+          imageTimeout: 15000,
+          onclone: (clonedDocument) => {
+            const cloned =
+              clonedDocument.querySelector(
+                '[data-dashboard-bond-download="true"]'
+              );
+
+            if (cloned) {
+              cloned.style.opacity = "1";
+              cloned.style.zIndex = "1";
+            }
+          },
+        }
+      );
+
+      const image =
+        canvas.toDataURL("image/png", 1.0);
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: "a4",
+      });
+
+      const pageWidth =
+        pdf.internal.pageSize.getWidth();
+
+      const pageHeight =
+        pdf.internal.pageSize.getHeight();
+
+      const imageWidth = pageWidth;
+
+      const imageHeight =
+        (canvas.height * imageWidth) /
+        canvas.width;
+
+      let heightLeft = imageHeight;
+      let position = 0;
+
+      pdf.addImage(
+        image,
+        "PNG",
+        0,
+        position,
+        imageWidth,
+        imageHeight
+      );
+
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imageHeight;
+
+        pdf.addPage();
+
+        pdf.addImage(
+          image,
+          "PNG",
+          0,
+          position,
+          imageWidth,
+          imageHeight
+        );
+
+        heightLeft -= pageHeight;
+      }
+
+      const safeBondNumber =
+        String(bondNumber)
+          .replace(/[^a-zA-Z0-9_-]/g, "_");
+
+      pdf.save(
+        `Bond-Certificate-${safeBondNumber}.pdf`
+      );
+    } catch (err) {
+      console.error(
+        "Dashboard direct bond download error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+          "Unable to download the bond certificate."
+      );
+    } finally {
+      if (printable?.parentNode) {
+        printable.parentNode.removeChild(
+          printable
+        );
+      }
+    }
+  };
 
   const loadDashboard = useCallback(async (isRefresh = false) => {
     try {
@@ -948,8 +1611,9 @@ export default function InvestorDashboard() {
                         getValue(
                           investment,
                           [
-                            "investment_id",
                             "id",
+                            "investmentId",
+                            "investment_id",
                           ],
                           ""
                         );
@@ -1002,9 +1666,7 @@ export default function InvestorDashboard() {
                                 type="button"
                                 className="dashboard-eye-btn"
                                 onClick={() =>
-                                  navigate(
-                                    `/investor/my-investments/${databaseId}`
-                                  )
+                                  openBondCertificate(investment)
                                 }
                               >
                                 <Eye size={13} />
@@ -1013,6 +1675,9 @@ export default function InvestorDashboard() {
                               <button
                                 type="button"
                                 className="dashboard-bond-btn"
+                                onClick={() =>
+                                  downloadBondCertificate(investment)
+                                }
                               >
                                 <Download size={12} />
                                 Bond
@@ -1083,6 +1748,13 @@ export default function InvestorDashboard() {
             <button
               type="button"
               className="quick-action"
+              onClick={() => {
+                if (recentInvestments.length > 0) {
+                  downloadBondCertificate(recentInvestments[0]);
+                } else {
+                  setError("No investment bond is available.");
+                }
+              }}
             >
               <Download size={13} />
               Download Bond Certificate

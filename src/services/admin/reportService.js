@@ -1,6 +1,6 @@
 const API_URL =
   process.env.REACT_APP_API_URL ||
-  "http://187.52.115.32:8000";
+ "http://187.52.115.32:8000";
 
 const getToken = () => {
   return (
@@ -17,6 +17,7 @@ const getHeaders = () => {
 
   return {
     Accept: "application/json",
+    "Content-Type": "application/json",
     ...(token
       ? {
           Authorization: `Bearer ${token}`,
@@ -26,12 +27,10 @@ const getHeaders = () => {
 };
 
 const handleResponse = async (response) => {
-  const data =
-    await response.json().catch(() => null);
+  const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    let message =
-      `Request failed with status ${response.status}`;
+    let message = `Request failed with status ${response.status}`;
 
     if (Array.isArray(data?.detail)) {
       message = data.detail
@@ -52,91 +51,99 @@ const handleResponse = async (response) => {
   return data;
 };
 
-export const getReportDashboard =
-  async () => {
-    const response = await fetch(
-      `${API_URL}/admin/reports/dashboard`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
+const request = async (url, options = {}) => {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...getHeaders(),
+      ...(options.headers || {}),
+    },
+  });
 
-    return handleResponse(response);
-  };
+  return handleResponse(response);
+};
 
-export const getReportSummary =
-  async () => {
-    const response = await fetch(
-      `${API_URL}/admin/reports/summary`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
+export const getReportDashboard = async (year) => {
+  const params = new URLSearchParams();
 
-    return handleResponse(response);
-  };
+  if (year) {
+    params.set("year", String(year));
+  }
 
-export const getMonthlyInvestments =
-  async () => {
-    const response = await fetch(
-      `${API_URL}/admin/reports/monthly-investments`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
+  return request(
+    `${API_URL}/admin/reports/dashboard?${params.toString()}`
+  );
+};
 
-    return handleResponse(response);
-  };
+export const getReportSummary = async (year) => {
+  const params = new URLSearchParams();
 
-export const getInvestorGrowth =
-  async () => {
-    const response = await fetch(
-      `${API_URL}/admin/reports/investor-growth`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
+  if (year) {
+    params.set("year", String(year));
+  }
 
-    return handleResponse(response);
-  };
+  return request(
+    `${API_URL}/admin/reports/summary?${params.toString()}`
+  );
+};
 
-export const getStatusDistribution =
-  async () => {
-    const response = await fetch(
-      `${API_URL}/admin/reports/status-distribution`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
+export const getMonthlyInvestments = async (year) => {
+  const params = new URLSearchParams();
 
-    return handleResponse(response);
-  };
+  if (year) {
+    params.set("year", String(year));
+  }
 
-export const getReportInvestments =
-  async ({
-    limit = 10,
-    offset = 0,
-  } = {}) => {
-    const params = new URLSearchParams({
-      limit: String(limit),
-      offset: String(offset),
-    });
+  return request(
+    `${API_URL}/admin/reports/monthly-investments?${params.toString()}`
+  );
+};
 
-    const response = await fetch(
-      `${API_URL}/admin/reports/investments?${params.toString()}`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
+export const getInvestorGrowth = async (year) => {
+  const params = new URLSearchParams();
 
-    return handleResponse(response);
-  };
+  if (year) {
+    params.set("year", String(year));
+  }
+
+  return request(
+    `${API_URL}/admin/reports/investor-growth?${params.toString()}`
+  );
+};
+
+export const getStatusDistribution = async (year) => {
+  const params = new URLSearchParams();
+
+  if (year) {
+    params.set("year", String(year));
+  }
+
+  return request(
+    `${API_URL}/admin/reports/status-distribution?${params.toString()}`
+  );
+};
+
+export const getReportInvestments = async ({
+  limit = 100,
+  offset = 0,
+} = {}) => {
+  const safeLimit = Math.min(
+    Number(limit) || 100,
+    100
+  );
+
+  const safeOffset =
+    Number(offset) || 0;
+
+  const params = new URLSearchParams({
+    limit: String(safeLimit),
+    offset: String(safeOffset),
+  });
+
+  return request(
+    `${API_URL}/admin/reports/investments?${params.toString()}`
+  );
+};
 
 export const exportReportCSV = (
   rows,
@@ -156,8 +163,7 @@ export const exportReportCSV = (
       return "";
     }
 
-    const stringValue =
-      String(value);
+    const stringValue = String(value);
 
     if (
       stringValue.includes(",") ||
@@ -184,12 +190,9 @@ export const exportReportCSV = (
     ),
   ].join("\n");
 
-  const blob = new Blob(
-    [csv],
-    {
-      type: "text/csv;charset=utf-8;",
-    }
-  );
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;",
+  });
 
   const url =
     window.URL.createObjectURL(blob);
@@ -208,3 +211,5 @@ export const exportReportCSV = (
 
   window.URL.revokeObjectURL(url);
 };
+
+export { API_URL };

@@ -1,937 +1,259 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  ArrowUpRight,
+  Building2,
+  CalendarClock,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
   Download,
+  Eye,
+  FileSpreadsheet,
+  LineChart as LineChartIcon,
+  Percent,
   RefreshCw,
   Search,
-  Users,
   TrendingUp,
+  Users,
   Wallet,
-  Clock3,
-  Percent,
-  CheckCircle2,
-  CalendarClock,
-  Building2,
-  AlertCircle,
-  ChevronRight,
   X,
 } from "lucide-react";
+
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+
 import "../../Styles/Admin/Reports.css";
-import { getReportDashboard, exportReportCSV } from "../../services/admin/reportService";
 
-const getValue = (obj, keys, fallback = "") => {
-  for (const key of keys) {
-    if (obj?.[key] !== undefined && obj?.[key] !== null && obj?.[key] !== "") {
-      return obj[key];
-    }
+import {
+  getReportDashboard,
+  getReportSummary,
+  getReportInvestments,
+  getMonthlyInvestments,
+  getInvestorGrowth,
+  getStatusDistribution,
+  exportReportCSV,
+} from "../../services/admin/reportService";
+
+const CHART_COLORS = [
+  "#3159e8",
+  "#18a978",
+  "#8b5cf6",
+  "#f59e0b",
+  "#ef4444",
+  "#06a6b8",
+];
+
+const money = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    maximumFractionDigits: 0,
+  })}`;
+
+const compactMoney = (value) => {
+  const n = Number(value || 0);
+
+  if (n >= 10000000) {
+    return `₹${(n / 10000000).toFixed(2)} Cr`;
   }
-  return fallback;
+
+  if (n >= 100000) {
+    return `₹${(n / 100000).toFixed(2)} L`;
+  }
+
+  if (n >= 1000) {
+    return `₹${(n / 1000).toFixed(1)} K`;
+  }
+
+  return money(n);
 };
-
-const num = (value) => Number(value || 0);
-
-const formatINR = (value) =>
-  `₹${num(value).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
-
-const formatINRCompact = (value) => {
-  const n = num(value);
-  if (n >= 10000000) return `₹${(n / 10000000).toFixed(2)} Cr`;
-  if (n >= 100000) return `₹${(n / 100000).toFixed(2)} L`;
-  if (n >= 1000) return `₹${(n / 1000).toFixed(1)} K`;
-  return formatINR(n);
-};
-
-const formatNumber = (value) => num(value).toLocaleString("en-IN");
 
 const formatDate = (value) => {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleDateString("en-IN", {
+  if (!value) return "-";
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 };
 
-const dateValue = (value) => {
-  if (!value) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-};
-
-const getInvestorName = (item) =>
-  getValue(item, ["investor_name", "investor", "full_name", "name"], "Unknown Investor");
-
-const getInvestorId = (item) =>
-  getValue(
-    item,
-    ["investor_registration_id", "investor_id", "investorId", "registration_id", "login_id"],
-    "—"
-  );
-
-const getInvestmentId = (item, index = 0) =>
-  getValue(
-    item,
-    ["investment_id", "investmentId", "bond_id", "bond_number", "id"],
-    `INV-${index + 1}`
-  );
-
-const getAmount = (item) =>
-  num(getValue(item, ["investment_amount", "amount", "principal_amount", "total_amount"], 0));
-
-const getRate = (item) =>
-  num(getValue(item, ["interest_rate", "rate", "initial_rate"], 0));
-
-const getInterest = (item) =>
-  num(
-    getValue(
-      item,
-      ["earned", "earned_amount", "interest_earned", "expected_interest_amount", "interest_amount"],
-      0
-    )
-  );
-
-const getStatus = (item) =>
-  String(
-    getValue(item, ["status_name", "investment_status", "status"], "Unknown")
-  ).trim();
-
-const getInvestmentDate = (item) =>
-  getValue(item, ["investment_date", "invested_date", "created_at", "date"], "");
-
-const getMaturityDate = (item) =>
-  getValue(item, ["maturity_date", "maturityDate", "matures_on", "maturity"], "");
-
-const getTenure = (item) =>
-  num(getValue(item, ["tenure_months", "tenure", "duration_months"], 0));
-
-const getBranch = (item) =>
-  getValue(item, ["branch_name", "branch", "service_location_name", "location_name"], "—");
-
-const normalizeStatus = (status) => status.toLowerCase().replace(/[_-]+/g, " ").trim();
-
 const statusClass = (status) => {
-  const s = normalizeStatus(status);
-  if (s.includes("active") || s.includes("approved")) return "active";
-  if (s.includes("pending")) return "pending";
-  if (s.includes("reject")) return "rejected";
-  if (s.includes("closed") || s.includes("settled") || s.includes("mature")) return "closed";
+  const s = String(status || "").toLowerCase();
+
+  if (s === "active" || s === "approved") return "active";
+  if (s === "pending") return "pending";
+  if (
+    s === "settled" ||
+    s === "closed" ||
+    s === "refunded"
+  ) {
+    return "closed";
+  }
+  if (s === "rejected") return "rejected";
+
   return "neutral";
 };
 
-const addMonths = (date, months) => {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
+const normalizeInvestment = (item, index) => {
+  const id =
+    item.investment_id ??
+    item.investmentId ??
+    item.id ??
+    `INV-${index + 1}`;
+
+  const investorId =
+    item.investor_id ??
+    item.investorId ??
+    item.investor_registration_id ??
+    "";
+
+  const investor =
+    item.investor_name ??
+    item.investor ??
+    item.full_name ??
+    "Unknown Investor";
+
+  const branch =
+    item.branch_name ??
+    item.branch ??
+    "Unknown Branch";
+
+  const amount = Number(
+    item.investment_amount ??
+      item.amount ??
+      item.principal_amount ??
+      0
+  );
+
+  const rate = Number(
+    item.interest_rate ??
+      item.rate ??
+      0
+  );
+
+  const interest = Number(
+    item.expected_interest_amount ??
+      item.expected_interest ??
+      item.interest_amount ??
+      item.net_interest_amount ??
+      0
+  );
+
+  const invested =
+    item.investment_date ??
+    item.invested_date ??
+    item.created_date ??
+    item.created_at;
+
+  const maturity =
+    item.maturity_date ??
+    item.maturityDate;
+
+  const rawStatus =
+    item.status_name ??
+    item.status ??
+    item.investment_status ??
+    "Unknown";
+
+  return {
+    raw: item,
+    id: String(id),
+    investorId: String(investorId),
+    investor: String(investor),
+    branch: String(branch),
+    amount,
+    rate,
+    invested,
+    maturity,
+    interest,
+    status: String(rawStatus),
+    tenureMonths: Number(
+      item.tenure_months ??
+        item.tenureMonths ??
+        0
+    ),
+  };
 };
 
-const calculatedMaturity = (item) => {
-  const explicit = dateValue(getMaturityDate(item));
-  if (explicit) return explicit;
-  const start = dateValue(getInvestmentDate(item));
-  const tenure = getTenure(item);
-  if (start && tenure > 0) return addMonths(start, tenure);
-  return null;
-};
-
-const daysUntil = (date) => {
-  if (!date) return null;
-  return Math.ceil((date.getTime() - Date.now()) / 86400000);
-};
-
-const csvSafeName = (value) =>
-  String(value || "report")
-    .replace(/[^a-z0-9]+/gi, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase();
-
-const StatCard = ({ label, value, subtitle, icon: Icon, tone }) => (
-  <div className={`reports-stat reports-stat--${tone}`}>
-    <div className="reports-stat-head">
-      <span>{label}</span>
-      <div className="reports-stat-icon">
-        <Icon size={16} />
-      </div>
-    </div>
-    <strong>{value}</strong>
-    <small>{subtitle}</small>
-  </div>
-);
-
-const StatusBadge = ({ status }) => (
-  <span className={`reports-status reports-status--${statusClass(status)}`}>
-    {status}
-  </span>
-);
-
-export default function Reports() {
-  const [dashboard, setDashboard] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("overview");
-  const [search, setSearch] = useState("");
-  const [branch, setBranch] = useState("all");
-  const [status, setStatus] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [selectedItem, setSelectedItem] = useState(null);
-
-  const loadReports = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const response = await getReportDashboard();
-      setDashboard(response || {});
-    } catch (err) {
-      setError(err?.message || "Unable to load reports.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadReports();
-  }, []);
-
-  const summary = dashboard?.summary || {};
-
-  const records = useMemo(() => {
-    const source =
-      dashboard?.recent_investments ||
-      dashboard?.investments ||
-      dashboard?.investment_records ||
-      dashboard?.records ||
-      [];
-    return Array.isArray(source) ? source : [];
-  }, [dashboard]);
-
-  const branches = useMemo(() => {
-    return [...new Set(records.map(getBranch).filter((x) => x && x !== "—"))].sort();
-  }, [records]);
-
-  const filteredRecords = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const from = dateFrom ? new Date(`${dateFrom}T00:00:00`) : null;
-    const to = dateTo ? new Date(`${dateTo}T23:59:59`) : null;
-
-    return records.filter((item) => {
-      const text = [
-        getInvestorName(item),
-        getInvestorId(item),
-        getInvestmentId(item),
-        getBranch(item),
-        getStatus(item),
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      if (q && !text.includes(q)) return false;
-      if (branch !== "all" && getBranch(item) !== branch) return false;
-      if (status !== "all" && normalizeStatus(getStatus(item)) !== status) return false;
-
-      const d = dateValue(getInvestmentDate(item));
-      if (from && (!d || d < from)) return false;
-      if (to && (!d || d > to)) return false;
-
-      return true;
-    });
-  }, [records, search, branch, status, dateFrom, dateTo]);
-
-  const metrics = useMemo(() => {
-    const totalInvested = records.reduce((s, x) => s + getAmount(x), 0);
-    const active = records.filter((x) => ["active", "approved"].includes(normalizeStatus(getStatus(x))));
-    const pending = records.filter((x) => normalizeStatus(getStatus(x)).includes("pending"));
-    const rejected = records.filter((x) => normalizeStatus(getStatus(x)).includes("reject"));
-    const settled = records.filter((x) => {
-      const s = normalizeStatus(getStatus(x));
-      return s.includes("closed") || s.includes("settled") || s.includes("mature");
-    });
-    const interest = records.reduce((s, x) => s + getInterest(x), 0);
-    const monthlyInterest = records.reduce((s, x) => {
-      const amount = getAmount(x);
-      const rate = getRate(x);
-      return s + (amount && rate ? (amount * rate) / 100 : 0);
-    }, 0);
-
-    return {
-      totalInvestors: num(summary.total_investors) || new Set(records.map(getInvestorId)).size,
-      totalInvestments: num(summary.total_investments) || records.length,
-      totalInvested: num(summary.total_aum) || totalInvested,
-      activeAmount: active.reduce((s, x) => s + getAmount(x), 0),
-      pendingAmount: pending.reduce((s, x) => s + getAmount(x), 0),
-      rejectedAmount: rejected.reduce((s, x) => s + getAmount(x), 0),
-      settledAmount: settled.reduce((s, x) => s + getAmount(x), 0),
-      interest: interest || num(summary.monthly_interest_due),
-      monthlyInterest,
-      activeCount: num(summary.active_investments) || active.length,
-      pendingCount: num(summary.pending_approvals) || pending.length,
-      rejectedCount: rejected.length,
-      settledCount: settled.length,
-    };
-  }, [records, summary]);
-
-  const investorRows = useMemo(() => {
-    const map = new Map();
-
-    filteredRecords.forEach((item, index) => {
-      const key = String(getInvestorId(item) || getInvestorName(item) || index);
-      if (!map.has(key)) {
-        map.set(key, {
-          id: key,
-          investorId: getInvestorId(item),
-          investor: getInvestorName(item),
-          branch: getBranch(item),
-          investments: 0,
-          total: 0,
-          interest: 0,
-          active: 0,
-          pending: 0,
-          rejected: 0,
-          settled: 0,
-          latest: "",
-          items: [],
-        });
-      }
-
-      const row = map.get(key);
-      const s = normalizeStatus(getStatus(item));
-      row.investments += 1;
-      row.total += getAmount(item);
-      row.interest += getInterest(item);
-      row.items.push(item);
-
-      if (s.includes("active") || s.includes("approved")) row.active += 1;
-      if (s.includes("pending")) row.pending += 1;
-      if (s.includes("reject")) row.rejected += 1;
-      if (s.includes("closed") || s.includes("settled") || s.includes("mature")) row.settled += 1;
-
-      const d = dateValue(getInvestmentDate(item));
-      if (d && (!row.latest || d > new Date(row.latest))) row.latest = d.toISOString();
-    });
-
-    return [...map.values()].sort((a, b) => b.total - a.total);
-  }, [filteredRecords]);
-
-  const maturityRows = useMemo(() => {
-    return filteredRecords
-      .map((item, index) => {
-        const maturity = calculatedMaturity(item);
-        return {
-          item,
-          index,
-          maturity,
-          days: daysUntil(maturity),
-        };
-      })
-      .filter((x) => x.maturity)
-      .sort((a, b) => a.maturity - b.maturity);
-  }, [filteredRecords]);
-
-  const interestRows = useMemo(() => {
-    return filteredRecords
-      .map((item) => {
-        const amount = getAmount(item);
-        const rate = getRate(item);
-        const monthly = num(
-          getValue(item, ["monthly_interest", "monthly_interest_due", "interest_due"], 0)
-        ) || (amount && rate ? (amount * rate) / 100 : 0);
-
-        const paid = num(getValue(item, ["interest_paid", "paid_interest"], 0));
-        const earned = getInterest(item);
-        const pending = num(
-          getValue(item, ["interest_pending", "pending_interest", "interest_balance"], 0)
-        ) || Math.max(0, earned - paid);
-
-        return { item, monthly, paid, earned, pending, rate };
-      })
-      .sort((a, b) => b.monthly - a.monthly);
-  }, [filteredRecords]);
-
-  const branchRows = useMemo(() => {
-    const map = new Map();
-
-    filteredRecords.forEach((item) => {
-      const key = getBranch(item);
-      if (!map.has(key)) {
-        map.set(key, {
-          branch: key,
-          investors: new Set(),
-          investments: 0,
-          principal: 0,
-          active: 0,
-          pending: 0,
-          rejected: 0,
-          settled: 0,
-          interest: 0,
-        });
-      }
-
-      const row = map.get(key);
-      row.investors.add(getInvestorId(item));
-      row.investments += 1;
-      row.principal += getAmount(item);
-      row.interest += getInterest(item);
-
-      const s = normalizeStatus(getStatus(item));
-      if (s.includes("active") || s.includes("approved")) row.active += 1;
-      if (s.includes("pending")) row.pending += 1;
-      if (s.includes("reject")) row.rejected += 1;
-      if (s.includes("closed") || s.includes("settled") || s.includes("mature")) row.settled += 1;
-    });
-
-    return [...map.values()]
-      .map((x) => ({ ...x, investors: x.investors.size }))
-      .sort((a, b) => b.principal - a.principal);
-  }, [filteredRecords]);
-
-  const monthlyRows = useMemo(() => {
-    const map = new Map();
-
-    filteredRecords.forEach((item) => {
-      const d = dateValue(getInvestmentDate(item));
-      if (!d) return;
-
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      if (!map.has(key)) {
-        map.set(key, {
-          key,
-          month: d.toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
-          investors: new Set(),
-          investments: 0,
-          principal: 0,
-          interest: 0,
-          settled: 0,
-        });
-      }
-
-      const row = map.get(key);
-      row.investors.add(getInvestorId(item));
-      row.investments += 1;
-      row.principal += getAmount(item);
-      row.interest += getInterest(item);
-
-      const s = normalizeStatus(getStatus(item));
-      if (s.includes("closed") || s.includes("settled") || s.includes("mature")) row.settled += getAmount(item);
-    });
-
-    return [...map.values()]
-      .map((x) => ({ ...x, investors: x.investors.size }))
-      .sort((a, b) => b.key.localeCompare(a.key));
-  }, [filteredRecords]);
-
-  const attentionRows = useMemo(() => {
-    const rows = [];
-
-    filteredRecords.forEach((item) => {
-      const s = normalizeStatus(getStatus(item));
-      const maturity = calculatedMaturity(item);
-      const days = daysUntil(maturity);
-
-      if (s.includes("pending")) {
-        rows.push({ type: "Pending Approval", item, priority: 1, detail: "Requires admin review" });
-      }
-
-      if (days !== null && days < 0 && !s.includes("closed") && !s.includes("settled")) {
-        rows.push({ type: "Overdue Maturity", item, priority: 0, detail: `${Math.abs(days)} day(s) overdue` });
-      } else if (days !== null && days <= 7 && days >= 0 && !s.includes("closed")) {
-        rows.push({ type: "Maturity Soon", item, priority: 2, detail: `${days} day(s) remaining` });
-      }
-
-      const pendingInterest = num(getValue(item, ["interest_pending", "pending_interest", "interest_balance"], 0));
-      if (pendingInterest > 0) {
-        rows.push({ type: "Interest Pending", item, priority: 1, detail: formatINR(pendingInterest) });
-      }
-    });
-
-    return rows.sort((a, b) => a.priority - b.priority).slice(0, 8);
-  }, [filteredRecords]);
-
-  const tabs = [
-    { id: "overview", label: "Overview", icon: TrendingUp },
-    { id: "investments", label: "Investments", icon: Wallet },
-    { id: "investors", label: "Investors", icon: Users },
-    { id: "maturity", label: "Maturity", icon: CalendarClock },
-    { id: "interest", label: "Interest", icon: Percent },
-    { id: "settlement", label: "Settlement", icon: CheckCircle2 },
-    { id: "branches", label: "Branches", icon: Building2 },
-    { id: "monthly", label: "Monthly", icon: TrendingUp },
-    { id: "extensions", label: "Extensions", icon: Clock3 },
-  ];
-
-  const exportRows = (rows, filename) => {
-    if (!rows.length) return;
-    exportReportCSV(rows, filename);
-  };
-
-  const exportCurrentReport = () => {
-    if (activeTab === "investors") {
-      exportRows(
-        investorRows.map((x) => ({
-          Investor_ID: x.investorId,
-          Investor: x.investor,
-          Branch: x.branch,
-          Investments: x.investments,
-          Total_Principal: x.total,
-          Interest_Earned: x.interest,
-          Active: x.active,
-          Pending: x.pending,
-          Rejected: x.rejected,
-          Settled: x.settled,
-        })),
-        "investor-report.csv"
-      );
-      return;
-    }
-
-    if (activeTab === "branches") {
-      exportRows(
-        branchRows.map((x) => ({
-          Branch: x.branch,
-          Investors: x.investors,
-          Investments: x.investments,
-          Principal: x.principal,
-          Active: x.active,
-          Pending: x.pending,
-          Rejected: x.rejected,
-          Settled: x.settled,
-          Interest: x.interest,
-        })),
-        "branch-report.csv"
-      );
-      return;
-    }
-
-    if (activeTab === "monthly") {
-      exportRows(
-        monthlyRows.map((x) => ({
-          Month: x.month,
-          Investors: x.investors,
-          Investments: x.investments,
-          Principal: x.principal,
-          Interest: x.interest,
-          Settled: x.settled,
-        })),
-        "monthly-report.csv"
-      );
-      return;
-    }
-
-    if (activeTab === "maturity") {
-      exportRows(
-        maturityRows.map(({ item, maturity, days }, index) => ({
-          Investment_ID: getInvestmentId(item, index),
-          Investor: getInvestorName(item),
-          Principal: getAmount(item),
-          Rate: getRate(item),
-          Maturity_Date: maturity?.toISOString() || "",
-          Days_Remaining: days,
-          Status: getStatus(item),
-        })),
-        "maturity-report.csv"
-      );
-      return;
-    }
-
-    exportRows(
-      filteredRecords.map((item, index) => ({
-        Investment_ID: getInvestmentId(item, index),
-        Investor_ID: getInvestorId(item),
-        Investor: getInvestorName(item),
-        Branch: getBranch(item),
-        Amount: getAmount(item),
-        Interest_Rate: getRate(item),
-        Investment_Date: getInvestmentDate(item),
-        Maturity_Date: calculatedMaturity(item)?.toISOString() || "",
-        Status: getStatus(item),
-        Interest: getInterest(item),
-      })),
-      `${csvSafeName(activeTab)}-report.csv`
-    );
-  };
-
-  if (loading) {
-    return (
-      <div className="reports-loading">
-        <RefreshCw size={24} className="reports-spinner" />
-        <p>Loading reports...</p>
-      </div>
-    );
-  }
-
+function StatCard({
+  label,
+  value,
+  subtitle,
+  icon: Icon,
+  tone,
+  onClick,
+}) {
   return (
-    <div className="reports-page">
+    <button
+      type="button"
+      className={`reports-stat reports-stat--${tone}${
+        onClick
+          ? " reports-stat--clickable"
+          : ""
+      }`}
+      onClick={onClick}
+    >
+      <div className="reports-stat-head">
+        <span>{label}</span>
 
-
-      <div className="reports-stat-grid">
-        <StatCard label="TOTAL INVESTORS" value={formatNumber(metrics.totalInvestors)} subtitle="Registered investors" icon={Users} tone="blue" />
-        <StatCard label="TOTAL INVESTMENTS" value={formatNumber(metrics.totalInvestments)} subtitle="Investment records" icon={TrendingUp} tone="indigo" />
-        <StatCard label="TOTAL PORTFOLIO" value={formatINRCompact(metrics.totalInvested)} subtitle="Principal value" icon={Wallet} tone="purple" />
-        <StatCard label="ACTIVE PORTFOLIO" value={formatINRCompact(metrics.activeAmount)} subtitle={`${metrics.activeCount} active investments`} icon={CheckCircle2} tone="green" />
-        <StatCard label="PENDING VALUE" value={formatINRCompact(metrics.pendingAmount)} subtitle={`${metrics.pendingCount} awaiting action`} icon={Clock3} tone="amber" />
-        <StatCard label="INTEREST" value={formatINRCompact(metrics.interest)} subtitle="Reported interest" icon={Percent} tone="teal" />
-      </div>
-
-      <div className="reports-filter-card">
-        <div className="reports-filter-grid">
-          <label className="reports-input reports-input--search">
-            <Search size={15} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search investor, investment ID..."
-            />
-          </label>
-
-          <div className="reports-view-select">
-            <select
-              value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value)}
-              aria-label="Select report"
-            >
-              {tabs.map(({ id, label }) => (
-                <option key={id} value={id}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <select value={branch} onChange={(e) => setBranch(e.target.value)} aria-label="Branch">
-            <option value="all">All Branches</option>
-            {branches.map((x) => (
-              <option key={x} value={x}>{x}</option>
-            ))}
-          </select>
-
-          <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="approved">Approved</option>
-            <option value="pending approval">Pending Approval</option>
-            <option value="rejected">Rejected</option>
-            <option value="closed">Closed</option>
-            <option value="settled">Settled</option>
-          </select>
-
-          <input
-            className="reports-date-input"
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            aria-label="From date"
-          />
-
-          <input
-            className="reports-date-input"
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            aria-label="To date"
-          />
+        <div className="reports-stat-icon">
+          <Icon size={16} />
         </div>
       </div>
 
-      {error && (
-        <div className="reports-error">
-          <AlertCircle size={17} />
-          <span>{error}</span>
-          <button onClick={() => loadReports()}>Try Again</button>
-        </div>
-      )}
+      <strong>{value}</strong>
 
-      {activeTab === "overview" && (
-        <div className="reports-overview">
-                    <section className="reports-panel">
-            <div className="reports-panel-head">
-              <div>
-                <span>RECENT INVESTMENTS</span>
-                <h2>Latest investment activity</h2>
-              </div>
-              <button className="reports-link-btn" onClick={() => setActiveTab("investments")}>Open full report <ChevronRight size={14} /></button>
-            </div>
-            <InvestmentTable rows={filteredRecords.slice(0, 8)} onView={setSelectedItem} />
-          </section>
-         
+      <small>{subtitle}</small>
+    </button>
+  );
+}
 
-          <div className="reports-overview-grid">
-            <section className="reports-panel">
-              <div className="reports-panel-head">
-                <div>
-                  <span>PORTFOLIO STATUS</span>
-                  <h2>Where the money is</h2>
-                </div>
-              </div>
-              <div className="reports-status-bars">
-                <div><span><b>Active</b><em>{formatINR(metrics.activeAmount)}</em></span><i><b style={{ width: `${metrics.totalInvested ? Math.min(100, metrics.activeAmount / metrics.totalInvested * 100) : 0}%` }} /></i></div>
-                <div><span><b>Pending</b><em>{formatINR(metrics.pendingAmount)}</em></span><i><b style={{ width: `${metrics.totalInvested ? Math.min(100, metrics.pendingAmount / metrics.totalInvested * 100) : 0}%` }} /></i></div>
-                <div><span><b>Settled</b><em>{formatINR(metrics.settledAmount)}</em></span><i><b style={{ width: `${metrics.totalInvested ? Math.min(100, metrics.settledAmount / metrics.totalInvested * 100) : 0}%` }} /></i></div>
-                <div><span><b>Rejected</b><em>{formatINR(metrics.rejectedAmount)}</em></span><i><b style={{ width: `${metrics.totalInvested ? Math.min(100, metrics.rejectedAmount / metrics.totalInvested * 100) : 0}%` }} /></i></div>
-              </div>
-            </section>
+function StatusBadge({ status }) {
+  return (
+    <span
+      className={`reports-status reports-status--${statusClass(
+        status
+      )}`}
+    >
+      {status}
+    </span>
+  );
+}
 
-            <section className="reports-panel">
-              <div className="reports-panel-head">
-                <div>
-                  <span>ACTION REQUIRED</span>
-                  <h2>Items needing attention</h2>
-                </div>
-                <button onClick={() => setActiveTab("maturity")} className="reports-link-btn">View report <ChevronRight size={14} /></button>
-              </div>
-
-              <div className="reports-attention">
-                {attentionRows.length === 0 ? (
-                  <div className="reports-empty-small">No immediate attention items found.</div>
-                ) : (
-                  attentionRows.map((row, index) => (
-                    <button key={`${row.type}-${index}`} className="reports-attention-row" onClick={() => setSelectedItem(row.item)}>
-                      <span className={`reports-attention-dot reports-attention-dot--${row.priority === 0 ? "red" : row.priority === 1 ? "amber" : "blue"}`} />
-                      <div>
-                        <strong>{row.type}</strong>
-                        <small>{getInvestorName(row.item)} · {getInvestmentId(row.item, index)}</small>
-                      </div>
-                      <em>{row.detail}</em>
-                    </button>
-                  ))
-                )}
-              </div>
-            </section>
-          </div>
-
-
-        </div>
-      )}
-
-      {activeTab === "investments" && (
-        <section className="reports-panel reports-table-panel">
-          <PanelTitle title="Investment Report" subtitle={`${filteredRecords.length} records matching the current filters`} onExport={exportCurrentReport} />
-          <InvestmentTable rows={filteredRecords} onView={setSelectedItem} />
-        </section>
-      )}
-
-      {activeTab === "investors" && (
-        <section className="reports-panel reports-table-panel">
-          <PanelTitle title="Investor Portfolio Report" subtitle={`${investorRows.length} investors grouped from investment records`} onExport={exportCurrentReport} />
-          <div className="reports-table-scroll">
-            <table className="reports-table">
-              <thead><tr><th>INVESTOR</th><th>BRANCH</th><th>INVESTMENTS</th><th>TOTAL PRINCIPAL</th><th>INTEREST</th><th>ACTIVE</th><th>PENDING</th><th>REJECTED</th><th>SETTLED</th><th>ACTION</th></tr></thead>
-              <tbody>
-                {investorRows.length === 0 ? <EmptyRow colSpan={10} /> : investorRows.map((row) => (
-                  <tr key={row.id}>
-                    <td><div className="reports-person"><span>{row.investor.charAt(0).toUpperCase()}</span><div><strong>{row.investor}</strong><small>{row.investorId}</small></div></div></td>
-                    <td>{row.branch}</td>
-                    <td><b className="reports-number-badge">{row.investments}</b></td>
-                    <td><strong>{formatINR(row.total)}</strong></td>
-                    <td className="reports-green-text">{formatINR(row.interest)}</td>
-                    <td><StatusCount tone="green" value={row.active} /></td>
-                    <td><StatusCount tone="amber" value={row.pending} /></td>
-                    <td><StatusCount tone="red" value={row.rejected} /></td>
-                    <td><StatusCount tone="gray" value={row.settled} /></td>
-                    <td><button className="reports-action-btn" onClick={() => setSelectedItem({ investorRow: row })}>View Portfolio</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "maturity" && (
-        <section className="reports-panel reports-table-panel">
-          <PanelTitle title="Maturity Report" subtitle="Upcoming, due and overdue investments" onExport={exportCurrentReport} />
-          <div className="reports-maturity-summary">
-            <MiniMetric label="Overdue" value={maturityRows.filter((x) => x.days < 0).length} tone="red" />
-            <MiniMetric label="Next 7 Days" value={maturityRows.filter((x) => x.days >= 0 && x.days <= 7).length} tone="amber" />
-            <MiniMetric label="8–30 Days" value={maturityRows.filter((x) => x.days > 7 && x.days <= 30).length} tone="blue" />
-            <MiniMetric label="31+ Days" value={maturityRows.filter((x) => x.days > 30).length} tone="green" />
-          </div>
-          <div className="reports-table-scroll">
-            <table className="reports-table">
-              <thead><tr><th>INVESTMENT</th><th>INVESTOR</th><th>PRINCIPAL</th><th>RATE</th><th>MATURITY</th><th>DAYS</th><th>SETTLEMENT VALUE</th><th>STATUS</th></tr></thead>
-              <tbody>
-                {maturityRows.length === 0 ? <EmptyRow colSpan={8} /> : maturityRows.map(({ item, maturity, days }, index) => (
-                  <tr key={getInvestmentId(item, index)}>
-                    <td><strong>{getInvestmentId(item, index)}</strong></td>
-                    <td>{getInvestorName(item)}</td>
-                    <td>{formatINR(getAmount(item))}</td>
-                    <td>{getRate(item)}%</td>
-                    <td>{formatDate(maturity)}</td>
-                    <td><span className={`reports-days reports-days--${days < 0 ? "red" : days <= 7 ? "amber" : "green"}`}>{days < 0 ? `${Math.abs(days)} overdue` : `${days} days`}</span></td>
-                    <td>{formatINR(getAmount(item) + getInterest(item))}</td>
-                    <td><StatusBadge status={getStatus(item)} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "interest" && (
-        <section className="reports-panel reports-table-panel">
-          <PanelTitle title="Interest Report" subtitle="Monthly interest and reported interest position" onExport={exportCurrentReport} />
-          <div className="reports-maturity-summary">
-            <MiniMetric label="Monthly Interest" value={formatINR(metrics.monthlyInterest)} tone="blue" />
-            <MiniMetric label="Reported Interest" value={formatINR(metrics.interest)} tone="green" />
-            <MiniMetric label="Records" value={interestRows.length} tone="purple" />
-          </div>
-          <div className="reports-table-scroll">
-            <table className="reports-table">
-              <thead><tr><th>INVESTOR</th><th>INVESTMENT</th><th>PRINCIPAL</th><th>RATE</th><th>MONTHLY INTEREST</th><th>REPORTED INTEREST</th><th>PAID</th><th>PENDING</th><th>STATUS</th></tr></thead>
-              <tbody>
-                {interestRows.length === 0 ? <EmptyRow colSpan={9} /> : interestRows.map(({ item, monthly, paid, earned, pending, rate }, index) => (
-                  <tr key={getInvestmentId(item, index)}>
-                    <td>{getInvestorName(item)}</td>
-                    <td><strong>{getInvestmentId(item, index)}</strong></td>
-                    <td>{formatINR(getAmount(item))}</td>
-                    <td>{rate}%</td>
-                    <td className="reports-blue-text">{formatINR(monthly)}</td>
-                    <td>{formatINR(earned)}</td>
-                    <td className="reports-green-text">{formatINR(paid)}</td>
-                    <td className={pending > 0 ? "reports-red-text" : ""}>{formatINR(pending)}</td>
-                    <td><StatusBadge status={getStatus(item)} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "settlement" && (
-        <section className="reports-panel reports-table-panel">
-          <PanelTitle title="Settlement Report" subtitle="Matured and settled investment positions" onExport={exportCurrentReport} />
-          <div className="reports-maturity-summary">
-            <MiniMetric label="Settled Principal" value={formatINR(metrics.settledAmount)} tone="green" />
-            <MiniMetric label="Pending Principal" value={formatINR(metrics.pendingAmount)} tone="amber" />
-            <MiniMetric label="Settled Records" value={metrics.settledCount} tone="blue" />
-          </div>
-          <div className="reports-table-scroll">
-            <table className="reports-table">
-              <thead><tr><th>INVESTMENT</th><th>INVESTOR</th><th>PRINCIPAL</th><th>INTEREST</th><th>TOTAL VALUE</th><th>MATURITY</th><th>STATUS</th></tr></thead>
-              <tbody>
-                {filteredRecords.length === 0 ? <EmptyRow colSpan={7} /> : filteredRecords.map((item, index) => (
-                  <tr key={getInvestmentId(item, index)}>
-                    <td><strong>{getInvestmentId(item, index)}</strong></td>
-                    <td>{getInvestorName(item)}</td>
-                    <td>{formatINR(getAmount(item))}</td>
-                    <td className="reports-green-text">{formatINR(getInterest(item))}</td>
-                    <td><strong>{formatINR(getAmount(item) + getInterest(item))}</strong></td>
-                    <td>{formatDate(calculatedMaturity(item))}</td>
-                    <td><StatusBadge status={getStatus(item)} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "branches" && (
-        <section className="reports-panel reports-table-panel">
-          <PanelTitle title="Branch Performance Report" subtitle="Investment activity grouped by branch" onExport={exportCurrentReport} />
-          <div className="reports-table-scroll">
-            <table className="reports-table">
-              <thead><tr><th>BRANCH</th><th>INVESTORS</th><th>INVESTMENTS</th><th>PRINCIPAL</th><th>ACTIVE</th><th>PENDING</th><th>REJECTED</th><th>SETTLED</th><th>INTEREST</th></tr></thead>
-              <tbody>
-                {branchRows.length === 0 ? <EmptyRow colSpan={9} /> : branchRows.map((row) => (
-                  <tr key={row.branch}>
-                    <td><div className="reports-branch"><Building2 size={15} /><strong>{row.branch}</strong></div></td>
-                    <td>{row.investors}</td>
-                    <td>{row.investments}</td>
-                    <td><strong>{formatINR(row.principal)}</strong></td>
-                    <td><StatusCount tone="green" value={row.active} /></td>
-                    <td><StatusCount tone="amber" value={row.pending} /></td>
-                    <td><StatusCount tone="red" value={row.rejected} /></td>
-                    <td><StatusCount tone="gray" value={row.settled} /></td>
-                    <td className="reports-green-text">{formatINR(row.interest)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "monthly" && (
-        <section className="reports-panel reports-table-panel">
-          <PanelTitle title="Monthly Business Report" subtitle="Monthly investment activity from available investment dates" onExport={exportCurrentReport} />
-          <div className="reports-table-scroll">
-            <table className="reports-table">
-              <thead><tr><th>MONTH</th><th>INVESTORS</th><th>INVESTMENTS</th><th>NEW PRINCIPAL</th><th>INTEREST</th><th>SETTLED VALUE</th></tr></thead>
-              <tbody>
-                {monthlyRows.length === 0 ? <EmptyRow colSpan={6} /> : monthlyRows.map((row) => (
-                  <tr key={row.key}>
-                    <td><strong>{row.month}</strong></td>
-                    <td>{row.investors}</td>
-                    <td>{row.investments}</td>
-                    <td><strong>{formatINR(row.principal)}</strong></td>
-                    <td className="reports-green-text">{formatINR(row.interest)}</td>
-                    <td>{formatINR(row.settled)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "extensions" && (
-        <section className="reports-panel reports-empty-feature">
-          <div className="reports-feature-icon"><Clock3 size={25} /></div>
-          <h2>Tenure Extension Report</h2>
-          <p>Your current report API does not expose tenure-extension records. The UI is ready for the dedicated extension endpoint without changing the rest of the report flow.</p>
-          <div className="reports-feature-note">Recommended endpoint: <b>/api/admin/reports/tenure-extensions</b></div>
-        </section>
-      )}
-
-      {selectedItem && (
-        <div className="reports-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setSelectedItem(null)}>
-          <div className="reports-modal">
-            <div className="reports-modal-head">
-              <div>
-                <span>REPORT DETAILS</span>
-                <h2>{selectedItem.investorRow ? selectedItem.investorRow.investor : getInvestorName(selectedItem)}</h2>
-                <p>{selectedItem.investorRow ? selectedItem.investorRow.investorId : getInvestmentId(selectedItem)}</p>
-              </div>
-              <button onClick={() => setSelectedItem(null)}><X size={18} /></button>
-            </div>
-
-            {selectedItem.investorRow ? (
-              <div className="reports-investor-detail">
-                <div className="reports-detail-cards">
-                  <MiniMetric label="Investments" value={selectedItem.investorRow.investments} tone="blue" />
-                  <MiniMetric label="Principal" value={formatINR(selectedItem.investorRow.total)} tone="purple" />
-                  <MiniMetric label="Interest" value={formatINR(selectedItem.investorRow.interest)} tone="green" />
-                  <MiniMetric label="Active" value={selectedItem.investorRow.active} tone="teal" />
-                </div>
-                <InvestmentTable rows={selectedItem.investorRow.items} onView={() => {}} />
-              </div>
-            ) : (
-              <div className="reports-detail-grid">
-                <Detail label="Investor" value={getInvestorName(selectedItem)} />
-                <Detail label="Investor ID" value={getInvestorId(selectedItem)} />
-                <Detail label="Investment ID" value={getInvestmentId(selectedItem)} />
-                <Detail label="Branch" value={getBranch(selectedItem)} />
-                <Detail label="Principal" value={formatINR(getAmount(selectedItem))} />
-                <Detail label="Interest Rate" value={`${getRate(selectedItem)}%`} />
-                <Detail label="Investment Date" value={formatDate(getInvestmentDate(selectedItem))} />
-                <Detail label="Maturity Date" value={formatDate(calculatedMaturity(selectedItem))} />
-                <Detail label="Interest" value={formatINR(getInterest(selectedItem))} />
-                <Detail label="Status" value={<StatusBadge status={getStatus(selectedItem)} />} />
-              </div>
-            )}
-
-            <div className="reports-modal-footer">
-              <button className="reports-action-btn reports-action-btn--dark" onClick={() => setSelectedItem(null)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
+function MiniMetric({ label, value, tone }) {
+  return (
+    <div
+      className={`reports-mini-metric reports-mini-metric--${tone}`}
+    >
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
 
-function PanelTitle({ title, subtitle, onExport }) {
+function PanelTitle({
+  title,
+  subtitle,
+  action,
+}) {
   return (
     <div className="reports-panel-head reports-panel-head--table">
       <div>
@@ -939,15 +261,59 @@ function PanelTitle({ title, subtitle, onExport }) {
         <h2>{title}</h2>
         <p>{subtitle}</p>
       </div>
-      <button className="reports-export-btn" onClick={onExport}>
-        <Download size={14} />
-        Export CSV
-      </button>
+
+      {action}
     </div>
   );
 }
 
-function InvestmentTable({ rows, onView }) {
+function EmptyRow({ colSpan }) {
+  return (
+    <tr>
+      <td
+        colSpan={colSpan}
+        className="reports-empty-row"
+      >
+        No records found.
+      </td>
+    </tr>
+  );
+}
+
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  return (
+    <div className="reports-chart-tooltip">
+      <strong>{label}</strong>
+
+      {payload.map((item) => (
+        <div key={item.dataKey}>
+          <span>{item.name}</span>
+
+          <b>
+            {item.dataKey === "amount" ||
+            item.dataKey === "invested" ||
+            item.dataKey === "investment_amount"
+              ? money(item.value)
+              : item.value}
+          </b>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InvestmentTable({
+  rows,
+  onView,
+}) {
   return (
     <div className="reports-table-scroll">
       <table className="reports-table">
@@ -965,22 +331,77 @@ function InvestmentTable({ rows, onView }) {
             <th>ACTION</th>
           </tr>
         </thead>
+
         <tbody>
-          {rows.length === 0 ? (
+          {!rows.length ? (
             <EmptyRow colSpan={10} />
           ) : (
-            rows.map((item, index) => (
-              <tr key={`${getInvestmentId(item, index)}-${index}`}>
-                <td><strong>{getInvestmentId(item, index)}</strong></td>
-                <td><div className="reports-person"><span>{getInvestorName(item).charAt(0).toUpperCase()}</span><div><strong>{getInvestorName(item)}</strong><small>{getInvestorId(item)}</small></div></div></td>
-                <td>{getBranch(item)}</td>
-                <td><strong>{formatINR(getAmount(item))}</strong></td>
-                <td>{getRate(item)}%</td>
-                <td>{formatDate(getInvestmentDate(item))}</td>
-                <td>{formatDate(calculatedMaturity(item))}</td>
-                <td className="reports-green-text">{formatINR(getInterest(item))}</td>
-                <td><StatusBadge status={getStatus(item)} /></td>
-                <td><button className="reports-icon-action" title="View details" onClick={() => onView(item)}>View</button></td>
+            rows.map((item) => (
+              <tr key={item.id}>
+                <td>
+                  <strong>{item.id}</strong>
+                </td>
+
+                <td>
+                  <div className="reports-person">
+                    <span className="reports-avatar">
+                      {item.investor
+                        .charAt(0)
+                        .toUpperCase()}
+                    </span>
+
+                    <div>
+                      <strong>
+                        {item.investor}
+                      </strong>
+
+                      <small>
+                        {item.investorId}
+                      </small>
+                    </div>
+                  </div>
+                </td>
+
+                <td>{item.branch}</td>
+
+                <td>
+                  <strong>
+                    {money(item.amount)}
+                  </strong>
+                </td>
+
+                <td>{item.rate}%</td>
+
+                <td>
+                  {formatDate(item.invested)}
+                </td>
+
+                <td>
+                  {formatDate(item.maturity)}
+                </td>
+
+                <td className="reports-green-text">
+                  {money(item.interest)}
+                </td>
+
+                <td>
+                  <StatusBadge
+                    status={item.status}
+                  />
+                </td>
+
+                <td>
+                  <button
+                    type="button"
+                    className="reports-icon-action"
+                    onClick={() =>
+                      onView(item)
+                    }
+                  >
+                    <Eye size={13} />
+                    View
+                  </button>
+                </td>
               </tr>
             ))
           )}
@@ -990,34 +411,2439 @@ function InvestmentTable({ rows, onView }) {
   );
 }
 
-function MiniMetric({ label, value, tone }) {
+function InvestorModal({
+  investor,
+  onClose,
+  onDownloadInvestment,
+  onDownloadInvestor,
+}) {
+  if (!investor) {
+    return null;
+  }
+
   return (
-    <div className={`reports-mini-metric reports-mini-metric--${tone}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
+    <div
+      className="reports-modal-backdrop"
+      onMouseDown={(event) => {
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
+          onClose();
+        }
+      }}
+    >
+      <div className="reports-investor-modal">
+        <div className="reports-modal-head">
+          <div className="reports-modal-investor">
+            <div className="reports-avatar reports-avatar--large">
+              {investor.investor
+                .charAt(0)
+                .toUpperCase()}
+            </div>
+
+            <div>
+              <span>
+                INVESTOR PORTFOLIO
+              </span>
+
+              <h2>
+                {investor.investor}
+              </h2>
+
+              <p>
+                {investor.investorId} ·{" "}
+                {investor.branch}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="reports-modal-close"
+            onClick={onClose}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="reports-investor-summary">
+          <div>
+            <span>Total Invested</span>
+            <strong>
+              {money(investor.amount)}
+            </strong>
+          </div>
+
+          <div>
+            <span>Expected Interest</span>
+            <strong className="reports-green-text">
+              {money(investor.interest)}
+            </strong>
+          </div>
+
+          <div>
+            <span>Investment Count</span>
+            <strong>
+              {investor.count}
+            </strong>
+          </div>
+
+          <div>
+            <span>Active</span>
+            <strong>
+              {investor.active}
+            </strong>
+          </div>
+        </div>
+
+        <div className="reports-modal-actions">
+          <button
+            type="button"
+            className="reports-download-btn reports-download-btn--primary"
+            onClick={() =>
+              onDownloadInvestor(
+                investor
+              )
+            }
+          >
+            <Download size={14} />
+            Download Investor Report
+          </button>
+        </div>
+
+        <div className="reports-modal-section-title">
+          <div>
+            <span>INVESTMENTS</span>
+            <h3>
+              All investments of{" "}
+              {investor.investor}
+            </h3>
+          </div>
+
+          <small>
+            {investor.items.length}{" "}
+            records
+          </small>
+        </div>
+
+        <div className="reports-table-scroll reports-modal-table">
+          <table className="reports-table">
+            <thead>
+              <tr>
+                <th>INVESTMENT</th>
+                <th>INVESTED</th>
+                <th>RATE</th>
+                <th>INTEREST</th>
+                <th>MATURITY</th>
+                <th>STATUS</th>
+                <th>DOWNLOAD</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {investor.items.map(
+                (item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <strong>
+                        {item.id}
+                      </strong>
+                    </td>
+
+                    <td>
+                      <strong>
+                        {money(
+                          item.amount
+                        )}
+                      </strong>
+                    </td>
+
+                    <td>
+                      {item.rate}%
+                    </td>
+
+                    <td className="reports-green-text">
+                      {money(
+                        item.interest
+                      )}
+                    </td>
+
+                    <td>
+                      {formatDate(
+                        item.maturity
+                      )}
+                    </td>
+
+                    <td>
+                      <StatusBadge
+                        status={
+                          item.status
+                        }
+                      />
+                    </td>
+
+                    <td>
+                      <button
+                        type="button"
+                        className="reports-row-download"
+                        onClick={() =>
+                          onDownloadInvestment(
+                            item
+                          )
+                        }
+                      >
+                        <Download
+                          size={13}
+                        />
+                        Download
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="reports-modal-footer">
+          <span>
+            Total principal:{" "}
+            <strong>
+              {money(investor.amount)}
+            </strong>
+          </span>
+
+          <span>
+            Total expected value:{" "}
+            <strong>
+              {money(
+                investor.amount +
+                  investor.interest
+              )}
+            </strong>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
 
-function StatusCount({ tone, value }) {
-  return <span className={`reports-count reports-count--${tone}`}>{value}</span>;
-}
+function InvestorReport({
+  rows,
+  onView,
+  onDownloadAll,
+}) {
+  const data = useMemo(() => {
+    const map = new Map();
 
-function Detail({ label, value }) {
+    rows.forEach((item) => {
+      if (!map.has(item.investorId)) {
+        map.set(item.investorId, {
+          investorId:
+            item.investorId,
+          investor:
+            item.investor,
+          branch:
+            item.branch,
+          count: 0,
+          amount: 0,
+          interest: 0,
+          active: 0,
+          pending: 0,
+          settled: 0,
+          items: [],
+        });
+      }
+
+      const row =
+        map.get(item.investorId);
+
+      row.count += 1;
+      row.amount += item.amount;
+      row.interest += item.interest;
+
+      row.items.push(item);
+
+      const status =
+        item.status.toLowerCase();
+
+      if (
+        status === "active" ||
+        status === "approved"
+      ) {
+        row.active += 1;
+      }
+
+      if (status === "pending") {
+        row.pending += 1;
+      }
+
+      if (
+        status === "settled" ||
+        status === "closed"
+      ) {
+        row.settled += 1;
+      }
+    });
+
+    return [...map.values()].sort(
+      (a, b) => b.amount - a.amount
+    );
+  }, [rows]);
+
+  const branchChart = useMemo(() => {
+    const map = new Map();
+
+    data.forEach((item) => {
+      if (!map.has(item.branch)) {
+        map.set(item.branch, {
+          branch: item.branch,
+          investors: 0,
+          amount: 0,
+        });
+      }
+
+      const row =
+        map.get(item.branch);
+
+      row.investors += 1;
+      row.amount += item.amount;
+    });
+
+    return [...map.values()];
+  }, [data]);
+
+  const statusChart = useMemo(() => {
+    const totals = {};
+
+    rows.forEach((item) => {
+      const status =
+        item.status || "Unknown";
+
+      totals[status] =
+        (totals[status] || 0) + 1;
+    });
+
+    return Object.entries(totals)
+      .map(([name, value]) => ({
+        name,
+        value,
+      }))
+      .filter((item) => item.value > 0);
+  }, [rows]);
+
+  const totalInvested =
+    data.reduce(
+      (sum, item) =>
+        sum + item.amount,
+      0
+    );
+
+  const totalInterest =
+    data.reduce(
+      (sum, item) =>
+        sum + item.interest,
+      0
+    );
+
   return (
-    <div className="reports-detail-item">
-      <span>{label}</span>
-      <strong>{value}</strong>
+    <div className="reports-investors-layout">
+      <section className="reports-panel reports-table-panel">
+        <PanelTitle
+          title="Investors"
+          subtitle={`${data.length} investors · ${rows.length} investment records`}
+          action={
+            <button
+              type="button"
+              className="reports-download-btn reports-download-btn--primary"
+              onClick={onDownloadAll}
+            >
+              <FileSpreadsheet
+                size={14}
+              />
+              Download All Investors
+            </button>
+          }
+        />
+
+        <div className="reports-investor-summary-strip">
+          <MiniMetric
+            label="Investors"
+            value={data.length}
+            tone="blue"
+          />
+
+          <MiniMetric
+            label="Investments"
+            value={rows.length}
+            tone="purple"
+          />
+
+          <MiniMetric
+            label="Invested"
+            value={compactMoney(
+              totalInvested
+            )}
+            tone="green"
+          />
+
+          <MiniMetric
+            label="Interest"
+            value={compactMoney(
+              totalInterest
+            )}
+            tone="teal"
+          />
+        </div>
+
+        <div className="reports-table-scroll">
+          <table className="reports-table reports-investors-table">
+            <thead>
+              <tr>
+                <th>INVESTOR</th>
+                <th>BRANCH</th>
+                <th>INVESTMENTS</th>
+                <th>TOTAL INVESTED</th>
+                <th>INTEREST</th>
+                <th>ACTIVE</th>
+                <th>PENDING</th>
+                <th>SETTLED</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {!data.length ? (
+                <EmptyRow colSpan={9} />
+              ) : (
+                data.map((row) => (
+                  <tr
+                    key={
+                      row.investorId
+                    }
+                  >
+                    <td>
+                      <div className="reports-person">
+                        <span className="reports-avatar">
+                          {row.investor
+                            .charAt(0)
+                            .toUpperCase()}
+                        </span>
+
+                        <div>
+                          <strong>
+                            {row.investor}
+                          </strong>
+
+                          <small>
+                            {
+                              row.investorId
+                            }
+                          </small>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      {row.branch}
+                    </td>
+
+                    <td>
+                      <strong>
+                        {row.count}
+                      </strong>
+                    </td>
+
+                    <td>
+                      <strong>
+                        {money(
+                          row.amount
+                        )}
+                      </strong>
+                    </td>
+
+                    <td className="reports-green-text">
+                      {money(
+                        row.interest
+                      )}
+                    </td>
+
+                    <td>
+                      {row.active}
+                    </td>
+
+                    <td>
+                      {row.pending}
+                    </td>
+
+                    <td>
+                      {row.settled}
+                    </td>
+
+                    <td>
+                      <button
+                        type="button"
+                        className="reports-investor-view-btn"
+                        onClick={() =>
+                          onView(row)
+                        }
+                      >
+                        <Eye size={13} />
+                        View Portfolio
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="reports-visual-grid">
+        <div className="reports-panel reports-chart-panel">
+          <div className="reports-panel-head">
+            <div>
+              <span>
+                VISUALIZATION
+              </span>
+              <h2>
+                Top investor portfolios
+              </h2>
+              <p>
+                Principal invested by investor
+              </p>
+            </div>
+          </div>
+
+          <div className="reports-chart reports-chart--investors">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+              <BarChart
+                data={data
+                  .slice(0, 6)
+                  .map((item) => ({
+                    name:
+                      item.investor.split(
+                        " "
+                      )[0],
+                    amount:
+                      item.amount,
+                  }))}
+              >
+                <CartesianGrid
+                  strokeDasharray="4 4"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={
+                    compactMoney
+                  }
+                />
+
+                <Tooltip
+                  content={
+                    <ChartTooltip />
+                  }
+                />
+
+                <Bar
+                  dataKey="amount"
+                  name="Invested"
+                  fill="#3159e8"
+                  radius={[
+                    5,
+                    5,
+                    0,
+                    0,
+                  ]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="reports-panel reports-chart-panel">
+          <div className="reports-panel-head">
+            <div>
+              <span>
+                VISUALIZATION
+              </span>
+              <h2>
+                Investment status
+              </h2>
+              <p>
+                Investment records by status
+              </p>
+            </div>
+          </div>
+
+          <div className="reports-status-chart">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+              <PieChart>
+                <Pie
+                  data={statusChart}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={58}
+                  outerRadius={88}
+                  paddingAngle={4}
+                  stroke="none"
+                >
+                  {statusChart.map(
+                    (entry, index) => (
+                      <Cell
+                        key={
+                          entry.name
+                        }
+                        fill={
+                          CHART_COLORS[
+                            index %
+                              CHART_COLORS.length
+                          ]
+                        }
+                      />
+                    )
+                  )}
+                </Pie>
+
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+
+            <div className="reports-pie-center">
+              <strong>
+                {rows.length}
+              </strong>
+              <span>Records</span>
+            </div>
+          </div>
+
+          <div className="reports-chart-legend">
+            {statusChart.map(
+              (item, index) => (
+                <div key={item.name}>
+                  <span
+                    style={{
+                      background:
+                        CHART_COLORS[
+                          index %
+                            CHART_COLORS.length
+                        ],
+                    }}
+                  />
+
+                  {item.name}
+
+                  <strong>
+                    {item.value}
+                  </strong>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        <div className="reports-panel reports-chart-panel reports-chart-panel--wide">
+          <div className="reports-panel-head">
+            <div>
+              <span>
+                VISUALIZATION
+              </span>
+
+              <h2>
+                Investor distribution by branch
+              </h2>
+
+              <p>
+                Investor count and principal value by branch
+              </p>
+            </div>
+          </div>
+
+          <div className="reports-chart reports-chart--branch">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+              <BarChart
+                data={branchChart}
+              >
+                <CartesianGrid
+                  strokeDasharray="4 4"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="branch"
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <Tooltip
+                  content={
+                    <ChartTooltip />
+                  }
+                />
+
+                <Legend />
+
+                <Bar
+                  dataKey="investors"
+                  name="Investors"
+                  fill="#18a978"
+                />
+
+                <Bar
+                  dataKey="amount"
+                  name="Invested Amount"
+                  fill="#8b5cf6"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
 
-function EmptyRow({ colSpan }) {
+function Overview({
+  investments,
+  summary,
+  monthly,
+  onInvestorClick,
+  onInvestmentClick,
+}) {
+  const totalPortfolio =
+    Number(
+      summary?.new_investments
+    ) ||
+    investments.reduce(
+      (sum, item) =>
+        sum + item.amount,
+      0
+    );
+
+  const active =
+    investments.filter(
+      (item) =>
+        ["active", "approved"].includes(
+          item.status.toLowerCase()
+        )
+    );
+
+  const pending =
+    investments.filter(
+      (item) =>
+        item.status.toLowerCase() ===
+        "pending"
+    );
+
+  const settled =
+    investments.filter(
+      (item) =>
+        ["settled", "closed"].includes(
+          item.status.toLowerCase()
+        )
+    );
+
+  const investorCount = new Set(
+    investments.map(
+      (item) => item.investorId
+    )
+  ).size;
+
   return (
-    <tr>
-      <td colSpan={colSpan} className="reports-empty-row">
-        No records found for the selected filters.
-      </td>
-    </tr>
+    <>
+      <div className="reports-overview-top">
+        <section className="reports-panel reports-overview-hero">
+          <div className="reports-panel-head">
+            <div>
+              <span>
+                PORTFOLIO OVERVIEW
+              </span>
+
+              <h2>
+                Investment performance
+              </h2>
+
+              <p>
+                Live investment data from the backend.
+              </p>
+            </div>
+          </div>
+
+          <div className="reports-overview-big">
+            <div>
+              <small>
+                Total portfolio
+              </small>
+
+              <strong>
+                {money(
+                  totalPortfolio
+                )}
+              </strong>
+
+              <span className="reports-positive">
+                <ArrowUpRight
+                  size={13}
+                />
+                Live data
+              </span>
+            </div>
+
+            <div className="reports-overview-hero-icon">
+              <Wallet size={28} />
+            </div>
+          </div>
+
+          <div className="reports-overview-metrics">
+            <div>
+              <span>Investors</span>
+              <strong>
+                {investorCount}
+              </strong>
+            </div>
+
+            <div>
+              <span>Active</span>
+              <strong>
+                {money(
+                  active.reduce(
+                    (s, x) =>
+                      s + x.amount,
+                    0
+                  )
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>Pending</span>
+              <strong>
+                {money(
+                  pending.reduce(
+                    (s, x) =>
+                      s + x.amount,
+                    0
+                  )
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>Settled</span>
+              <strong>
+                {money(
+                  settled.reduce(
+                    (s, x) =>
+                      s + x.amount,
+                    0
+                  )
+                )}
+              </strong>
+            </div>
+          </div>
+        </section>
+
+        <section className="reports-panel reports-overview-chart">
+          <div className="reports-panel-head">
+            <div>
+              <span>
+                INVESTMENT TREND
+              </span>
+
+              <h2>
+                Monthly investment value
+              </h2>
+            </div>
+          </div>
+
+          <div className="reports-chart reports-chart--overview">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+              <AreaChart
+                data={monthly}
+              >
+                <CartesianGrid
+                  strokeDasharray="4 4"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={
+                    compactMoney
+                  }
+                />
+
+                <Tooltip
+                  content={
+                    <ChartTooltip />
+                  }
+                />
+
+                <Area
+                  type="monotone"
+                  dataKey="amount"
+                  name="Investment"
+                  stroke="#3159e8"
+                  strokeWidth={2.5}
+                  fill="#3159e8"
+                  fillOpacity={0.12}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      </div>
+
+      <section className="reports-panel reports-table-panel">
+        <PanelTitle
+          title="Recent Investments"
+          subtitle="Latest investment records"
+          action={
+            <button
+              type="button"
+              className="reports-link-btn"
+              onClick={() =>
+                onInvestorClick()
+              }
+            >
+              Investors
+              <ChevronRight size={14} />
+            </button>
+          }
+        />
+
+        <InvestmentTable
+          rows={investments.slice(
+            0,
+            5
+          )}
+          onView={onInvestmentClick}
+        />
+      </section>
+    </>
+  );
+}
+
+function GenericReport({
+  title,
+  subtitle,
+  rows,
+  columns,
+}) {
+  return (
+    <section className="reports-panel reports-table-panel">
+      <PanelTitle
+        title={title}
+        subtitle={subtitle}
+      />
+
+      <div className="reports-table-scroll">
+        <table className="reports-table">
+          <thead>
+            <tr>
+              {columns.map(
+                (column) => (
+                  <th key={column.key}>
+                    {column.label}
+                  </th>
+                )
+              )}
+            </tr>
+          </thead>
+
+          <tbody>
+            {!rows.length ? (
+              <EmptyRow
+                colSpan={
+                  columns.length
+                }
+              />
+            ) : (
+              rows.map(
+                (row, index) => (
+                  <tr
+                    key={
+                      row.id ||
+                      row.investment_id ||
+                      index
+                    }
+                  >
+                    {columns.map(
+                      (column) => (
+                        <td
+                          key={
+                            column.key
+                          }
+                        >
+                          {column.render
+                            ? column.render(
+                                row
+                              )
+                            : row[
+                                column.key
+                              ] ?? "-"}
+                        </td>
+                      )
+                    )}
+                  </tr>
+                )
+              )
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+export default function Reports() {
+  const currentYear =
+    new Date().getFullYear();
+
+  const [year, setYear] =
+    useState(currentYear);
+
+  const [activeTab, setActiveTab] =
+    useState("overview");
+
+  const [search, setSearch] =
+    useState("");
+
+  const [branch, setBranch] =
+    useState("all");
+
+  const [status, setStatus] =
+    useState("all");
+
+  const [
+    selectedInvestor,
+    setSelectedInvestor,
+  ] = useState(null);
+
+  const [
+    selectedInvestment,
+    setSelectedInvestment,
+  ] = useState(null);
+
+  const [
+    investments,
+    setInvestments,
+  ] = useState([]);
+
+  const [summary, setSummary] =
+    useState(null);
+
+  const [monthly, setMonthly] =
+    useState([]);
+
+  const [
+    investorGrowth,
+    setInvestorGrowth,
+  ] = useState([]);
+
+  const [
+    statusDistribution,
+    setStatusDistribution,
+  ] = useState([]);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  const [
+    lastUpdated,
+    setLastUpdated,
+  ] = useState("");
+
+  const loadReports = async () => {
+    try {
+      setError("");
+
+      setRefreshing(true);
+
+      const [
+        investmentResponse,
+        summaryResponse,
+        monthlyResponse,
+        growthResponse,
+        statusResponse,
+      ] = await Promise.allSettled([
+        getReportInvestments({
+          limit: 1000,
+          offset: 0,
+        }),
+
+        getReportSummary(year),
+
+        getMonthlyInvestments(year),
+
+        getInvestorGrowth(year),
+
+        getStatusDistribution(year),
+      ]);
+
+      if (
+        investmentResponse.status ===
+        "fulfilled"
+      ) {
+        const payload =
+          investmentResponse.value;
+
+        const rows =
+          Array.isArray(payload)
+            ? payload
+            : payload?.data || [];
+
+        setInvestments(
+          rows.map(
+            normalizeInvestment
+          )
+        );
+      } else {
+        throw investmentResponse.reason;
+      }
+
+      if (
+        summaryResponse.status ===
+        "fulfilled"
+      ) {
+        setSummary(
+          summaryResponse.value?.data ||
+            summaryResponse.value ||
+            null
+        );
+      }
+
+      if (
+        monthlyResponse.status ===
+        "fulfilled"
+      ) {
+        const rows =
+          Array.isArray(
+            monthlyResponse.value
+          )
+            ? monthlyResponse.value
+            : monthlyResponse.value
+                ?.data || [];
+
+        setMonthly(
+          rows.map((row) => ({
+            month:
+              row.month_name ||
+              row.month ||
+              "",
+            amount: Number(
+              row.invested_amount ??
+                row.amount ??
+                row.investment_amount ??
+                0
+            ),
+            investors: Number(
+              row.investor_count ??
+                row.investors ??
+                0
+            ),
+            investments: Number(
+              row.investment_count ??
+                row.investments ??
+                0
+            ),
+          }))
+        );
+      }
+
+      if (
+        growthResponse.status ===
+        "fulfilled"
+      ) {
+        const rows =
+          Array.isArray(
+            growthResponse.value
+          )
+            ? growthResponse.value
+            : growthResponse.value
+                ?.data || [];
+
+        setInvestorGrowth(rows);
+      }
+
+      if (
+        statusResponse.status ===
+        "fulfilled"
+      ) {
+        const rows =
+          Array.isArray(
+            statusResponse.value
+          )
+            ? statusResponse.value
+            : statusResponse.value
+                ?.data || [];
+
+        setStatusDistribution(rows);
+      }
+
+      setLastUpdated(
+        new Date().toLocaleTimeString(
+          "en-IN",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+          }
+        )
+      );
+    } catch (err) {
+      console.error(
+        "Reports loading error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+          "Unable to load reports."
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReports();
+  }, [year]);
+
+  const branches = useMemo(() => {
+    return [
+      ...new Set(
+        investments
+          .map(
+            (item) => item.branch
+          )
+          .filter(Boolean)
+      ),
+    ].sort();
+  }, [investments]);
+
+  const filtered = useMemo(() => {
+    const q =
+      search
+        .trim()
+        .toLowerCase();
+
+    return investments.filter(
+      (item) => {
+        const matchesSearch =
+          !q ||
+          item.id
+            .toLowerCase()
+            .includes(q) ||
+          item.investor
+            .toLowerCase()
+            .includes(q) ||
+          item.investorId
+            .toLowerCase()
+            .includes(q);
+
+        const matchesBranch =
+          branch === "all" ||
+          item.branch === branch;
+
+        const matchesStatus =
+          status === "all" ||
+          item.status
+            .toLowerCase() ===
+            status.toLowerCase();
+
+        return (
+          matchesSearch &&
+          matchesBranch &&
+          matchesStatus
+        );
+      }
+    );
+  }, [
+    investments,
+    search,
+    branch,
+    status,
+  ]);
+
+  const investorGroups = useMemo(() => {
+    const map = new Map();
+
+    filtered.forEach((item) => {
+      if (
+        !map.has(
+          item.investorId
+        )
+      ) {
+        map.set(item.investorId, {
+          investorId:
+            item.investorId,
+          investor:
+            item.investor,
+          branch:
+            item.branch,
+          count: 0,
+          amount: 0,
+          interest: 0,
+          active: 0,
+          pending: 0,
+          settled: 0,
+          items: [],
+        });
+      }
+
+      const row = map.get(
+        item.investorId
+      );
+
+      row.count += 1;
+      row.amount += item.amount;
+      row.interest += item.interest;
+      row.items.push(item);
+
+      const currentStatus =
+        item.status.toLowerCase();
+
+      if (
+        currentStatus === "active" ||
+        currentStatus === "approved"
+      ) {
+        row.active += 1;
+      }
+
+      if (
+        currentStatus ===
+        "pending"
+      ) {
+        row.pending += 1;
+      }
+
+      if (
+        currentStatus ===
+          "settled" ||
+        currentStatus ===
+          "closed"
+      ) {
+        row.settled += 1;
+      }
+    });
+
+    return [...map.values()].sort(
+      (a, b) =>
+        b.amount - a.amount
+    );
+  }, [filtered]);
+
+  const totalPortfolio =
+    filtered.reduce(
+      (sum, item) =>
+        sum + item.amount,
+      0
+    );
+
+  const active =
+    filtered.filter((item) =>
+      ["active", "approved"].includes(
+        item.status.toLowerCase()
+      )
+    );
+
+  const pending =
+    filtered.filter(
+      (item) =>
+        item.status.toLowerCase() ===
+        "pending"
+    );
+
+  const settled =
+    filtered.filter((item) =>
+      ["settled", "closed"].includes(
+        item.status.toLowerCase()
+      )
+    );
+
+  const totalInterest =
+    filtered.reduce(
+      (sum, item) =>
+        sum + item.interest,
+      0
+    );
+
+  const derivedMonthly = useMemo(() => {
+    const map = new Map();
+
+    filtered.forEach((item) => {
+      if (!item.invested) {
+        return;
+      }
+
+      const d = new Date(
+        item.invested
+      );
+
+      if (
+        Number.isNaN(d.getTime())
+      ) {
+        return;
+      }
+
+      const key =
+        `${d.getFullYear()}-${String(
+          d.getMonth() + 1
+        ).padStart(2, "0")}`;
+
+      if (!map.has(key)) {
+        map.set(key, {
+          month: d.toLocaleString(
+            "en-US",
+            {
+              month: "short",
+            }
+          ),
+          amount: 0,
+          investors: new Set(),
+          investments: 0,
+          sort: key,
+        });
+      }
+
+      const row = map.get(key);
+
+      row.amount += item.amount;
+      row.investments += 1;
+
+      row.investors.add(
+        item.investorId
+      );
+    });
+
+    return [...map.values()]
+      .sort((a, b) =>
+        a.sort.localeCompare(
+          b.sort
+        )
+      )
+      .map((row) => ({
+        month: row.month,
+        amount: row.amount,
+        investors:
+          row.investors.size,
+        investments:
+          row.investments,
+      }));
+  }, [filtered]);
+
+  const chartMonthly =
+    monthly.length
+      ? monthly
+      : derivedMonthly;
+
+  const downloadInvestment = (
+    item
+  ) => {
+    exportReportCSV(
+      [item.raw],
+      `${item.id}-report.csv`
+    );
+  };
+
+  const downloadInvestor = (
+    investor
+  ) => {
+    exportReportCSV(
+      investor.items.map(
+        (item) => item.raw
+      ),
+      `${investor.investorId}-report.csv`
+    );
+  };
+
+  const downloadAllInvestors = () => {
+    exportReportCSV(
+      investorGroups.map(
+        (item) => ({
+          investor_id:
+            item.investorId,
+          investor:
+            item.investor,
+          branch:
+            item.branch,
+          investment_count:
+            item.count,
+          total_invested:
+            item.amount,
+          expected_interest:
+            item.interest,
+          active:
+            item.active,
+          pending:
+            item.pending,
+          settled:
+            item.settled,
+        })
+      ),
+      "all-investors-report.csv"
+    );
+  };
+
+  const downloadAllInvestments = () => {
+    exportReportCSV(
+      filtered.map(
+        (item) => item.raw
+      ),
+      "all-investments-report.csv"
+    );
+  };
+
+  const openInvestorFromInvestment = (
+    item
+  ) => {
+    const investor =
+      investorGroups.find(
+        (x) =>
+          x.investorId ===
+          item.investorId
+      );
+
+    if (investor) {
+      setSelectedInvestor(
+        investor
+      );
+    }
+  };
+
+  const tabs = [
+    {
+      id: "overview",
+      label: "Overview",
+      icon: TrendingUp,
+    },
+    {
+      id: "investors",
+      label: "Investors",
+      icon: Users,
+    },
+    {
+      id: "investments",
+      label: "Investments",
+      icon: Wallet,
+    },
+    {
+      id: "maturity",
+      label: "Maturity",
+      icon: CalendarClock,
+    },
+    {
+      id: "interest",
+      label: "Interest",
+      icon: Percent,
+    },
+    {
+      id: "settlement",
+      label: "Settlement",
+      icon: CheckCircle2,
+    },
+    {
+      id: "branches",
+      label: "Branches",
+      icon: Building2,
+    },
+    {
+      id: "monthly",
+      label: "Monthly",
+      icon: LineChartIcon,
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="reports-page">
+        <div className="reports-panel">
+          <div className="reports-panel-head">
+            <div>
+              <span>
+                REPORTS
+              </span>
+              <h2>
+                Loading reports...
+              </h2>
+              <p>
+                Fetching live data from the server.
+              </p>
+            </div>
+
+            <RefreshCw
+              size={20}
+              className="reports-loading-icon"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="reports-page">
+      <div className="reports-page-header">
+       
+
+        {/* <div className="reports-header-actions">
+          <select
+            value={year}
+            onChange={(event) =>
+              setYear(
+                Number(
+                  event.target.value
+                )
+              )
+            }
+          >
+            {[currentYear, currentYear - 1, currentYear - 2].map(
+              (item) => (
+                <option
+                  key={item}
+                  value={item}
+                >
+                  {item}
+                </option>
+              )
+            )}
+          </select>
+
+       
+
+          <button
+            type="button"
+            className="reports-export-btn"
+            onClick={
+              downloadAllInvestors
+            }
+          >
+            <Download size={14} />
+            Download Investors
+          </button>
+        </div> */}
+      </div>
+
+      {error && (
+        <div className="reports-error">
+          {error}
+        </div>
+      )}
+
+      <div className="reports-stat-grid">
+        <StatCard
+          label="TOTAL INVESTORS"
+          value={
+            new Set(
+              investments.map(
+                (x) =>
+                  x.investorId
+              )
+            ).size
+          }
+          subtitle="Live investor records"
+          icon={Users}
+          tone="blue"
+          onClick={() =>
+            setActiveTab(
+              "investors"
+            )
+          }
+        />
+
+        <StatCard
+          label="TOTAL INVESTMENTS"
+          value={filtered.length}
+          subtitle="Investment accounts"
+          icon={Wallet}
+          tone="indigo"
+          onClick={() =>
+            setActiveTab(
+              "investments"
+            )
+          }
+        />
+
+        <StatCard
+          label="TOTAL PORTFOLIO"
+          value={compactMoney(
+            summary?.new_investments ??
+              totalPortfolio
+          )}
+          subtitle="Principal value"
+          icon={TrendingUp}
+          tone="purple"
+        />
+
+        <StatCard
+          label="ACTIVE PORTFOLIO"
+          value={compactMoney(
+            active.reduce(
+              (s, x) =>
+                s + x.amount,
+              0
+            )
+          )}
+          subtitle={`${active.length} active records`}
+          icon={CheckCircle2}
+          tone="green"
+        />
+
+        <StatCard
+          label="PENDING VALUE"
+          value={compactMoney(
+            pending.reduce(
+              (s, x) =>
+                s + x.amount,
+              0
+            )
+          )}
+          subtitle={`${pending.length} awaiting action`}
+          icon={Clock3}
+          tone="amber"
+        />
+
+        <StatCard
+          label="INTEREST PAID"
+          value={compactMoney(
+            summary?.interest_paid ??
+              totalInterest
+          )}
+          subtitle="Paid interest"
+          icon={Percent}
+          tone="teal"
+        />
+      </div>
+
+      <div className="reports-tab-bar">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+
+          return (
+            <button
+              type="button"
+              key={tab.id}
+              className={`reports-tab ${
+                activeTab ===
+                tab.id
+                  ? "reports-tab--active"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveTab(
+                  tab.id
+                )
+              }
+            >
+              <Icon size={14} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="reports-filter-card">
+        <div className="reports-filter-grid">
+          <label className="reports-input reports-input--search">
+            <Search size={15} />
+
+            <input
+              value={search}
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              placeholder="Search investor, investor ID, investment..."
+            />
+          </label>
+
+          <select
+            value={branch}
+            onChange={(event) =>
+              setBranch(
+                event.target.value
+              )
+            }
+          >
+            <option value="all">
+              All Branches
+            </option>
+
+            {branches.map(
+              (item) => (
+                <option
+                  key={item}
+                  value={item}
+                >
+                  {item}
+                </option>
+              )
+            )}
+          </select>
+
+          <select
+            value={status}
+            onChange={(event) =>
+              setStatus(
+                event.target.value
+              )
+            }
+          >
+            <option value="all">
+              All Status
+            </option>
+
+            <option value="Active">
+              Active
+            </option>
+
+            <option value="Approved">
+              Approved
+            </option>
+
+            <option value="Pending">
+              Pending
+            </option>
+
+            <option value="Closed">
+              Closed
+            </option>
+
+            <option value="Settled">
+              Settled
+            </option>
+
+            <option value="Rejected">
+              Rejected
+            </option>
+          </select>
+
+          <button
+            type="button"
+            className="reports-download-all-btn"
+            onClick={
+              downloadAllInvestments
+            }
+          >
+            <FileSpreadsheet
+              size={14}
+            />
+            Download All
+          </button>
+        </div>
+      </div>
+
+      {activeTab === "overview" && (
+        <Overview
+          investments={filtered}
+          summary={summary}
+          monthly={chartMonthly}
+          onInvestorClick={() =>
+            setActiveTab(
+              "investors"
+            )
+          }
+          onInvestmentClick={
+            setSelectedInvestment
+          }
+        />
+      )}
+
+      {activeTab === "investors" && (
+        <InvestorReport
+          rows={filtered}
+          onView={
+            setSelectedInvestor
+          }
+          onDownloadAll={
+            downloadAllInvestors
+          }
+        />
+      )}
+
+      {activeTab === "investments" && (
+        <section className="reports-panel reports-table-panel">
+          <PanelTitle
+            title="Investment Report"
+            subtitle={`${filtered.length} investment records`}
+            action={
+              <button
+                type="button"
+                className="reports-download-btn reports-download-btn--primary"
+                onClick={
+                  downloadAllInvestments
+                }
+              >
+                <Download
+                  size={14}
+                />
+                Download All
+              </button>
+            }
+          />
+
+          <InvestmentTable
+            rows={filtered}
+            onView={
+              setSelectedInvestment
+            }
+          />
+        </section>
+      )}
+
+      {activeTab === "maturity" && (
+        <GenericReport
+          title="Maturity Report"
+          subtitle="Investment maturity information"
+          rows={filtered}
+          columns={[
+            {
+              key: "id",
+              label: "INVESTMENT",
+            },
+            {
+              key: "investor",
+              label: "INVESTOR",
+            },
+            {
+              key: "amount",
+              label: "PRINCIPAL",
+              render: (row) =>
+                money(
+                  row.amount
+                ),
+            },
+            {
+              key: "maturity",
+              label: "MATURITY",
+              render: (row) =>
+                formatDate(
+                  row.maturity
+                ),
+            },
+            {
+              key: "interest",
+              label: "INTEREST",
+              render: (row) =>
+                money(
+                  row.interest
+                ),
+            },
+            {
+              key: "status",
+              label: "STATUS",
+              render: (row) => (
+                <StatusBadge
+                  status={
+                    row.status
+                  }
+                />
+              ),
+            },
+          ]}
+        />
+      )}
+
+      {activeTab === "interest" && (
+        <GenericReport
+          title="Interest Report"
+          subtitle="Expected interest position by investment"
+          rows={filtered}
+          columns={[
+            {
+              key: "investor",
+              label: "INVESTOR",
+            },
+            {
+              key: "id",
+              label: "INVESTMENT",
+            },
+            {
+              key: "amount",
+              label: "PRINCIPAL",
+              render: (row) =>
+                money(
+                  row.amount
+                ),
+            },
+            {
+              key: "rate",
+              label: "RATE",
+              render: (row) =>
+                `${row.rate}%`,
+            },
+            {
+              key: "interest",
+              label: "INTEREST",
+              render: (row) =>
+                money(
+                  row.interest
+                ),
+            },
+            {
+              key: "status",
+              label: "STATUS",
+              render: (row) => (
+                <StatusBadge
+                  status={
+                    row.status
+                  }
+                />
+              ),
+            },
+          ]}
+        />
+      )}
+
+      {activeTab === "settlement" && (
+        <GenericReport
+          title="Settlement Report"
+          subtitle="Settled investment records"
+          rows={settled}
+          columns={[
+            {
+              key: "id",
+              label: "INVESTMENT",
+            },
+            {
+              key: "investor",
+              label: "INVESTOR",
+            },
+            {
+              key: "amount",
+              label: "PRINCIPAL",
+              render: (row) =>
+                money(
+                  row.amount
+                ),
+            },
+            {
+              key: "interest",
+              label: "INTEREST",
+              render: (row) =>
+                money(
+                  row.interest
+                ),
+            },
+            {
+              key: "status",
+              label: "STATUS",
+              render: (row) => (
+                <StatusBadge
+                  status={
+                    row.status
+                  }
+                />
+              ),
+            },
+          ]}
+        />
+      )}
+
+      {activeTab === "branches" && (
+        <GenericReport
+          title="Branch Performance"
+          subtitle="Investment activity by branch"
+          rows={branches.map(
+            (branchName) => {
+              const branchRows =
+                investments.filter(
+                  (item) =>
+                    item.branch ===
+                    branchName
+                );
+
+              const investorCount =
+                new Set(
+                  branchRows.map(
+                    (item) =>
+                      item.investorId
+                  )
+                ).size;
+
+              const amount =
+                branchRows.reduce(
+                  (sum, item) =>
+                    sum +
+                    item.amount,
+                  0
+                );
+
+              return {
+                branch:
+                  branchName,
+                investors:
+                  investorCount,
+                investments:
+                  branchRows.length,
+                amount,
+              };
+            }
+          )}
+          columns={[
+            {
+              key: "branch",
+              label: "BRANCH",
+            },
+            {
+              key: "investors",
+              label: "INVESTORS",
+            },
+            {
+              key: "investments",
+              label: "INVESTMENTS",
+            },
+            {
+              key: "amount",
+              label: "PORTFOLIO",
+              render: (row) =>
+                money(
+                  row.amount
+                ),
+            },
+          ]}
+        />
+      )}
+
+      {activeTab === "monthly" && (
+        <section className="reports-panel reports-table-panel">
+          <PanelTitle
+            title="Monthly Investment Report"
+            subtitle={`Investment activity for ${year}`}
+          />
+
+          <div className="reports-monthly-cards">
+            {chartMonthly.map(
+              (row) => (
+                <div
+                  className="reports-month-card"
+                  key={row.month}
+                >
+                  <span>
+                    {row.month}{" "}
+                    {year}
+                  </span>
+
+                  <strong>
+                    {money(
+                      row.amount
+                    )}
+                  </strong>
+
+                  <small>
+                    {
+                      row.investments
+                    }{" "}
+                    investments ·{" "}
+                    {
+                      row.investors
+                    }{" "}
+                    investors
+                  </small>
+                </div>
+              )
+            )}
+          </div>
+
+          <div className="reports-chart reports-chart--monthly">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+              <AreaChart
+                data={chartMonthly}
+              >
+                <CartesianGrid
+                  strokeDasharray="4 4"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={
+                    compactMoney
+                  }
+                />
+
+                <Tooltip
+                  content={
+                    <ChartTooltip />
+                  }
+                />
+
+                <Area
+                  type="monotone"
+                  dataKey="amount"
+                  name="Investment"
+                  stroke="#3159e8"
+                  strokeWidth={2.5}
+                  fill="#3159e8"
+                  fillOpacity={0.12}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
+
+      {selectedInvestment && (
+        <div
+          className="reports-modal-backdrop"
+          onMouseDown={(event) => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              setSelectedInvestment(
+                null
+              );
+            }
+          }}
+        >
+          <div className="reports-investment-modal">
+            <div className="reports-modal-head">
+              <div>
+                <span>
+                  INVESTMENT DETAILS
+                </span>
+
+                <h2>
+                  {
+                    selectedInvestment.id
+                  }
+                </h2>
+
+                <p>
+                  {
+                    selectedInvestment.investor
+                  }{" "}
+                  ·{" "}
+                  {
+                    selectedInvestment.investorId
+                  }
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="reports-modal-close"
+                onClick={() =>
+                  setSelectedInvestment(
+                    null
+                  )
+                }
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="reports-detail-grid">
+              <div>
+                <span>
+                  Investor
+                </span>
+
+                <strong>
+                  {
+                    selectedInvestment.investor
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Branch
+                </span>
+
+                <strong>
+                  {
+                    selectedInvestment.branch
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Principal
+                </span>
+
+                <strong>
+                  {money(
+                    selectedInvestment.amount
+                  )}
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Interest Rate
+                </span>
+
+                <strong>
+                  {
+                    selectedInvestment.rate
+                  }
+                  %
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Investment Date
+                </span>
+
+                <strong>
+                  {formatDate(
+                    selectedInvestment.invested
+                  )}
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Maturity Date
+                </span>
+
+                <strong>
+                  {formatDate(
+                    selectedInvestment.maturity
+                  )}
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Expected Interest
+                </span>
+
+                <strong className="reports-green-text">
+                  {money(
+                    selectedInvestment.interest
+                  )}
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Status
+                </span>
+
+                <StatusBadge
+                  status={
+                    selectedInvestment.status
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="reports-modal-footer">
+              <button
+                type="button"
+                className="reports-download-btn reports-download-btn--primary"
+                onClick={() =>
+                  downloadInvestment(
+                    selectedInvestment
+                  )
+                }
+              >
+                <Download
+                  size={14}
+                />
+                Download Investment
+              </button>
+
+              <button
+                type="button"
+                className="reports-action-btn reports-action-btn--dark"
+                onClick={() => {
+                  openInvestorFromInvestment(
+                    selectedInvestment
+                  );
+
+                  setSelectedInvestment(
+                    null
+                  );
+                }}
+              >
+                View Investor Portfolio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <InvestorModal
+        investor={selectedInvestor}
+        onClose={() =>
+          setSelectedInvestor(
+            null
+          )
+        }
+        onDownloadInvestment={
+          downloadInvestment
+        }
+        onDownloadInvestor={
+          downloadInvestor
+        }
+      />
+    </div>
   );
 }

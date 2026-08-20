@@ -2052,7 +2052,7 @@ export default function InvestmentManagement() {
 
               </div>
 
-              <div className="investment-review-grid">
+              <div className="investment-details-grid investment-tenure-details-grid">
 
                 <div>
                   <span>
