@@ -2817,3 +2817,199 @@
     font-size: 17px !important;
   }
 }
+
+
+/* Tenure extension review modal - refined UI */
+.investment-action-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+  overflow: hidden;
+  border: 1px solid #e6eaf0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+}
+
+.investment-action-modal .investment-modal-header {
+  min-height: 64px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.investment-action-modal .investment-modal-header > div {
+  min-width: 0;
+}
+
+.investment-action-modal .investment-modal-header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 750;
+}
+
+.investment-action-modal .investment-modal-header p {
+  margin: 4px 0 0;
+  color: #7b8494;
+  font-size: 10px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.investment-action-modal .investment-modal-header button {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #e2e6ec;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.investment-action-modal .investment-modal-header button:hover {
+  background: #f5f7fa;
+  border-color: #d5dbe4;
+  color: #111827;
+}
+
+.investment-tenure-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  padding: 16px 18px 8px;
+  background: #ffffff;
+}
+
+.investment-tenure-details-grid > div {
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid #e8ecf1;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.investment-tenure-details-grid > div:first-child {
+  grid-column: span 2;
+  background: #f7f9ff;
+  border-color: #dfe7ff;
+}
+
+.investment-tenure-details-grid span {
+  display: block;
+  margin-bottom: 4px;
+  color: #7a8495;
+  font-size: 9px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.investment-tenure-details-grid strong {
+  display: block;
+  overflow: hidden;
+  color: #172033;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.investment-tenure-details-grid > div:first-child strong {
+  color: #1d4ed8;
+  font-size: 13px;
+}
+
+.investment-action-modal .investment-form {
+  gap: 6px;
+  padding: 12px 18px 16px;
+  background: #ffffff;
+}
+
+.investment-action-modal .investment-form label {
+  margin-top: 2px;
+  color: #374151;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.investment-action-modal .investment-form textarea {
+  min-height: 76px;
+  padding: 9px 10px;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.investment-action-modal .investment-form textarea::placeholder {
+  color: #a0a8b5;
+}
+
+.investment-action-modal .investment-form textarea:focus {
+  border-color: #4f73e8;
+  box-shadow: 0 0 0 3px rgba(79, 115, 232, 0.10);
+}
+
+.investment-action-modal .investment-modal-actions {
+  margin-top: 5px;
+  padding-top: 5px;
+  gap: 8px;
+}
+
+.investment-action-modal .investment-modal-actions button {
+  min-height: 34px;
+  padding: 7px 13px;
+  border-radius: 7px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.investment-action-modal .modal-cancel {
+  border: 1px solid #d9dee6 !important;
+  background: #ffffff;
+  color: #4b5563;
+}
+
+.investment-action-modal .modal-approve {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.investment-action-modal .modal-approve:hover {
+  background: #15803d;
+}
+
+.investment-action-modal .modal-reject {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.investment-action-modal .modal-reject:hover {
+  background: #b91c1c;
+}
+
+@media (max-width: 640px) {
+  .investment-action-modal {
+    width: calc(100vw - 20px);
+    max-width: none;
+    border-radius: 11px;
+  }
+
+  .investment-tenure-details-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .investment-tenure-details-grid > div:first-child {
+    grid-column: span 1;
+  }
+
+  .investment-action-modal .investment-form {
+    padding: 10px 12px 13px;
+  }
+}

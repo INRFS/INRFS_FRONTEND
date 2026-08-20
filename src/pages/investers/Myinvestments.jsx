@@ -898,54 +898,83 @@ export default function Myinvestments() {
       }
     };
 
-  const handleView =
-    async (investment) => {
-      const investmentId =
-        getInvestmentId(
-          investment
-        );
+  const handleView = async (investment) => {
+    const investmentId = getInvestmentId(investment);
 
-      if (!investmentId) {
+    if (!investmentId) {
+      setError("Investment ID is missing.");
+      return;
+    }
+
+    try {
+      setError("");
+
+      const response = await getMyInvestmentBond(investmentId);
+      const bond = response?.data ?? response;
+
+      const bondNumber =
+        bond?.bond_number ||
+        bond?.bond_id ||
+        bond?.bondNumber;
+
+      if (!bondNumber) {
         setError(
-          "Investment ID is missing."
+          "Bond certificate has not been generated yet. Please refresh after admin approval."
         );
         return;
       }
 
-      try {
-        setError("");
+      navigate(
+        `/investor/bond-certificate/${encodeURIComponent(
+          investmentId
+        )}`
+      );
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Unable to open the bond certificate."
+      );
+    }
+  };
 
-        const bond =
-          await getMyInvestmentBond(
-            investmentId
-          );
+  const handleDownloadBond = async (investment) => {
+    const investmentId = getInvestmentId(investment);
 
-        const bondNumber =
-          bond?.bond_number ||
-          bond?.bond_id ||
-          bond?.bondNumber;
+    if (!investmentId) {
+      setError("Investment ID is missing.");
+      return;
+    }
 
-        if (!bondNumber) {
-          setError(
-            "Bond certificate has not been generated yet. Please refresh after admin approval."
-          );
-          return;
-        }
+    try {
+      setError("");
 
-        // Use the numeric investment ID in the URL. The certificate page
-        // fetches the bond securely for the logged-in investor.
-        navigate(
-          `/investor/bond-certificate/${encodeURIComponent(
-            investmentId
-          )}`
-        );
-      } catch (err) {
+      const response = await getMyInvestmentBond(investmentId);
+      const bond = response?.data ?? response;
+
+      const bondNumber =
+        bond?.bond_number ||
+        bond?.bond_id ||
+        bond?.bondNumber;
+
+      if (!bondNumber) {
         setError(
-          err?.message ||
-            "Unable to open the bond certificate."
+          "Bond certificate has not been generated yet. Please refresh after admin approval."
         );
+        return;
       }
-    };
+
+      navigate(
+        `/investor/bond-certificate/${encodeURIComponent(
+          investmentId
+        )}?download=1`
+      );
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Unable to download the bond certificate."
+      );
+    }
+  };
 
 const getActionState =
     (investment) => {
@@ -1375,11 +1404,7 @@ const getActionState =
                                   type="button"
                                   title="Download Bond"
                                   className="icon-btn icon-btn--settle"
-                                  onClick={() =>
-                                    handleView(
-                                      investment
-                                    )
-                                  }
+                                  onClick={() => handleDownloadBond(investment)}
                                 >
                                   <Download size={14} />
                                 </button>
