@@ -1,6 +1,6 @@
 const API_URL =
   process.env.REACT_APP_API_URL ||
-  "http://187.52.115.32:8000";
+  "http://localhost:8000";
 
 const getToken = () => {
   const keys = [
@@ -69,6 +69,7 @@ const apiRequest = async (
     `${API_URL}${endpoint}`,
     {
       ...options,
+
       headers: {
         ...getHeaders(
           Boolean(options.body)
@@ -120,28 +121,62 @@ const apiRequest = async (
   return data;
 };
 
+const makePagination = (
+  limit = 100,
+  offset = 0
+) => {
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "limit",
+    String(limit)
+  );
+
+  params.set(
+    "offset",
+    String(offset)
+  );
+
+  return params.toString();
+};
+
+/* =========================================================
+   GET LIST
+   ========================================================= */
+
 export const getList = (response) => {
   if (Array.isArray(response)) {
     return response;
   }
 
-  if (Array.isArray(response?.items)) {
+  if (
+    Array.isArray(response?.items)
+  ) {
     return response.items;
   }
 
-  if (Array.isArray(response?.data)) {
+  if (
+    Array.isArray(response?.data)
+  ) {
     return response.data;
   }
 
-  if (Array.isArray(response?.settlements)) {
+  if (
+    Array.isArray(response?.settlements)
+  ) {
     return response.settlements;
   }
 
-  if (Array.isArray(response?.requests)) {
+  if (
+    Array.isArray(response?.requests)
+  ) {
     return response.requests;
   }
 
-  if (Array.isArray(response?.results)) {
+  if (
+    Array.isArray(response?.results)
+  ) {
     return response.results;
   }
 
@@ -172,25 +207,9 @@ export const getList = (response) => {
   return [];
 };
 
-const makePagination = (
-  limit = 100,
-  offset = 0
-) => {
-  const params =
-    new URLSearchParams();
-
-  params.set(
-    "limit",
-    String(limit)
-  );
-
-  params.set(
-    "offset",
-    String(offset)
-  );
-
-  return params.toString();
-};
+/* =========================================================
+   TENURE TIMEOUT SETTLEMENTS
+   ========================================================= */
 
 export const getTenureTimeoutSettlements =
   async ({
@@ -207,6 +226,10 @@ export const getTenureTimeoutSettlements =
       }
     );
   };
+
+/* =========================================================
+   TENURE TIMEOUT DETAILS
+   ========================================================= */
 
 export const getTenureTimeoutSettlementDetails =
   async (settlementId) => {
@@ -229,6 +252,10 @@ export const getTenureTimeoutSettlementDetails =
       }
     );
   };
+
+/* =========================================================
+   ADMIN APPROVE TENURE TIMEOUT
+   ========================================================= */
 
 export const approveTenureTimeoutSettlement =
   async (settlementId) => {
@@ -253,6 +280,10 @@ export const approveTenureTimeoutSettlement =
     );
   };
 
+/* =========================================================
+   ADMIN REJECT TENURE TIMEOUT
+   ========================================================= */
+
 export const rejectTenureTimeoutSettlement =
   async (settlementId) => {
     if (
@@ -276,6 +307,10 @@ export const rejectTenureTimeoutSettlement =
     );
   };
 
+/* =========================================================
+   PRE-CLOSE REQUESTS
+   ========================================================= */
+
 export const getPrecloseRequests =
   async ({
     limit = 100,
@@ -291,6 +326,10 @@ export const getPrecloseRequests =
       }
     );
   };
+
+/* =========================================================
+   PRE-CLOSE DETAILS
+   ========================================================= */
 
 export const getPrecloseRequestDetails =
   async (requestId) => {
@@ -313,6 +352,10 @@ export const getPrecloseRequestDetails =
       }
     );
   };
+
+/* =========================================================
+   ADMIN APPROVE PRE-CLOSE
+   ========================================================= */
 
 export const approvePrecloseRequest =
   async (requestId) => {
@@ -337,6 +380,10 @@ export const approvePrecloseRequest =
     );
   };
 
+/* =========================================================
+   ADMIN REJECT PRE-CLOSE
+   ========================================================= */
+
 export const rejectPrecloseRequest =
   async (requestId) => {
     if (
@@ -360,6 +407,10 @@ export const rejectPrecloseRequest =
     );
   };
 
+/* =========================================================
+   CLOSED SETTLEMENTS
+   ========================================================= */
+
 export const getClosedSettlements =
   async ({
     limit = 100,
@@ -375,6 +426,10 @@ export const getClosedSettlements =
       }
     );
   };
+
+/* =========================================================
+   EXPORT
+   ========================================================= */
 
 export { API_URL };
 

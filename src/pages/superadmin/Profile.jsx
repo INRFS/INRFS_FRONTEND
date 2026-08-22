@@ -1,146 +1,451 @@
-import React, { useState } from "react";
-import { Edit2, X, Save, Check } from "lucide-react";
+import React, {
+  useEffect,
+  useState,
+} from "react";
+import {
+  Edit2,
+  X,
+  Save,
+  Check,
+  User,
+  Mail,
+  Phone,
+  Building2,
+  ShieldCheck,
+  CircleCheck,
+  Loader2,
+} from "lucide-react";
+
 import "../../Styles/SuperAdmin/Profile.css";
 
-const INITIAL_PROFILE = {
-  fullName: "Super Admin",
-  email: "superadmin@inrfs.in",
-  mobile: "+91 98765 43210",
-  role: "Super Admin",
-  branch: "Head Office",
-  status: "Active",
+import {
+  getSuperAdminProfile,
+  updateSuperAdminProfile,
+} from "../../services/superadmin/profileService";
+
+const EMPTY_PROFILE = {
+  fullName: "",
+  email: "",
+  mobile: "",
+  role: "",
+  branch: "",
+  status: "",
 };
 
 export default function Profile() {
-  const [profile, setProfile] = useState(INITIAL_PROFILE);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(INITIAL_PROFILE);
-  const [showToast, setShowToast] = useState(false);
+  const [profile, setProfile] =
+    useState(EMPTY_PROFILE);
 
-  const handleEditToggle = () => {
-    if (isEditing) {
-      // Cancel clicked: revert unsaved changes
-      setFormData(profile);
-      setIsEditing(false);
-    } else {
-      // Edit clicked: enter edit mode
-      setFormData(profile);
-      setIsEditing(true);
+  const [formData, setFormData] =
+    useState(EMPTY_PROFILE);
+
+  const [isEditing, setIsEditing] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [fieldErrors, setFieldErrors] =
+    useState({});
+
+  const [showToast, setShowToast] =
+    useState(false);
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response =
+        await getSuperAdminProfile();
+
+      const data =
+        response?.data || {};
+
+      const normalized = {
+        fullName:
+          data.full_name ||
+          data.fullName ||
+          data.name ||
+          "",
+        email:
+          data.email || "",
+        mobile:
+          data.mobile || "",
+        role:
+          data.role_name ||
+          data.role ||
+          "",
+        branch:
+          data.branch_name ||
+          data.branch ||
+          "",
+        status:
+          data.status_name ||
+          data.status ||
+          "",
+      };
+
+      setProfile(normalized);
+      setFormData(normalized);
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Unable to load profile."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleEditToggle = () => {
+    if (isEditing) {
+      setFormData(profile);
+      setFieldErrors({});
+      setError("");
+      setIsEditing(false);
+      return;
+    }
+
+    setFormData(profile);
+    setFieldErrors({});
+    setError("");
+    setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setProfile(formData);
-    setIsEditing(false);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2500);
+  const handleChange = (
+    field,
+    value
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [field]: "",
+    }));
   };
 
-  const initial = profile.fullName.charAt(0).toUpperCase();
+  const validate = () => {
+    const errors = {};
+
+    if (!formData.fullName.trim()) {
+      errors.fullName =
+        "Full name is required.";
+    }
+
+    if (!formData.email.trim()) {
+      errors.email =
+        "Email is required.";
+    } else if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        formData.email.trim()
+      )
+    ) {
+      errors.email =
+        "Enter a valid email address.";
+    }
+
+    if (!formData.mobile.trim()) {
+      errors.mobile =
+        "Mobile number is required.";
+    } else if (
+      !/^\+?[\d\s-]{8,15}$/.test(
+        formData.mobile.trim()
+      )
+    ) {
+      errors.mobile =
+        "Enter a valid mobile number.";
+    }
+
+    setFieldErrors(errors);
+
+    return (
+      Object.keys(errors).length === 0
+    );
+  };
+
+  const handleSave = async () => {
+    if (!validate()) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const response =
+        await updateSuperAdminProfile(
+          formData
+        );
+
+      const data =
+        response?.data || {};
+
+      const updatedProfile = {
+        fullName:
+          data.full_name ||
+          data.fullName ||
+          formData.fullName,
+        email:
+          data.email ||
+          formData.email,
+        mobile:
+          data.mobile ||
+          formData.mobile,
+        role:
+          data.role_name ||
+          data.role ||
+          profile.role,
+        branch:
+          data.branch_name ||
+          data.branch ||
+          profile.branch,
+        status:
+          data.status_name ||
+          data.status ||
+          profile.status,
+      };
+
+      setProfile(updatedProfile);
+      setFormData(updatedProfile);
+      setIsEditing(false);
+
+      setShowToast(true);
+
+      setTimeout(() => {
+        setShowToast(false);
+      }, 2500);
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Unable to update profile."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const initial =
+    profile.fullName
+      ?.charAt(0)
+      ?.toUpperCase() || "S";
+
+  if (loading) {
+    return (
+      <div className="sa-profile-page">
+        <div className="sa-profile-loading">
+          <Loader2
+            size={22}
+            className="sa-profile-spin"
+          />
+          <span>
+            Loading profile...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="sa-profile-page">
       <div className="sa-profile-page__header">
-        <h1 className="sa-profile-page__title">My Profile</h1>
-        <button className="sa-profile-edit-btn" onClick={handleEditToggle}>
+        <div>
+          <h1 className="sa-profile-page__title">
+            My Profile
+          </h1>
+
+          <p className="sa-profile-page__subtitle">
+            Manage your personal information
+            and account details
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="sa-profile-edit-btn"
+          onClick={handleEditToggle}
+          disabled={saving}
+        >
           {isEditing ? (
             <>
-              <X size={14} /> Cancel
+              <X size={14} />
+              Cancel
             </>
           ) : (
             <>
-              <Edit2 size={14} /> Edit Profile
+              <Edit2 size={14} />
+              Edit Profile
             </>
           )}
         </button>
       </div>
 
+      {error && (
+        <div className="sa-profile-error">
+          {error}
+        </div>
+      )}
+
       <div className="sa-profile-page__grid">
-        {/* Avatar card */}
         <div className="sa-profile-avatar-card">
-          <div className="sa-profile-avatar">{initial}</div>
-          <div className="sa-profile-avatar-card__name">{profile.fullName}</div>
-          <div className="sa-profile-avatar-card__email">{profile.email}</div>
-          <span className="sa-profile-role-badge">{profile.role}</span>
+          <div className="sa-profile-avatar">
+            {initial}
+          </div>
+
+          <div className="sa-profile-avatar-card__name">
+            {profile.fullName || "Super Admin"}
+          </div>
+
+          <div className="sa-profile-avatar-card__email">
+            {profile.email || "—"}
+          </div>
+
+          <span className="sa-profile-role-badge">
+            <ShieldCheck size={13} />
+            {profile.role || "Super Admin"}
+          </span>
+
+          <div className="sa-profile-account-status">
+            <span className="sa-profile-status-dot" />
+            {profile.status || "Active"}
+          </div>
         </div>
 
-        {/* Personal info card */}
         <div className="sa-profile-info-card">
-          <h2 className="sa-profile-info-card__title">Personal Information</h2>
+          <div className="sa-profile-info-card__heading">
+            <div>
+              <h2 className="sa-profile-info-card__title">
+                Personal Information
+              </h2>
+
+              <p className="sa-profile-info-card__subtitle">
+                Your account and contact details
+              </p>
+            </div>
+          </div>
+
           <div className="sa-profile-info-card__divider" />
 
           <div className="sa-profile-info-grid">
-            <div className="sa-profile-field">
-              <span className="sa-profile-field__label">FULL NAME</span>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) => handleChange("fullName", e.target.value)}
-                />
-              ) : (
-                <span className="sa-profile-field__value">{profile.fullName}</span>
-              )}
-            </div>
+            <ProfileField
+              icon={<User size={14} />}
+              label="FULL NAME"
+              value={formData.fullName}
+              editing={isEditing}
+              error={fieldErrors.fullName}
+              onChange={(value) =>
+                handleChange(
+                  "fullName",
+                  value
+                )
+              }
+            />
+
+            <ProfileField
+              icon={<Phone size={14} />}
+              label="MOBILE"
+              value={formData.mobile}
+              editing={isEditing}
+              error={fieldErrors.mobile}
+              onChange={(value) =>
+                handleChange(
+                  "mobile",
+                  value
+                )
+              }
+            />
+
+            <ProfileField
+              icon={<Mail size={14} />}
+              label="EMAIL"
+              value={formData.email}
+              editing={isEditing}
+              error={fieldErrors.email}
+              type="email"
+              onChange={(value) =>
+                handleChange(
+                  "email",
+                  value
+                )
+              }
+            />
+
+            <ProfileField
+              icon={<ShieldCheck size={14} />}
+              label="ROLE"
+              value={profile.role}
+            />
+
+            <ProfileField
+              icon={<Building2 size={14} />}
+              label="BRANCH"
+              value={profile.branch}
+            />
 
             <div className="sa-profile-field">
-              <span className="sa-profile-field__label">MOBILE</span>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={formData.mobile}
-                  onChange={(e) => handleChange("mobile", e.target.value)}
-                />
-              ) : (
-                <span className="sa-profile-field__value">{profile.mobile}</span>
-              )}
-            </div>
+              <div className="sa-profile-field__label-row">
+                <span className="sa-profile-field__icon">
+                  <CircleCheck size={14} />
+                </span>
 
-            <div className="sa-profile-field">
-              <span className="sa-profile-field__label">EMAIL</span>
-              {isEditing ? (
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                />
-              ) : (
-                <span className="sa-profile-field__value">{profile.email}</span>
-              )}
-            </div>
+                <span className="sa-profile-field__label">
+                  STATUS
+                </span>
+              </div>
 
-            <div className="sa-profile-field">
-              <span className="sa-profile-field__label">ROLE</span>
-              <span className="sa-profile-field__value">{profile.role}</span>
-            </div>
-
-            <div className="sa-profile-field">
-              <span className="sa-profile-field__label">BRANCH</span>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={formData.branch}
-                  onChange={(e) => handleChange("branch", e.target.value)}
-                />
-              ) : (
-                <span className="sa-profile-field__value">{profile.branch}</span>
-              )}
-            </div>
-
-            <div className="sa-profile-field">
-              <span className="sa-profile-field__label">STATUS</span>
-              <span className="sa-profile-field__value">{profile.status}</span>
+              <span
+                className={`sa-profile-status-value ${
+                  String(
+                    profile.status
+                  ).toLowerCase() ===
+                  "active"
+                    ? "active"
+                    : "inactive"
+                }`}
+              >
+                <span />
+                {profile.status || "—"}
+              </span>
             </div>
           </div>
 
           {isEditing && (
-            <button className="sa-profile-save-btn" onClick={handleSave}>
-              <Save size={14} /> Save Changes
-            </button>
+            <div className="sa-profile-save-area">
+              <button
+                type="button"
+                className="sa-profile-save-btn"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <Loader2
+                      size={14}
+                      className="sa-profile-spin"
+                    />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} />
+                    Save Changes
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -150,8 +455,62 @@ export default function Profile() {
           <span className="sa-profile-toast__icon">
             <Check size={14} />
           </span>
+
           Profile updated successfully!
         </div>
+      )}
+    </div>
+  );
+}
+
+function ProfileField({
+  icon,
+  label,
+  value,
+  editing = false,
+  error,
+  type = "text",
+  onChange,
+}) {
+  return (
+    <div className="sa-profile-field">
+      <div className="sa-profile-field__label-row">
+        <span className="sa-profile-field__icon">
+          {icon}
+        </span>
+
+        <span className="sa-profile-field__label">
+          {label}
+        </span>
+      </div>
+
+      {editing ? (
+        <>
+          <input
+            className={
+              error
+                ? "sa-profile-input sa-profile-input-error"
+                : "sa-profile-input"
+            }
+            type={type}
+            value={value || ""}
+            onChange={(e) =>
+              onChange?.(
+                e.target.value
+              )
+            }
+          />
+
+          {error && (
+            <div className="sa-profile-field-error">
+              {error}
+            </div>
+          )}
+        </>
+      ) : (
+        <span className="sa-profile-field__value">
+          {value || "—"}
+        </span>
       )}
     </div>
   );
