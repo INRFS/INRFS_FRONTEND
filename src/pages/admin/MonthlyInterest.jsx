@@ -12,9 +12,8 @@ import {
 import { StatusBadge, formatINR } from "../../shared/Shared";
 import {
   getMonthlyInterest,
-  approveMonthlyInterest,
-  rejectMonthlyInterest,
-  approveAllMonthlyInterest,
+  sendMonthlyInterestForApproval,
+  sendAllMonthlyInterestForApproval,
 } from "../../services/admin/monthlyInterestService";
 import "../../Styles/Admin/MontlyIntrest.css";
 
@@ -37,19 +36,25 @@ const getValue = (row, keys, fallback = null) => {
 const normalizeStatus = (value) => {
   if (!value) return "Pending";
 
-  const status = String(value).trim().toLowerCase();
+  const status = String(value)
+    .trim()
+    .toLowerCase();
 
   if (
     status === "approved" ||
     status === "active" ||
     status === "paid"
   ) {
-    return status === "paid" ? "Paid" : "Approved";
+    return status === "paid"
+      ? "Paid"
+      : "Approved";
   }
 
   if (
     status.includes("awaiting") ||
-    status.includes("super admin")
+    status.includes("super admin") ||
+    status.includes("submitted") ||
+    status.includes("sent for approval")
   ) {
     return "Awaiting Approval";
   }
@@ -90,17 +95,24 @@ const toISODate = (value) => {
   }
 
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
 const gstFor = (amount) =>
-  Math.round(Number(amount || 0) * GST_RATE);
+  Math.round(
+    Number(amount || 0) * GST_RATE
+  );
 
 const netPayableFor = (amount) =>
-  Number(amount || 0) - gstFor(amount);
+  Number(amount || 0) -
+  gstFor(amount);
 
 const normalizeRow = (row, index) => {
   const amount = Number(
@@ -197,7 +209,11 @@ const normalizeRow = (row, index) => {
   };
 };
 
-function DetailRow({ label, value, valueClass = "" }) {
+function DetailRow({
+  label,
+  value,
+  valueClass = "",
+}) {
   return (
     <div className="admin-detail-row">
       <span className="admin-detail-row__label">
@@ -217,32 +233,43 @@ const getTodayISO = () => {
   const date = new Date();
 
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
 export default function MonthlyInterest() {
   const [rows, setRows] = useState([]);
-  const [filterDate, setFilterDate] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [filterDate, setFilterDate] =
+    useState("");
+  const [statusFilter, setStatusFilter] =
+    useState("all");
+  const [loading, setLoading] =
+    useState(true);
+  const [actionLoading, setActionLoading] =
+    useState(false);
   const [error, setError] = useState("");
-  const [confirmAction, setConfirmAction] = useState(null);
-  const [step, setStep] = useState("details");
+  const [confirmAction, setConfirmAction] =
+    useState(null);
+  const [step, setStep] =
+    useState("details");
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await getMonthlyInterest({
-        interestDueDate: filterDate,
-        limit: 100,
-        offset: 0,
-      });
+      const response =
+        await getMonthlyInterest({
+          interestDueDate: filterDate,
+          limit: 100,
+          offset: 0,
+        });
 
       const list = Array.isArray(response)
         ? response
@@ -252,9 +279,14 @@ export default function MonthlyInterest() {
         ? response.items
         : [];
 
-      setRows(list.map(normalizeRow));
+      setRows(
+        list.map(normalizeRow)
+      );
     } catch (err) {
-      setError(err.message || "Failed to load monthly interest");
+      setError(
+        err.message ||
+          "Failed to load monthly interest"
+      );
       setRows([]);
     } finally {
       setLoading(false);
@@ -284,7 +316,8 @@ export default function MonthlyInterest() {
 
     if (statusFilter === "rejected") {
       return rows.filter(
-        (row) => row.status === "Rejected"
+        (row) =>
+          row.status === "Rejected"
       );
     }
 
@@ -313,15 +346,18 @@ export default function MonthlyInterest() {
       .map(([due, groupRows]) => ({
         due,
         dueLabel:
-          groupRows[0]?.dueLabel || formatDate(due),
+          groupRows[0]?.dueLabel ||
+          formatDate(due),
         rows: groupRows,
         total: groupRows.reduce(
-          (sum, row) => sum + row.amount,
+          (sum, row) =>
+            sum + row.amount,
           0
         ),
         netTotal: groupRows.reduce(
           (sum, row) =>
-            sum + netPayableFor(row.amount),
+            sum +
+            netPayableFor(row.amount),
           0
         ),
       }));
@@ -331,44 +367,58 @@ export default function MonthlyInterest() {
 
   const pendingRows = visibleGroups
     .flatMap((group) => group.rows)
-    .filter((row) => row.status === "Pending");
+    .filter(
+      (row) =>
+        row.status === "Pending"
+    );
 
   const totalInterest = rows.reduce(
-    (sum, row) => sum + Number(row.amount || 0),
+    (sum, row) =>
+      sum + Number(row.amount || 0),
     0
   );
 
   const pendingCount = rows.filter(
-    (row) => row.status === "Pending"
+    (row) =>
+      row.status === "Pending" ||
+      row.status === "Awaiting Approval"
   ).length;
 
   const approvedCount = rows.filter(
-    (row) => row.status === "Approved" || row.status === "Paid"
+    (row) =>
+      row.status === "Approved" ||
+      row.status === "Paid"
   ).length;
 
   const rejectedCount = rows.filter(
-    (row) => row.status === "Rejected"
+    (row) =>
+      row.status === "Rejected"
   ).length;
 
   const totalNetPayable = rows.reduce(
-    (sum, row) => sum + Number(netPayableFor(row.amount) || 0),
+    (sum, row) =>
+      sum +
+      Number(
+        netPayableFor(row.amount) || 0
+      ),
     0
   );
 
-  const openConfirm = (type, row) => {
+  const openConfirm = (
+    type,
+    row
+  ) => {
     setConfirmAction({
       type,
       row,
     });
 
-    setStep(
-      type === "approveAllPending"
-        ? "confirm"
-        : "details"
-    );
+    setStep("details");
   };
 
   const closeConfirm = () => {
+    if (actionLoading) return;
+
     setConfirmAction(null);
     setStep("details");
   };
@@ -385,41 +435,31 @@ export default function MonthlyInterest() {
         row,
       } = confirmAction;
 
-      if (type === "approve") {
-        await approveMonthlyInterest(row.id);
-      }
-
-      if (type === "reject") {
-        await rejectMonthlyInterest(
-          row.id,
-          "Rejected by Admin",
-          null
+      if (type === "send") {
+        await sendMonthlyInterestForApproval(
+          row.id
         );
       }
 
-      if (type === "approveAllPending") {
+      if (type === "sendAll") {
         const dueDate =
           filterDate ||
-          toISODate(row[0]?.due);
+          toISODate(row?.[0]?.due);
 
         if (!dueDate) {
           throw new Error(
-            "Please select a due date before approving all."
+            "Please select a due date before sending all."
           );
         }
 
-        await approveAllMonthlyInterest(
+        await sendAllMonthlyInterestForApproval(
           dueDate
         );
       }
 
       closeConfirm();
 
-      if (type === "approve" || type === "approveAllPending") {
-        setStatusFilter("approved");
-      } else if (type === "reject") {
-        setStatusFilter("rejected");
-      }
+      setStatusFilter("pending");
 
       await loadData();
     } catch (err) {
@@ -440,32 +480,54 @@ export default function MonthlyInterest() {
       <div className="monthly-interest-stats">
         <div className="monthly-interest-stat monthly-interest-stat--blue">
           <span>Total Interest</span>
-          <strong>{formatINR(totalInterest)}</strong>
-          <small>All interest payments</small>
+          <strong>
+            {formatINR(totalInterest)}
+          </strong>
+          <small>
+            All interest payments
+          </small>
         </div>
 
         <div className="monthly-interest-stat monthly-interest-stat--amber">
           <span>Pending</span>
-          <strong>{pendingCount}</strong>
-          <small>Waiting for approval</small>
+          <strong>
+            {pendingCount}
+          </strong>
+          <small>
+            Waiting for approval
+          </small>
         </div>
 
         <div className="monthly-interest-stat monthly-interest-stat--green">
           <span>Approved</span>
-          <strong>{approvedCount}</strong>
-          <small>Approved or paid</small>
+          <strong>
+            {approvedCount}
+          </strong>
+          <small>
+            Approved or paid
+          </small>
         </div>
 
         <div className="monthly-interest-stat monthly-interest-stat--red">
           <span>Rejected</span>
-          <strong>{rejectedCount}</strong>
-          <small>Rejected payments</small>
+          <strong>
+            {rejectedCount}
+          </strong>
+          <small>
+            Rejected payments
+          </small>
         </div>
 
         <div className="monthly-interest-stat monthly-interest-stat--purple">
           <span>Net Payable</span>
-          <strong>{formatINR(totalNetPayable)}</strong>
-          <small>After GST deduction</small>
+          <strong>
+            {formatINR(
+              totalNetPayable
+            )}
+          </strong>
+          <small>
+            After GST deduction
+          </small>
         </div>
       </div>
 
@@ -494,18 +556,29 @@ export default function MonthlyInterest() {
                 count: rows.length,
               },
             ].map((tab) => {
-              const active = statusFilter === tab.key;
+              const active =
+                statusFilter ===
+                tab.key;
 
               return (
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => setStatusFilter(tab.key)}
+                  onClick={() =>
+                    setStatusFilter(
+                      tab.key
+                    )
+                  }
                   className={`monthly-interest-status-tab ${
-                    active ? "monthly-interest-status-tab--active" : ""
+                    active
+                      ? "monthly-interest-status-tab--active"
+                      : ""
                   }`}
                 >
-                  <span>{tab.label}</span>
+                  <span>
+                    {tab.label}
+                  </span>
+
                   <span className="monthly-interest-status-count">
                     {tab.count}
                   </span>
@@ -516,10 +589,15 @@ export default function MonthlyInterest() {
 
           <label className="admin-date-filter monthly-interest-date-filter">
             <Filter size={14} />
+
             <input
               type="date"
               value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
+              onChange={(e) =>
+                setFilterDate(
+                  e.target.value
+                )
+              }
             />
           </label>
         </div>
@@ -537,7 +615,8 @@ export default function MonthlyInterest() {
             Loading monthly interest...
           </p>
         </div>
-      ) : visibleGroups.length === 0 ? (
+      ) : visibleGroups.length ===
+        0 ? (
         <div className="admin-table-card">
           <p className="admin-no-results">
             No interest payments found.
@@ -555,14 +634,35 @@ export default function MonthlyInterest() {
               </div>
 
               <div className="due-group-header__meta">
-                <span>{group.rows.length} payment{group.rows.length > 1 ? "s" : ""}</span>
+                <span>
+                  {group.rows.length} payment
+                  {group.rows.length >
+                  1
+                    ? "s"
+                    : ""}
+                </span>
+
                 <span>·</span>
-                <span>{formatINR(group.total)} gross</span>
+
+                <span>
+                  {formatINR(
+                    group.total
+                  )}{" "}
+                  gross
+                </span>
+
                 <span>·</span>
-                <span>{formatINR(group.netTotal)} net of GST</span>
+
+                <span>
+                  {formatINR(
+                    group.netTotal
+                  )}{" "}
+                  net of GST
+                </span>
               </div>
 
-              {group.due === getTodayISO() && (
+              {group.due ===
+                getTodayISO() && (
                 <div className="due-badge due-badge--today">
                   Due Today
                 </div>
@@ -582,150 +682,191 @@ export default function MonthlyInterest() {
                     <col className="monthly-col-status" />
                     <col className="monthly-col-actions" />
                   </colgroup>
-                <thead>
-                  <tr>
-                    <th>Investor</th>
-                    <th>Bond Number</th>
-                    <th>Interest Amount</th>
-                    <th>GST (18%)</th>
-                    <th>Net Payable</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
 
-                <tbody>
-                  {group.rows.map((row) => {
-                    const gst =
-                      gstFor(row.amount);
+                  <thead>
+                    <tr>
+                      <th>
+                        Investor
+                      </th>
 
-                    const net =
-                      netPayableFor(
-                        row.amount
-                      );
+                      <th>
+                        Bond Number
+                      </th>
 
-                    return (
-                      <tr key={row.id}>
-                        <td>
-                          {row.investor}
-                        </td>
+                      <th>
+                        Interest Amount
+                      </th>
 
-                        <td className="mono link">
-                          {row.bond}
-                        </td>
+                      <th>
+                        GST (18%)
+                      </th>
 
-                        <td className="mono amount-positive">
-                          {formatINR(
+                      <th>
+                        Net Payable
+                      </th>
+
+                      <th>
+                        Due Date
+                      </th>
+
+                      <th>
+                        Status
+                      </th>
+
+                      <th>
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {group.rows.map(
+                      (row) => {
+                        const gst =
+                          gstFor(
                             row.amount
-                          )}
-                        </td>
+                          );
 
-                        <td className="mono">
-                          -{formatINR(gst)}
-                        </td>
+                        const net =
+                          netPayableFor(
+                            row.amount
+                          );
 
-                        <td className="mono amount-positive">
-                          {formatINR(net)}
-                        </td>
-
-                        <td className="due-date--muted">
-                          {row.dueLabel}
-                        </td>
-
-                        <td>
-                          <StatusBadge
-                            status={
-                              row.status
+                        return (
+                          <tr
+                            key={
+                              row.id
                             }
-                          />
-                        </td>
+                          >
+                            <td>
+                              {
+                                row.investor
+                              }
+                            </td>
 
-                        <td>
-                          {row.status ===
-                            "Pending" && (
-                            <div className="admin-action-group">
-                              <button
-                                className="admin-btn admin-btn--success admin-btn--pill"
-                                disabled={
-                                  actionLoading
+                            <td className="mono link">
+                              {row.bond}
+                            </td>
+
+                            <td className="mono amount-positive">
+                              {formatINR(
+                                row.amount
+                              )}
+                            </td>
+
+                            <td className="mono">
+                              -
+                              {formatINR(
+                                gst
+                              )}
+                            </td>
+
+                            <td className="mono amount-positive">
+                              {formatINR(
+                                net
+                              )}
+                            </td>
+
+                            <td className="due-date--muted">
+                              {
+                                row.dueLabel
+                              }
+                            </td>
+
+                            <td>
+                              <StatusBadge
+                                status={
+                                  row.status
                                 }
-                                onClick={() =>
-                                  openConfirm(
-                                    "approve",
-                                    row
-                                  )
-                                }
-                              >
-                                <CheckCircle2
-                                  size={14}
-                                />
-                                Approve
-                              </button>
-
-                              <button
-                                className="admin-icon-btn admin-icon-btn--danger"
-                                disabled={
-                                  actionLoading
-                                }
-                                onClick={() =>
-                                  openConfirm(
-                                    "reject",
-                                    row
-                                  )
-                                }
-                              >
-                                <Ban
-                                  size={14}
-                                />
-                              </button>
-                            </div>
-                          )}
-
-                          {row.status ===
-                            "Awaiting Approval" && (
-                            <span className="admin-action-muted">
-                              <Clock
-                                size={14}
                               />
-                              Waiting for Super
-                              Admin Approval
-                            </span>
-                          )}
+                            </td>
 
-                          {row.status ===
-                            "Approved" && (
-                            <span className="admin-action-muted">
-                              <CheckCircle2
-                                size={14}
-                              />
-                              Approved
-                            </span>
-                          )}
+                            <td>
+                              {row.status ===
+                                "Pending" && (
+                                <div className="admin-action-group">
+                                  <button
+                                    type="button"
+                                    className="admin-btn admin-btn--success admin-btn--pill"
+                                    disabled={
+                                      actionLoading
+                                    }
+                                    onClick={() =>
+                                      openConfirm(
+                                        "send",
+                                        row
+                                      )
+                                    }
+                                  >
+                                    <Send
+                                      size={
+                                        14
+                                      }
+                                    />
 
-                          {row.status ===
-                            "Rejected" && (
-                            <span className="admin-action-muted">
-                              <Ban
-                                size={14}
-                              />
-                              Rejected
-                            </span>
-                          )}
+                                    Send for Approval
+                                  </button>
+                                </div>
+                              )}
 
-                          {row.status === "Paid" && (
-                            <span className="admin-action-muted">
-                              <CheckCircle2
-                                size={14}
-                              />
-                              Paid
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
+                              {row.status ===
+                                "Awaiting Approval" && (
+                                <span className="admin-action-muted">
+                                  <Clock
+                                    size={
+                                      14
+                                    }
+                                  />
+
+                                  Waiting for Super
+                                  Admin Approval
+                                </span>
+                              )}
+
+                              {row.status ===
+                                "Approved" && (
+                                <span className="admin-action-muted">
+                                  <CheckCircle2
+                                    size={
+                                      14
+                                    }
+                                  />
+
+                                  Approved
+                                </span>
+                              )}
+
+                              {row.status ===
+                                "Rejected" && (
+                                <span className="admin-action-muted">
+                                  <Ban
+                                    size={
+                                      14
+                                    }
+                                  />
+
+                                  Rejected
+                                </span>
+                              )}
+
+                              {row.status ===
+                                "Paid" && (
+                                <span className="admin-action-muted">
+                                  <CheckCircle2
+                                    size={
+                                      14
+                                    }
+                                  />
+
+                                  Paid
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      }
+                    )}
+                  </tbody>
                 </table>
               </div>
             </div>
@@ -746,21 +887,27 @@ export default function MonthlyInterest() {
           >
             <div className="admin-modal-header">
               <div className="admin-modal-header__title">
-                <AlertTriangle size={18} />
+                <AlertTriangle
+                  size={18}
+                />
+
                 <h3>
                   {confirmAction.type ===
-                  "reject"
-                    ? "Reject Interest Request"
-                    : confirmAction.type ===
-                      "approveAllPending"
-                    ? "Approve All Pending"
-                    : "Interest Payout Details"}
+                  "sendAll"
+                    ? "Send All for Super Admin Approval"
+                    : "Send for Super Admin Approval"}
                 </h3>
               </div>
 
               <button
+                type="button"
                 className="admin-modal-close-btn"
-                onClick={closeConfirm}
+                onClick={
+                  closeConfirm
+                }
+                disabled={
+                  actionLoading
+                }
               >
                 <X size={16} />
               </button>
@@ -836,21 +983,28 @@ export default function MonthlyInterest() {
 
                   <div className="admin-modal-footer">
                     <button
+                      type="button"
                       className="admin-btn admin-btn--outline"
-                      onClick={closeConfirm}
+                      onClick={
+                        closeConfirm
+                      }
+                      disabled={
+                        actionLoading
+                      }
                     >
                       Cancel
                     </button>
 
                     <button
-                      className={`admin-btn ${
-                        confirmAction.type ===
-                        "reject"
-                          ? "admin-btn--danger"
-                          : "admin-btn--success"
-                      }`}
+                      type="button"
+                      className="admin-btn admin-btn--success"
                       onClick={() =>
-                        setStep("confirm")
+                        setStep(
+                          "confirm"
+                        )
+                      }
+                      disabled={
+                        actionLoading
                       }
                     >
                       Continue
@@ -863,7 +1017,7 @@ export default function MonthlyInterest() {
               <>
                 <div className="admin-modal-body">
                   {confirmAction.type ===
-                    "approveAllPending" ? (
+                  "sendAll" ? (
                     <p>
                       Send{" "}
                       <strong>
@@ -871,29 +1025,14 @@ export default function MonthlyInterest() {
                           activeRow.length
                         }
                       </strong>{" "}
-                      pending interest payments
-                      for Super Admin approval?
-                    </p>
-                  ) : confirmAction.type ===
-                    "reject" ? (
-                    <p>
-                      Reject the interest
-                      payout for{" "}
-                      <strong>
-                        {
-                          activeRow.investor
-                        }
-                      </strong>{" "}
-                      on bond{" "}
-                      <strong>
-                        {activeRow.bond}
-                      </strong>
-                      ?
+                      pending interest
+                      payments to Super
+                      Admin for approval?
                     </p>
                   ) : (
                     <p>
-                      Send the interest payout
-                      of{" "}
+                      Send the interest
+                      payout of{" "}
                       <strong>
                         {formatINR(
                           netPayableFor(
@@ -907,32 +1046,34 @@ export default function MonthlyInterest() {
                           activeRow.investor
                         }
                       </strong>{" "}
-                      to Super Admin for final
-                      approval?
+                      to Super Admin for
+                      final approval?
                     </p>
                   )}
                 </div>
 
                 <div className="admin-modal-footer">
                   <button
+                    type="button"
                     className="admin-btn admin-btn--outline"
                     onClick={() =>
                       confirmAction.type ===
-                      "approveAllPending"
+                      "sendAll"
                         ? closeConfirm()
-                        : setStep("details")
+                        : setStep(
+                            "details"
+                          )
+                    }
+                    disabled={
+                      actionLoading
                     }
                   >
                     Back
                   </button>
 
                   <button
-                    className={`admin-btn ${
-                      confirmAction.type ===
-                      "reject"
-                        ? "admin-btn--danger"
-                        : "admin-btn--success"
-                    }`}
+                    type="button"
+                    className="admin-btn admin-btn--success"
                     disabled={
                       actionLoading
                     }
@@ -941,10 +1082,7 @@ export default function MonthlyInterest() {
                     }
                   >
                     {actionLoading
-                      ? "Processing..."
-                      : confirmAction.type ===
-                        "reject"
-                      ? "Reject"
+                      ? "Sending..."
                       : "Send for Approval"}
                   </button>
                 </div>

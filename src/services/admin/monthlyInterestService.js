@@ -1,4 +1,4 @@
-const API_URL =  "http://187.52.115.32:8000";
+const API_URL = "http://187.52.115.32:8000";
 
 const getHeaders = () => {
   const token =
@@ -23,7 +23,9 @@ const handleResponse = async (response) => {
 
     throw new Error(
       Array.isArray(message)
-        ? message.map((item) => item?.msg || String(item)).join(", ")
+        ? message
+            .map((item) => item?.msg || String(item))
+            .join(", ")
         : String(message)
     );
   }
@@ -56,7 +58,9 @@ export const getMonthlyInterest = async ({
   return handleResponse(response);
 };
 
-export const getMonthlyInterestDetails = async (interestScheduleId) => {
+export const getMonthlyInterestDetails = async (
+  interestScheduleId
+) => {
   const response = await fetch(
     `${API_URL}/admin/monthly-interest/${interestScheduleId}`,
     {
@@ -68,9 +72,11 @@ export const getMonthlyInterestDetails = async (interestScheduleId) => {
   return handleResponse(response);
 };
 
-export const approveMonthlyInterest = async (interestScheduleId) => {
+export const sendMonthlyInterestForApproval = async (
+  interestScheduleId
+) => {
   const response = await fetch(
-    `${API_URL}/admin/monthly-interest/${interestScheduleId}/approve`,
+    `${API_URL}/admin/monthly-interest/${interestScheduleId}/send-for-approval`,
     {
       method: "PUT",
       headers: {
@@ -84,32 +90,11 @@ export const approveMonthlyInterest = async (interestScheduleId) => {
   return handleResponse(response);
 };
 
-export const rejectMonthlyInterest = async (
-  interestScheduleId,
-  rejectionReason,
-  remarks = null
+export const sendAllMonthlyInterestForApproval = async (
+  interestDueDate
 ) => {
   const response = await fetch(
-    `${API_URL}/admin/monthly-interest/${interestScheduleId}/reject`,
-    {
-      method: "PUT",
-      headers: {
-        ...getHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        rejection_reason: rejectionReason,
-        remarks,
-      }),
-    }
-  );
-
-  return handleResponse(response);
-};
-
-export const approveAllMonthlyInterest = async (interestDueDate) => {
-  const response = await fetch(
-    `${API_URL}/admin/monthly-interest/approve-all`,
+    `${API_URL}/admin/monthly-interest/send-all-for-approval`,
     {
       method: "PUT",
       headers: {

@@ -830,3 +830,100 @@
     margin-top: 14px;
   }
 }
+.pq-tabs {
+  padding: 5px !important;
+  gap: 4px !important;
+  border: 1px solid #e7ebf2 !important;
+  background: linear-gradient(180deg, #f7f9fc, #f1f4f8) !important;
+}
+
+.pq-tab {
+  min-height: 42px !important;
+  padding: 0 17px !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  transition: all .18s ease !important;
+}
+
+.pq-tab:hover {
+  background: #fff !important;
+  color: #315bea !important;
+}
+
+.pq-tab-active {
+  background: #fff !important;
+  color: #315bea !important;
+  border-color: #dce5ff !important;
+  box-shadow: 0 3px 10px rgba(49, 91, 234, .10) !important;
+}
+
+.pq-tenure-head {
+  padding: 15px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border-bottom: 1px solid #e8edf4 !important;
+  background: linear-gradient(180deg, #fff, #fbfcfe) !important;
+}
+
+.pq-tenure-head h2 {
+  margin: 0 !important;
+  color: #17223d !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+
+.pq-tenure-head p {
+  margin: 4px 0 0 !important;
+  color: #8290a6 !important;
+  font-size: 11px !important;
+}
+
+.pq-tenure-head-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.pq-tenure-table th,
+.pq-tenure-table td {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.pq-tenure-table {
+  min-width: 1050px !important;
+}
+
+.pq-tenure-table .pq-approve-btn {
+  min-height: 32px !important;
+  padding: 0 11px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, #315bea, #2448cf) !important;
+  box-shadow: 0 4px 10px rgba(49, 91, 234, .14) !important;
+}
+
+.pq-tenure-table .pq-approve-btn:hover {
+  background: linear-gradient(135deg, #2448cf, #1d3fb9) !important;
+  transform: translateY(-1px) !important;
+}
+
+@media (max-width: 760px) {
+  .pq-tenure-head {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .pq-tenure-head-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .pq-tab {
+    padding: 0 12px !important;
+    font-size: 11px !important;
+  }
+}

@@ -235,24 +235,52 @@ export default function AdminLayout({
     };
   }, []);
 
-  const confirmLogout = () => {
-    localStorage.removeItem(
-      "access_token"
-    );
-    localStorage.removeItem("token");
-    localStorage.removeItem(
-      "admin_token"
-    );
+ const confirmLogout = () => {
+  setShowLogoutConfirm(false);
 
-    sessionStorage.removeItem(
-      "access_token"
-    );
-    sessionStorage.removeItem("token");
+  // Get role BEFORE clearing localStorage
+  const role = String(
+    localStorage.getItem("role") || ""
+  )
+    .trim()
+    .toUpperCase();
 
-    setShowLogoutConfirm(false);
+  let loginPath = "/login";
 
-    navigate("/login");
-  };
+  if (role === "SUPERADMIN") {
+    loginPath = "/superadmin-login";
+  } else if (
+    role === "ADMIN" ||
+    role === "BRANCH MANAGER"
+  ) {
+    loginPath = "/admin-login";
+  } else if (role === "INVESTOR") {
+    loginPath = "/login";
+  }
+
+  // Clear authentication
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("token");
+  localStorage.removeItem("admin_token");
+  localStorage.removeItem("token_type");
+  localStorage.removeItem("user_id");
+  localStorage.removeItem("login_id");
+  localStorage.removeItem("full_name");
+  localStorage.removeItem("role");
+  localStorage.removeItem("role_id");
+  localStorage.removeItem("branch_id");
+  localStorage.removeItem("branch_name");
+  localStorage.removeItem("permissions");
+  localStorage.removeItem("mobile");
+
+  sessionStorage.removeItem("access_token");
+  sessionStorage.removeItem("token");
+  sessionStorage.removeItem("admin_token");
+
+  navigate(loginPath, {
+    replace: true,
+  });
+};
 
   const displayName =
     profileLoading

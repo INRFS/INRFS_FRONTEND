@@ -583,3 +583,914 @@
     padding: 12px;
   }
 }
+
+/* =========================================================
+   DASHBOARD VISUAL UPDATE
+   ========================================================= */
+
+.chart-panel{
+  min-height:355px;
+  overflow:hidden;
+}
+
+.chart-panel .panel-title{
+  font-size:20px;
+  line-height:1.25;
+  letter-spacing:-.02em;
+}
+
+.chart-panel .panel-sub{
+  font-size:14px;
+  margin-bottom:10px;
+}
+
+.chart-panel .recharts-wrapper,
+.chart-panel .recharts-surface{
+  overflow:visible;
+}
+
+.chart-empty{
+  min-height:285px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:var(--ink-faint);
+  text-align:center;
+  border:1px dashed #dce3f0;
+  border-radius:12px;
+  background:linear-gradient(145deg,#fbfcff,#f7f9fd);
+}
+
+.chart-empty svg{
+  color:var(--blue);
+}
+
+.chart-empty strong{
+  color:var(--ink-soft);
+  font-size:14px;
+}
+
+.chart-empty span{
+  font-size:12px;
+}
+
+.dashboard-empty{
+  min-height:170px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:var(--ink-faint);
+  text-align:center;
+}
+
+.dashboard-empty svg{
+  color:var(--blue);
+}
+
+.dashboard-empty strong{
+  color:var(--ink-soft);
+  font-size:14px;
+}
+
+.dashboard-empty span{
+  font-size:12px;
+}
+
+.dashboard-empty-compact{
+  min-height:145px;
+}
+
+.activity-table-wrapper{
+  min-height:190px;
+}
+
+.kyc-pending-list{
+  min-height:145px;
+}
+
+@media (min-width:801px){
+  .chart-grid{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    align-items:stretch;
+  }
+
+  .chart-panel{
+    min-height:355px;
+  }
+
+  .bottom-grid{
+    align-items:start;
+  }
+}
+
+@media (max-width:800px){
+  .chart-panel .panel-title{
+    font-size:18px;
+  }
+
+  .chart-panel .panel-sub{
+    font-size:13px;
+  }
+
+  .chart-empty{
+    min-height:250px;
+  }
+}
+
+/* =========================================================
+   FINAL ADMIN DASHBOARD UI OVERRIDES
+   - clean Recent Activity
+   - single View action only
+   - responsive charts
+   - responsive table/card layout
+   - no horizontal page overflow
+   ========================================================= */
+
+.admin-content:has(.dash-header) {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.admin-content:has(.dash-header) * {
+  box-sizing: border-box;
+}
+
+.admin-content:has(.dash-header) .dash-header {
+  width: 100%;
+  min-width: 0;
+}
+
+.chart-grid {
+  width: 100%;
+  min-width: 0;
+}
+
+.chart-panel {
+  min-width: 0;
+  width: 100%;
+  min-height: 360px;
+  overflow: hidden;
+}
+
+.chart-panel > .recharts-responsive-container {
+  min-width: 0;
+}
+
+.bottom-grid {
+  width: 100%;
+  min-width: 0;
+}
+
+.bottom-grid > .panel {
+  min-width: 0;
+}
+
+/* Recent Activity */
+.activity-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.activity-table {
+  width: 100%;
+  min-width: 650px;
+  table-layout: fixed;
+}
+
+.activity-table th:nth-child(1) { width: 30%; }
+.activity-table th:nth-child(2) { width: 24%; }
+.activity-table th:nth-child(3) { width: 18%; }
+.activity-table th:nth-child(4) { width: 18%; }
+.activity-table th:nth-child(5) { width: 10%; text-align: center; }
+
+.activity-table td:last-child {
+  text-align: center;
+}
+
+.activity-view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 64px;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid #d6e0ff;
+  border-radius: 8px;
+  background: #f3f6ff;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background .18s ease,
+    color .18s ease,
+    border-color .18s ease,
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+.activity-view-btn:hover {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+  transform: translateY(-1px);
+  box-shadow: 0 7px 15px rgba(47, 92, 240, .22);
+}
+
+.activity-view-btn:active {
+  transform: scale(.97);
+}
+
+/* Old approve/reject controls are no longer used */
+.activity-table .row-actions {
+  display: none;
+}
+
+/* KYC Pending */
+.kyc-pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.kyc-pending-row {
+  min-height: 58px;
+  padding: 10px 0;
+}
+
+.kyc-pending-row .investor-cell {
+  min-width: 0;
+}
+
+.kyc-pending-row .investor-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kyc-review-btn {
+  flex-shrink: 0;
+}
+
+/* Charts */
+.chart-panel .recharts-responsive-container {
+  width: 100% !important;
+}
+
+.chart-panel .recharts-wrapper,
+.chart-panel .recharts-surface {
+  max-width: 100%;
+}
+
+.chart-panel .recharts-tooltip-wrapper {
+  z-index: 20;
+}
+
+.chart-empty {
+  min-height: 285px;
+}
+
+/* Desktop */
+@media (min-width: 1201px) {
+  .chart-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+  }
+
+  .bottom-grid {
+    grid-template-columns: minmax(0, 2.25fr) minmax(300px, .85fr);
+  }
+}
+
+/* Tablet */
+@media (max-width: 1100px) {
+  .chart-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .bottom-grid {
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+    gap: 14px;
+  }
+
+  .chart-panel {
+    min-height: 340px;
+  }
+
+  .activity-table {
+    min-width: 630px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 800px) {
+  .admin-content:has(.dash-header) {
+    border-radius: 0;
+    overflow-x: hidden;
+  }
+
+  .dash-header,
+  .dash-header-actions {
+    width: 100%;
+  }
+
+  .stat-grid {
+    width: calc(100vw - 24px);
+    max-width: none;
+  }
+
+  .chart-grid,
+  .bottom-grid {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .chart-panel {
+    min-height: 330px;
+    padding: 16px;
+  }
+
+  .chart-panel .panel-title {
+    font-size: 17px;
+  }
+
+  .chart-panel .panel-sub {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .chart-panel .recharts-responsive-container {
+    height: 255px !important;
+  }
+
+  .activity-table-wrapper {
+    margin: 0;
+    padding-bottom: 3px;
+  }
+
+  .activity-table {
+    min-width: 640px;
+  }
+
+  .activity-table th,
+  .activity-table td {
+    white-space: nowrap;
+  }
+
+  .activity-view-btn {
+    min-width: 58px;
+    height: 31px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  .side-col {
+    width: 100%;
+  }
+
+  .quick-actions {
+    gap: 8px;
+  }
+
+  .quick-action {
+    min-height: 45px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 600px) {
+  .dash-header h1 {
+    font-size: 19px;
+  }
+
+  .dash-header p {
+    font-size: 11.5px;
+  }
+
+  .dash-header-actions {
+    gap: 7px;
+  }
+
+  .dash-header-actions .btn {
+    min-height: 40px;
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+
+  .stat-grid {
+    width: calc(100vw - 20px);
+    gap: 9px;
+    padding-left: 1px;
+    padding-right: 4px;
+  }
+
+  .stat-card {
+    flex: 0 0 164px;
+    width: 164px;
+    height: 94px;
+    padding: 13px;
+  }
+
+  .stat-value {
+    font-size: 19px;
+  }
+
+  .chart-grid {
+    gap: 11px;
+  }
+
+  .chart-panel {
+    padding: 14px;
+    min-height: 310px;
+    border-radius: 14px;
+  }
+
+  .chart-panel .panel-title {
+    font-size: 15px;
+  }
+
+  .chart-panel .panel-sub {
+    font-size: 11px;
+  }
+
+  .chart-panel .recharts-responsive-container {
+    height: 235px !important;
+  }
+
+  .bottom-grid {
+    gap: 11px;
+  }
+
+  .bottom-grid .panel {
+    padding: 14px;
+  }
+
+  .panel-header-row {
+    gap: 8px;
+  }
+
+  .panel-title {
+    font-size: 14px;
+  }
+
+  .panel-sub {
+    font-size: 11px;
+  }
+
+  .link-btn {
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+
+  .activity-table {
+    min-width: 610px;
+  }
+
+  .activity-table th {
+    font-size: 9px;
+    padding: 9px 7px;
+  }
+
+  .activity-table td {
+    font-size: 12px;
+    padding: 11px 7px;
+  }
+
+  .investor-avatar {
+    width: 31px;
+    height: 31px;
+    font-size: 11px;
+  }
+
+  .investor-name {
+    font-size: 12px;
+  }
+
+  .investor-id {
+    font-size: 9.5px;
+  }
+
+  .badge {
+    min-height: 21px;
+    padding: 3px 8px;
+    font-size: 9px;
+  }
+
+  .activity-view-btn {
+    min-width: 55px;
+    height: 29px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .kyc-pending-row .investor-name {
+    max-width: 105px;
+  }
+
+  .quick-action {
+    min-height: 43px;
+    font-size: 11px;
+    padding: 10px 11px;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 420px) {
+  .dash-header {
+    gap: 8px;
+  }
+
+  .dash-header h1 {
+    font-size: 18px;
+  }
+
+  .dash-header-actions .btn {
+    font-size: 10.5px;
+    min-height: 39px;
+  }
+
+  .stat-card {
+    flex-basis: 158px;
+    width: 158px;
+    height: 92px;
+    padding: 12px;
+  }
+
+  .stat-label {
+    font-size: 8.5px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .chart-panel {
+    padding: 12px;
+    min-height: 295px;
+  }
+
+  .chart-panel .recharts-responsive-container {
+    height: 220px !important;
+  }
+
+  .activity-table {
+    min-width: 590px;
+  }
+
+  .kyc-pending-row .investor-name {
+    max-width: 90px;
+  }
+}
+
+/* Prevent page horizontal scrolling */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.admin-content:has(.dash-header) {
+  overflow-x: hidden;
+}
+
+/* =========================================================
+   MODERN RECENT INVESTORS + CHARTS
+   ========================================================= */
+
+.recent-investors-panel {
+  min-width: 0;
+  padding: 20px 20px 14px;
+}
+
+.recent-investors-header {
+  margin-bottom: 10px;
+}
+
+.recent-investors-header .panel-title {
+  font-size: 18px;
+}
+
+.recent-investors-header .panel-sub {
+  margin-bottom: 0;
+  font-size: 12px;
+}
+
+.recent-investors-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.recent-investor-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.5fr) minmax(125px, .9fr) minmax(115px, .8fr) 68px;
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--line-soft);
+  transition: background .18s ease, transform .18s ease;
+}
+
+.recent-investor-row:last-child {
+  border-bottom: none;
+}
+
+.recent-investor-row:hover {
+  background: #f8faff;
+  border-radius: 10px;
+}
+
+.recent-investor-main {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 10px;
+}
+
+.recent-investor-info {
+  min-width: 0;
+}
+
+.recent-investor-info .investor-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-investor-branch,
+.recent-investor-status {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.recent-investor-branch > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.recent-label {
+  color: var(--ink-faint);
+  font-size: 8.5px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.recent-investor-status .badge {
+  width: fit-content;
+}
+
+.activity-view-btn {
+  justify-self: end;
+  min-width: 62px;
+  height: 31px;
+  padding: 0 9px;
+  border: 1px solid #d6e0ff;
+  border-radius: 8px;
+  background: #f3f6ff;
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: .18s ease;
+}
+
+.activity-view-btn:hover {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+  box-shadow: 0 6px 14px rgba(47,92,240,.2);
+  transform: translateY(-1px);
+}
+
+/* Make both charts feel like one clean analytics section */
+.chart-grid {
+  gap: 14px;
+}
+
+.chart-panel {
+  min-height: 345px;
+  padding: 20px 20px 16px;
+}
+
+.chart-panel .panel-title {
+  font-size: 19px;
+}
+
+.chart-panel .panel-sub {
+  margin-bottom: 7px;
+  font-size: 12px;
+}
+
+.chart-panel .recharts-responsive-container {
+  height: 275px !important;
+}
+
+.chart-panel .recharts-default-tooltip {
+  border-radius: 10px;
+}
+
+.bottom-grid {
+  gap: 14px;
+}
+
+@media (min-width: 801px) {
+  .recent-investors-panel {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .recent-investor-row {
+    grid-template-columns: minmax(180px, 1.55fr) minmax(115px, .85fr) minmax(105px, .75fr) 62px;
+    gap: 8px;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .recent-investor-main {
+    gap: 8px;
+  }
+
+  .recent-investor-row .investor-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+
+  .recent-investor-row .investor-name {
+    font-size: 12.5px;
+  }
+
+  .recent-investor-row .investor-id {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 800px) {
+  .chart-grid {
+    gap: 11px;
+  }
+
+  .chart-panel {
+    min-height: 315px;
+    padding: 16px;
+  }
+
+  .chart-panel .panel-title {
+    font-size: 17px;
+  }
+
+  .chart-panel .recharts-responsive-container {
+    height: 245px !important;
+  }
+
+  .recent-investors-panel {
+    padding: 15px;
+  }
+
+  .recent-investors-header .panel-title {
+    font-size: 16px;
+  }
+
+  .recent-investor-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "main action"
+      "branch status";
+    gap: 8px 10px;
+    min-height: 72px;
+    padding: 10px 2px;
+  }
+
+  .recent-investor-main {
+    grid-area: main;
+  }
+
+  .recent-investor-branch {
+    grid-area: branch;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .recent-investor-status {
+    grid-area: status;
+    justify-self: end;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .recent-investor-status .recent-label {
+    display: none;
+  }
+
+  .recent-investor-branch .recent-label {
+    font-size: 8px;
+  }
+
+  .recent-investor-branch > span:last-child {
+    max-width: 170px;
+  }
+
+  .recent-investor-row .activity-view-btn {
+    grid-area: action;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-panel {
+    min-height: 295px;
+    padding: 13px;
+  }
+
+  .chart-panel .panel-title {
+    font-size: 15px;
+  }
+
+  .chart-panel .panel-sub {
+    font-size: 10.5px;
+  }
+
+  .chart-panel .recharts-responsive-container {
+    height: 225px !important;
+  }
+
+  .recent-investors-panel {
+    padding: 13px;
+  }
+
+  .recent-investors-header .panel-title {
+    font-size: 15px;
+  }
+
+  .recent-investors-header .panel-sub {
+    font-size: 10px;
+  }
+
+  .recent-investor-row {
+    min-height: 68px;
+    gap: 7px 8px;
+  }
+
+  .recent-investor-row .investor-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 10px;
+  }
+
+  .recent-investor-row .investor-name {
+    font-size: 11.5px;
+  }
+
+  .recent-investor-row .investor-id {
+    font-size: 9px;
+  }
+
+  .recent-investor-branch > span:last-child {
+    max-width: 120px;
+    font-size: 10px;
+  }
+
+  .recent-investor-branch .recent-label {
+    font-size: 7.5px;
+  }
+
+  .recent-investor-row .badge {
+    min-height: 21px;
+    padding: 3px 7px;
+    font-size: 9px;
+  }
+
+  .activity-view-btn {
+    min-width: 55px;
+    height: 29px;
+    font-size: 10px;
+    padding: 0 7px;
+  }
+}

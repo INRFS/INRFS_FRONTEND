@@ -1,9 +1,4 @@
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -13,77 +8,116 @@ import {
   TrendingUp,
   Clock3,
   CheckCircle2,
-  
   IndianRupee,
+  RefreshCw,
 } from "lucide-react";
 import "../../Styles/SuperAdmin/InvestmentManagement.css";
 import Modal from "./Modal";
-
-const MOCK_INVESTMENTS = [
-  {
-    bond: "BND-2025-001",
-    investor: "Arjun Sharma",
-    branch: "Hyderabad",
-    amount: 500000,
-    rate: "3% p.m.",
-    investedOn: "2025-01-15",
-    maturesOn: "2026-01-15",
-    monthlyInterest: 15000,
-    status: "Active",
-  },
-  {
-    bond: "BND-2025-002",
-    investor: "Rahul Kumar",
-    branch: "Bangalore",
-    amount: 875000,
-    rate: "3% p.m.",
-    investedOn: "2025-01-18",
-    maturesOn: "2025-07-18",
-    monthlyInterest: 26250,
-    status: "Matured",
-  },
-  {
-    bond: "BND-2025-003",
-    investor: "Neha Gupta",
-    branch: "Chennai",
-    amount: 600000,
-    rate: "3% p.m.",
-    investedOn: "2025-01-22",
-    maturesOn: "2026-01-22",
-    monthlyInterest: 18000,
-    status: "Active",
-  },
-  {
-    bond: "BND-2025-004",
-    investor: "Priya Patel",
-    branch: "Vijayawada",
-    amount: 250000,
-    rate: "3% p.m.",
-    investedOn: "2025-07-22",
-    maturesOn: null,
-    monthlyInterest: 7500,
-    status: "Pending",
-  },
-  {
-    bond: null,
-    investor: "Vikram Singh",
-    branch: "Hyderabad",
-    amount: 325000,
-    rate: "3% p.m.",
-    investedOn: "2025-07-21",
-    maturesOn: null,
-    monthlyInterest: 9750,
-    status: "Pending",
-  },
-];
+import {
+  getSuperAdminInvestments,
+} from "../../services/superadmin/investmentManagementService";
 
 const PAGE_SIZE = 10;
 
-function formatDate(iso) {
-  if (!iso) return "—";
+const pick = (row, keys, fallback = "") => {
+  for (const key of keys) {
+    if (
+      row &&
+      row[key] !== undefined &&
+      row[key] !== null &&
+      row[key] !== ""
+    ) {
+      return row[key];
+    }
+  }
+  return fallback;
+};
 
-  const date = new Date(iso);
+const normalizeInvestment = (row, index) => {
+  const amount = Number(
+    pick(row, [
+      "amount",
+      "investment_amount",
+      "principal_amount",
+      "invested_amount",
+      "total_amount",
+    ], 0)
+  ) || 0;
 
+  const monthlyInterest = Number(
+    pick(row, [
+      "monthly_interest",
+      "monthly_interest_amount",
+      "interest_amount",
+    ], 0)
+  ) || 0;
+
+  return {
+    raw: row,
+    key:
+      pick(row, [
+        "id",
+        "investment_id",
+        "investment_code",
+        "bond_number",
+        "bond_no",
+      ]) || `investment-${index}`,
+    bond: pick(row, [
+      "bond",
+      "bond_number",
+      "bond_no",
+      "bond_code",
+      "investment_code",
+    ]),
+    investor: pick(row, [
+      "investor",
+      "investor_name",
+      "name",
+      "full_name",
+      "investor_full_name",
+    ], "—"),
+    branch: pick(row, [
+      "branch",
+      "branch_name",
+      "service_location",
+    ], "—"),
+    branchId: pick(row, [
+      "branch_id",
+      "branchid",
+    ]),
+    amount,
+    rate: pick(row, [
+      "rate",
+      "interest_rate",
+      "interest_rate_display",
+      "roi",
+    ], "—"),
+    investedOn: pick(row, [
+      "invested_on",
+      "investment_date",
+      "invested_date",
+      "start_date",
+      "created_at",
+    ]),
+    maturesOn: pick(row, [
+      "matures_on",
+      "maturity_date",
+      "matures_date",
+      "end_date",
+    ]),
+    monthlyInterest,
+    status: pick(row, [
+      "status",
+      "status_name",
+      "investment_status",
+    ], "—"),
+  };
+};
+
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -98,78 +132,48 @@ function formatAmount(value) {
 function statusBadgeClass(status) {
   const value = String(status || "").toLowerCase();
 
-  if (value === "active") {
+  if (value.includes("active") || value.includes("approved")) {
     return "ivt-badge ivt-badge-green";
   }
-
-  if (value === "matured") {
+  if (value.includes("mature")) {
     return "ivt-badge ivt-badge-blue";
   }
-
-  if (value === "pending") {
+  if (value.includes("pending")) {
     return "ivt-badge ivt-badge-orange";
   }
-
-  if (value === "rejected") {
+  if (
+    value.includes("reject") ||
+    value.includes("cancel") ||
+    value.includes("failed")
+  ) {
     return "ivt-badge ivt-badge-red";
   }
 
   return "ivt-badge";
 }
 
-function Dropdown({
-  label,
-  options,
-  value,
-  onChange,
-}) {
+function Dropdown({ label, options, value, onChange }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        ref.current &&
-        !ref.current.contains(event.target)
-      ) {
+    const close = (event) => {
+      if (!event.target.closest(".ivt-dropdown")) {
         setOpen(false);
       }
-    }
-
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
     };
+
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
   }, []);
 
   return (
-    <div
-      className={
-        "ivt-dropdown" +
-        (open
-          ? " ivt-dropdown-open"
-          : "")
-      }
-      ref={ref}
-    >
+    <div className={`ivt-dropdown ${open ? "ivt-dropdown-open" : ""}`}>
       <button
         type="button"
         className="ivt-dropdown-btn"
-        onClick={() =>
-          setOpen((current) => !current)
-        }
+        onClick={() => setOpen((v) => !v)}
       >
-        <span>
-          {value || label}
-        </span>
-
+        <span>{value || label}</span>
         <ChevronDown size={15} />
       </button>
 
@@ -177,14 +181,9 @@ function Dropdown({
         <div className="ivt-dropdown-menu">
           <button
             type="button"
-            className={
-              "ivt-dropdown-item" +
-              (!value
-                ? " ivt-dropdown-item-active"
-                : "")
-            }
+            className={`ivt-dropdown-item ${!value ? "ivt-dropdown-item-active" : ""}`}
             onClick={() => {
-              onChange(null);
+              onChange("");
               setOpen(false);
             }}
           >
@@ -193,14 +192,11 @@ function Dropdown({
 
           {options.map((option) => (
             <button
-              key={option}
+              key={String(option)}
               type="button"
-              className={
-                "ivt-dropdown-item" +
-                (value === option
-                  ? " ivt-dropdown-item-active"
-                  : "")
-              }
+              className={`ivt-dropdown-item ${
+                value === option ? "ivt-dropdown-item-active" : ""
+              }`}
               onClick={() => {
                 onChange(option);
                 setOpen(false);
@@ -215,202 +211,162 @@ function Dropdown({
   );
 }
 
-function StatCard({
-  label,
-  value,
-  subtitle,
-  icon: Icon,
-  tone,
-}) {
+function StatCard({ label, value, subtitle, icon: Icon, tone }) {
   return (
-    <div
-      className={`ivt-stat-card ivt-stat-card-${tone}`}
-    >
+    <div className={`ivt-stat-card ivt-stat-card-${tone}`}>
       <div className="ivt-stat-top">
-        <span className="ivt-stat-label">
-          {label}
-        </span>
-
+        <span className="ivt-stat-label">{label}</span>
         <span className="ivt-stat-icon">
           <Icon size={17} />
         </span>
       </div>
-
-      <strong className="ivt-stat-value">
-        {value}
-      </strong>
-
-      <span className="ivt-stat-subtitle">
-        {subtitle}
-      </span>
+      <strong className="ivt-stat-value">{value}</strong>
+      <span className="ivt-stat-subtitle">{subtitle}</span>
     </div>
   );
 }
 
 export default function InvestmentManagement() {
+  const [investments, setInvestments] = useState([]);
   const [search, setSearch] = useState("");
-  const [branchFilter, setBranchFilter] =
-    useState(null);
-  const [statusFilter, setStatusFilter] =
-    useState(null);
+  const [branchFilter, setBranchFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
-  const [viewBond, setViewBond] =
-    useState(null);
+  const [viewInvestment, setViewInvestment] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const branches = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          MOCK_INVESTMENTS.map(
-            (investment) =>
-              investment.branch
-          )
-        )
-      ),
-    []
-  );
+  const loadInvestments = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-  const statuses = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          MOCK_INVESTMENTS.map(
-            (investment) =>
-              investment.status
-          )
-        )
-      ),
-    []
-  );
+      const response = await getSuperAdminInvestments({
+        search: "",
+        branchId: "",
+        statusId: "",
+        limit: 100,
+        offset: 0,
+      });
+
+      const rows = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+          ? response
+          : [];
+
+      setInvestments(
+        rows.map((row, index) => normalizeInvestment(row, index))
+      );
+    } catch (err) {
+      setError(err?.message || "Unable to load investments.");
+      setInvestments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInvestments();
+  }, []);
+
+  const branches = useMemo(() => {
+    return Array.from(
+      new Set(
+        investments
+          .map((item) => item.branch)
+          .filter((value) => value && value !== "—")
+      )
+    ).sort();
+  }, [investments]);
+
+  const statuses = useMemo(() => {
+    return Array.from(
+      new Set(
+        investments
+          .map((item) => item.status)
+          .filter((value) => value && value !== "—")
+      )
+    ).sort();
+  }, [investments]);
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return investments.filter((investment) => {
+      const matchesSearch =
+        !query ||
+        String(investment.investor).toLowerCase().includes(query) ||
+        String(investment.bond).toLowerCase().includes(query) ||
+        String(investment.branch).toLowerCase().includes(query);
+
+      const matchesBranch =
+        !branchFilter || investment.branch === branchFilter;
+
+      const matchesStatus =
+        !statusFilter || investment.status === statusFilter;
+
+      return matchesSearch && matchesBranch && matchesStatus;
+    });
+  }, [investments, search, branchFilter, statusFilter]);
 
   const stats = useMemo(() => {
-    const total = MOCK_INVESTMENTS.length;
+    const total = investments.length;
 
-    const active =
-      MOCK_INVESTMENTS.filter(
-        (investment) =>
-          investment.status === "Active"
-      ).length;
+    const active = investments.filter((item) =>
+      String(item.status).toLowerCase().includes("active") ||
+      String(item.status).toLowerCase().includes("approved")
+    ).length;
 
-    const pending =
-      MOCK_INVESTMENTS.filter(
-        (investment) =>
-          investment.status === "Pending"
-      ).length;
+    const pending = investments.filter((item) =>
+      String(item.status).toLowerCase().includes("pending")
+    ).length;
 
-    const matured =
-      MOCK_INVESTMENTS.filter(
-        (investment) =>
-          investment.status === "Matured"
-      ).length;
+    const matured = investments.filter((item) =>
+      String(item.status).toLowerCase().includes("mature")
+    ).length;
 
-    const rejected =
-      MOCK_INVESTMENTS.filter(
-        (investment) =>
-          investment.status === "Rejected"
-      ).length;
+    const totalInvested = investments.reduce(
+      (sum, item) => sum + item.amount,
+      0
+    );
 
-    const totalInvested =
-      MOCK_INVESTMENTS.reduce(
-        (sum, investment) =>
-          sum +
-          Number(
-            investment.amount || 0
-          ),
-        0
-      );
-
-    const monthlyInterest =
-      MOCK_INVESTMENTS.reduce(
-        (sum, investment) =>
-          sum +
-          Number(
-            investment.monthlyInterest ||
-              0
-          ),
-        0
-      );
+    const monthlyInterest = investments.reduce(
+      (sum, item) => sum + item.monthlyInterest,
+      0
+    );
 
     return {
       total,
       active,
       pending,
       matured,
-      rejected,
       totalInvested,
       monthlyInterest,
     };
-  }, []);
-
-  const filtered = useMemo(() => {
-    const query =
-      search.trim().toLowerCase();
-
-    return MOCK_INVESTMENTS.filter(
-      (investment) => {
-        const matchesSearch =
-          !query ||
-          investment.investor
-            .toLowerCase()
-            .includes(query) ||
-          String(
-            investment.bond || ""
-          )
-            .toLowerCase()
-            .includes(query);
-
-        const matchesBranch =
-          !branchFilter ||
-          investment.branch ===
-            branchFilter;
-
-        const matchesStatus =
-          !statusFilter ||
-          investment.status ===
-            statusFilter;
-
-        return (
-          matchesSearch &&
-          matchesBranch &&
-          matchesStatus
-        );
-      }
-    );
-  }, [
-    search,
-    branchFilter,
-    statusFilter,
-  ]);
+  }, [investments]);
 
   const totalPages = Math.max(
     1,
-    Math.ceil(
-      filtered.length / PAGE_SIZE
-    )
+    Math.ceil(filtered.length / PAGE_SIZE)
   );
 
-  const pageSafe = Math.min(
-    page,
-    totalPages
-  );
+  const pageSafe = Math.min(page, totalPages);
 
   const paginated = filtered.slice(
-    (pageSafe - 1) *
-      PAGE_SIZE,
+    (pageSafe - 1) * PAGE_SIZE,
     pageSafe * PAGE_SIZE
   );
 
   useEffect(() => {
     setPage(1);
-  }, [
-    search,
-    branchFilter,
-    statusFilter,
-  ]);
+  }, [search, branchFilter, statusFilter]);
 
-  function handleExport() {
+  const handleExport = () => {
+    if (!filtered.length) return;
+
     const headers = [
-      "Bond",
+      // "Bond Number",
       "Investor",
       "Branch",
       "Amount",
@@ -421,98 +377,67 @@ export default function InvestmentManagement() {
       "Status",
     ];
 
-    const rows = filtered.map(
-      (investment) => [
-        investment.bond || "-",
-        investment.investor,
-        investment.branch,
-        investment.amount,
-        investment.rate,
-        formatDate(
-          investment.investedOn
-        ),
-        formatDate(
-          investment.maturesOn
-        ),
-        investment.monthlyInterest,
-        investment.status,
-      ]
-    );
+    const rows = filtered.map((item) => [
+      item.bond || "-",
+      item.investor,
+      item.branch,
+      item.amount,
+      item.rate,
+      formatDate(item.investedOn),
+      formatDate(item.maturesOn),
+      item.monthlyInterest,
+      item.status,
+    ]);
+
+    const escape = (value) =>
+      `"${String(value ?? "").replaceAll('"', '""')}"`;
 
     const csv = [
       headers,
       ...rows,
     ]
-      .map((row) =>
-        row
-          .map((value) =>
-            `"${String(value).replaceAll(
-              '"',
-              '""'
-            )}"`
-          )
-          .join(",")
-      )
+      .map((row) => row.map(escape).join(","))
       .join("\n");
 
-    const blob = new Blob(
-      [csv],
-      {
-        type:
-          "text/csv;charset=utf-8;",
-      }
-    );
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
 
-    const url =
-      URL.createObjectURL(blob);
-
-    const anchor =
-      document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
 
     anchor.href = url;
-    anchor.download =
-      "investments.csv";
-
-    document.body.appendChild(
-      anchor
-    );
-
+    anchor.download = "investments.csv";
+    document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
 
     URL.revokeObjectURL(url);
-  }
+  };
 
   return (
     <div className="ivt-page">
       <div className="ivt-page-head">
-        <div>
-          <h1>Investment Management</h1>
 
-          <p>
-            Manage investments,
-            bonds, branches and
-            investment status
-          </p>
-        </div>
 
         <div className="ivt-page-actions">
-          <button
-            type="button"
-            className="ivt-export-btn"
-            onClick={handleExport}
-          >
-            <Download size={15} />
-            Export
-          </button>
+      
+
+       
         </div>
       </div>
+
+      {error && (
+        <div className="ivt-error">
+          {error}
+        </div>
+      )}
 
       <div className="ivt-stat-grid">
         <StatCard
           label="TOTAL INVESTMENTS"
           value={stats.total}
-          subtitle="All investment requests"
+          subtitle="All investment records"
           icon={TrendingUp}
           tone="blue"
         />
@@ -543,9 +468,7 @@ export default function InvestmentManagement() {
 
         <StatCard
           label="TOTAL INVESTED"
-          value={formatAmount(
-            stats.totalInvested
-          )}
+          value={formatAmount(stats.totalInvested)}
           subtitle="Combined principal"
           icon={IndianRupee}
           tone="teal"
@@ -553,15 +476,11 @@ export default function InvestmentManagement() {
       </div>
 
       <div className="ivt-card">
-        <div className="ivt-filter-head">
+        {/* <div className="ivt-filter-head">
           <div>
-            <h2>
-              Investment Directory
-            </h2>
-
+            <h2>Investment Directory</h2>
             <span>
-              {filtered.length} matching
-              records
+              {filtered.length} matching records
             </span>
           </div>
 
@@ -570,20 +489,17 @@ export default function InvestmentManagement() {
               ? `Status: ${statusFilter}`
               : "All Status"}
           </div>
-        </div>
+        </div> */}
 
         <div className="ivt-toolbar">
           <div className="ivt-search">
             <Search size={16} />
-
             <input
               type="text"
-              placeholder="Search investor or bond..."
+              placeholder="Search investor, bond or branch..."
               value={search}
               onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
+                setSearch(event.target.value)
               }
             />
           </div>
@@ -602,201 +518,151 @@ export default function InvestmentManagement() {
             onChange={setStatusFilter}
           />
 
-          {(search ||
-            branchFilter ||
-            statusFilter) && (
+          {(search || branchFilter || statusFilter) && (
             <button
               type="button"
               className="ivt-clear-btn"
               onClick={() => {
                 setSearch("");
-                setBranchFilter(null);
-                setStatusFilter(null);
+                setBranchFilter("");
+                setStatusFilter("");
               }}
             >
               Clear
             </button>
           )}
+
+              <button
+            type="button"
+            className="ivt-export-btn"
+            onClick={handleExport}
+            disabled={!filtered.length}
+          >
+            <Download size={15} />
+            Export
+          </button>
         </div>
 
         <div className="ivt-table-wrap">
           <table className="ivt-table">
             <thead>
               <tr>
-                <th>
-                  Bond Number
-                </th>
-
+                {/* <th>Bond Number</th> */}
                 <th>Investor</th>
-
                 <th>Branch</th>
-
                 <th>Amount</th>
-
                 <th>Rate</th>
-
                 <th>Invested On</th>
-
                 <th>Matures On</th>
-
-                <th>
-                  Monthly Int.
-                </th>
-
+                <th>Monthly Int.</th>
                 <th>Status</th>
-
                 <th>Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              {paginated.length ===
-              0 ? (
+              {loading ? (
                 <tr>
-                  <td
-                    colSpan={10}
-                    className="ivt-empty"
-                  >
+                  <td colSpan={10} className="ivt-empty">
+                    Loading investments...
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="ivt-empty">
                     <div className="ivt-empty-box">
                       <Search size={22} />
-
-                      <strong>
-                        No investments
-                        found
-                      </strong>
-
+                      <strong>No investments found</strong>
                       <span>
-                        Try changing your
-                        search or filters.
+                        Try changing your search or filters.
                       </span>
                     </div>
                   </td>
                 </tr>
               ) : (
-                paginated.map(
-                  (
-                    investment,
-                    index
-                  ) => (
-                    <tr
-                      key={
-                        investment.bond ||
-                        `pending-${index}`
-                      }
-                    >
-                      <td>
-                        {investment.bond ? (
-                          <span className="ivt-bond-number">
-                            {investment.bond}
-                          </span>
-                        ) : (
-                          <span className="ivt-muted">
-                            —
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="ivt-name">
-                        {
-                          investment.investor
-                        }
-                      </td>
-
-                      <td>
-                        <span className="ivt-branch-text">
-                          {
-                            investment.branch
-                          }
+                paginated.map((investment) => (
+                  <tr key={investment.key}>
+                    {/* <td>
+                      {investment.bond ? (
+                        <span className="ivt-bond-number">
+                          {investment.bond}
                         </span>
-                      </td>
+                      ) : (
+                        <span className="ivt-muted">—</span>
+                      )}
+                    </td> */}
 
-                      <td className="ivt-amount">
-                        {formatAmount(
-                          investment.amount
+                    <td className="ivt-name">
+                      {investment.investor}
+                    </td>
+
+                    <td>
+                      <span className="ivt-branch-text">
+                        {investment.branch}
+                      </span>
+                    </td>
+
+                    <td className="ivt-amount">
+                      {formatAmount(investment.amount)}
+                    </td>
+
+                    <td>
+                      <span className="ivt-rate-badge">
+                        {investment.rate}
+                      </span>
+                    </td>
+
+                    <td className="ivt-muted">
+                      {formatDate(investment.investedOn)}
+                    </td>
+
+                    <td className="ivt-muted">
+                      {formatDate(investment.maturesOn)}
+                    </td>
+
+                    <td className="ivt-interest">
+                      {formatAmount(investment.monthlyInterest)}
+                    </td>
+
+                    <td>
+                      <span
+                        className={statusBadgeClass(
+                          investment.status
                         )}
-                      </td>
+                      >
+                        {investment.status}
+                      </span>
+                    </td>
 
-                      <td>
-                        <span className="ivt-rate-badge">
-                          {
-                            investment.rate
+                    <td>
+                      <div className="ivt-actions">
+                        <button
+                          type="button"
+                          className="ivt-view-btn"
+                          onClick={() =>
+                            setViewInvestment(investment)
                           }
-                        </span>
-                      </td>
-
-                      <td className="ivt-muted">
-                        {formatDate(
-                          investment.investedOn
-                        )}
-                      </td>
-
-                      <td className="ivt-muted">
-                        {formatDate(
-                          investment.maturesOn
-                        )}
-                      </td>
-
-                      <td className="ivt-interest">
-                        {formatAmount(
-                          investment.monthlyInterest
-                        )}
-                      </td>
-
-                      <td>
-                        <span
-                          className={statusBadgeClass(
-                            investment.status
-                          )}
+                          aria-label="View investment"
                         >
-                          {
-                            investment.status
-                          }
-                        </span>
-                      </td>
+                          <Eye size={15} />
+                        </button>
 
-                      <td>
-                        <div className="ivt-actions">
+                        {investment.bond && (
                           <button
                             type="button"
-                            className="ivt-view-btn"
+                            className="ivt-bond-btn"
                             onClick={() =>
-                              setViewBond(
-                                investment
-                              )
+                              setViewInvestment(investment)
                             }
-                            aria-label="View investment"
                           >
-                            <Eye
-                              size={15}
-                            />
+                            <Ticket size={13} />
+                            <span>Bond</span>
                           </button>
-
-                          {investment.status ===
-                            "Active" && (
-                            <button
-                              type="button"
-                              className="ivt-bond-btn"
-                              onClick={() =>
-                                setViewBond(
-                                  investment
-                                )
-                              }
-                              aria-label="View bond"
-                            >
-                              <Ticket
-                                size={13}
-                              />
-
-                              <span>
-                                Bond
-                              </span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                )
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -807,9 +673,7 @@ export default function InvestmentManagement() {
             Showing{" "}
             {filtered.length === 0
               ? 0
-              : (pageSafe - 1) *
-                  PAGE_SIZE +
-                1}
+              : (pageSafe - 1) * PAGE_SIZE + 1}
             –
             {Math.min(
               pageSafe * PAGE_SIZE,
@@ -822,15 +686,10 @@ export default function InvestmentManagement() {
             <button
               type="button"
               className="ivt-page-btn"
-              disabled={
-                pageSafe === 1
-              }
+              disabled={pageSafe === 1}
               onClick={() =>
                 setPage((current) =>
-                  Math.max(
-                    1,
-                    current - 1
-                  )
+                  Math.max(1, current - 1)
                 )
               }
             >
@@ -844,15 +703,10 @@ export default function InvestmentManagement() {
             <button
               type="button"
               className="ivt-page-btn"
-              disabled={
-                pageSafe === totalPages
-              }
+              disabled={pageSafe === totalPages}
               onClick={() =>
                 setPage((current) =>
-                  Math.min(
-                    totalPages,
-                    current + 1
-                  )
+                  Math.min(totalPages, current + 1)
                 )
               }
             >
@@ -862,91 +716,61 @@ export default function InvestmentManagement() {
         </div>
       </div>
 
-      {viewBond && (
+      {viewInvestment && (
         <Modal
           title={
-            viewBond.bond ||
-            viewBond.investor
+            viewInvestment.bond ||
+            viewInvestment.investor
           }
-          onClose={() =>
-            setViewBond(null)
-          }
+          onClose={() => setViewInvestment(null)}
         >
           <div className="ivt-modal-grid">
             <div>
-              <span className="ivt-modal-label">
-                Bond
-              </span>
-
+              <span className="ivt-modal-label">Bond</span>
               <span className="ivt-modal-value">
-                {viewBond.bond ||
-                  "Not issued yet"}
+                {viewInvestment.bond || "Not issued"}
               </span>
             </div>
 
             <div>
-              <span className="ivt-modal-label">
-                Investor
-              </span>
-
+              <span className="ivt-modal-label">Investor</span>
               <span className="ivt-modal-value">
-                {viewBond.investor}
+                {viewInvestment.investor}
               </span>
             </div>
 
             <div>
-              <span className="ivt-modal-label">
-                Branch
-              </span>
-
+              <span className="ivt-modal-label">Branch</span>
               <span className="ivt-modal-value">
-                {viewBond.branch}
+                {viewInvestment.branch}
               </span>
             </div>
 
             <div>
-              <span className="ivt-modal-label">
-                Amount
-              </span>
-
+              <span className="ivt-modal-label">Amount</span>
               <span className="ivt-modal-value">
-                {formatAmount(
-                  viewBond.amount
-                )}
+                {formatAmount(viewInvestment.amount)}
               </span>
             </div>
 
             <div>
-              <span className="ivt-modal-label">
-                Rate
-              </span>
-
+              <span className="ivt-modal-label">Rate</span>
               <span className="ivt-modal-value">
-                {viewBond.rate}
+                {viewInvestment.rate}
               </span>
             </div>
 
             <div>
-              <span className="ivt-modal-label">
-                Invested On
-              </span>
-
+              <span className="ivt-modal-label">Invested On</span>
               <span className="ivt-modal-value">
-                {formatDate(
-                  viewBond.investedOn
-                )}
+                {formatDate(viewInvestment.investedOn)}
               </span>
             </div>
 
             <div>
-              <span className="ivt-modal-label">
-                Matures On
-              </span>
-
+              <span className="ivt-modal-label">Matures On</span>
               <span className="ivt-modal-value">
-                {formatDate(
-                  viewBond.maturesOn
-                )}
+                {formatDate(viewInvestment.maturesOn)}
               </span>
             </div>
 
@@ -954,25 +778,21 @@ export default function InvestmentManagement() {
               <span className="ivt-modal-label">
                 Monthly Interest
               </span>
-
               <span className="ivt-modal-value">
                 {formatAmount(
-                  viewBond.monthlyInterest
+                  viewInvestment.monthlyInterest
                 )}
               </span>
             </div>
 
             <div>
-              <span className="ivt-modal-label">
-                Status
-              </span>
-
+              <span className="ivt-modal-label">Status</span>
               <span
                 className={statusBadgeClass(
-                  viewBond.status
+                  viewInvestment.status
                 )}
               >
-                {viewBond.status}
+                {viewInvestment.status}
               </span>
             </div>
           </div>

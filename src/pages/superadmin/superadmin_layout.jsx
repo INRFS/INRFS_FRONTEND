@@ -13,13 +13,19 @@ import {
   X,
   MoreVertical,
 } from "lucide-react";
+
 import {
   NavLink,
   Outlet,
   useNavigate,
 } from "react-router-dom";
+
 import "../../Styles/SuperAdmin/SuperAdminLayout.css";
 import Modal from "./Modal";
+
+import {
+  getSuperAdminProfile,
+} from "../../services/superadmin/profileService";
 
 const navItems = [
   {
@@ -41,7 +47,6 @@ const navItems = [
     to: "/superadmin/payments",
     label: "Payments",
     icon: Wallet,
-    badge: 5,
   },
   {
     to: "/superadmin/branches",
@@ -80,21 +85,140 @@ export default function SuperAdminLayout({
   const [sidebarOpen, setSidebarOpen] =
     React.useState(false);
 
+  const [profile, setProfile] =
+    React.useState(null);
+
+  const [profileLoading, setProfileLoading] =
+    React.useState(true);
+
+  // ==========================================
+  // LOAD LOGGED-IN SUPER ADMIN PROFILE
+  // ==========================================
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    const loadProfile = async () => {
+      try {
+        setProfileLoading(true);
+
+        const response =
+          await getSuperAdminProfile();
+
+        if (!mounted) {
+          return;
+        }
+
+        const profileData =
+          response?.data ||
+          response?.profile ||
+          response ||
+          null;
+
+        setProfile(profileData);
+      } catch (error) {
+        console.error(
+          "Failed to load Super Admin profile:",
+          error
+        );
+      } finally {
+        if (mounted) {
+          setProfileLoading(false);
+        }
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // ==========================================
+  // PROFILE VALUES
+  // ==========================================
+
+  const profileName =
+    profile?.full_name ||
+    profile?.fullName ||
+    profile?.name ||
+    "Super Admin";
+
+  const profileEmail =
+    profile?.email ||
+    profile?.username ||
+    "superadmin@inrfs.in";
+
+  const profileRole =
+    profile?.role_name ||
+    profile?.role ||
+    profile?.roleName ||
+    "Super Admin";
+
+  const profileInitial =
+    String(profileName || "S")
+      .trim()
+      .charAt(0)
+      .toUpperCase() || "S";
+
+  // ==========================================
+  // LOGOUT
+  // ==========================================
+
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
   };
+const confirmLogout = () => {
+  setShowLogoutConfirm(false);
 
-  const confirmLogout = () => {
-    setShowLogoutConfirm(false);
+  // Get role BEFORE clearing localStorage
+  const role = String(
+    localStorage.getItem("role") || ""
+  )
+    .trim()
+    .toUpperCase();
 
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("token");
-    localStorage.removeItem("admin_token");
+  let loginPath = "/login";
 
-    navigate("/login", {
-      replace: true,
-    });
-  };
+  if (role === "SUPERADMIN") {
+    loginPath = "/superadmin-login";
+  } else if (
+    role === "ADMIN" ||
+    role === "BRANCH MANAGER"
+  ) {
+    loginPath = "/admin-login";
+  } else if (role === "INVESTOR") {
+    loginPath = "/login";
+  }
+
+  // Clear authentication
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("token");
+  localStorage.removeItem("admin_token");
+  localStorage.removeItem("token_type");
+  localStorage.removeItem("user_id");
+  localStorage.removeItem("login_id");
+  localStorage.removeItem("full_name");
+  localStorage.removeItem("role");
+  localStorage.removeItem("role_id");
+  localStorage.removeItem("branch_id");
+  localStorage.removeItem("branch_name");
+  localStorage.removeItem("permissions");
+  localStorage.removeItem("mobile");
+
+  sessionStorage.removeItem("access_token");
+  sessionStorage.removeItem("token");
+  sessionStorage.removeItem("admin_token");
+
+  navigate(loginPath, {
+    replace: true,
+  });
+};
+
+  // ==========================================
+  // SIDEBAR
+  // ==========================================
 
   const closeSidebar = () => {
     setSidebarOpen(false);
@@ -109,8 +233,17 @@ export default function SuperAdminLayout({
     };
   }, [sidebarOpen]);
 
+  // ==========================================
+  // RENDER
+  // ==========================================
+
   return (
     <div className="sa-shell">
+
+      {/* ========================================
+          SIDEBAR
+      ======================================== */}
+
       <aside
         className={
           "sa-sidebar" +
@@ -119,7 +252,11 @@ export default function SuperAdminLayout({
             : "")
         }
       >
+
+        {/* LOGO */}
+
         <div className="sa-logo">
+
           <img
             src="/assets/logo2.jpg"
             alt="INRFS"
@@ -140,9 +277,13 @@ export default function SuperAdminLayout({
           >
             <X size={16} />
           </button>
+
         </div>
 
+        {/* NAVIGATION */}
+
         <nav className="sa-nav">
+
           {navItems.map(
             ({
               to,
@@ -161,35 +302,53 @@ export default function SuperAdminLayout({
                     : "")
                 }
               >
+
                 <Icon size={16} />
 
-                <span>{label}</span>
+                <span>
+                  {label}
+                </span>
 
                 {badge ? (
                   <span className="sa-nav-badge">
                     {badge}
                   </span>
                 ) : null}
+
               </NavLink>
             )
           )}
+
         </nav>
 
+        {/* ========================================
+            SIDEBAR USER
+        ======================================== */}
+
         <div className="sa-sidebar-footer">
+
           <div className="sa-user">
+
             <span className="sa-user-avatar">
-              S
+              {profileInitial}
             </span>
 
             <div>
+
               <div className="sa-user-name">
-                Super Admin
+                {profileLoading
+                  ? "Loading..."
+                  : profileName}
               </div>
 
               <div className="sa-user-email">
-                superadmin@inrfs.in
+                {profileLoading
+                  ? ""
+                  : profileEmail}
               </div>
+
             </div>
+
           </div>
 
           <button
@@ -198,10 +357,19 @@ export default function SuperAdminLayout({
             onClick={handleLogoutClick}
           >
             <LogOut size={16} />
-            <span>Logout</span>
+
+            <span>
+              Logout
+            </span>
           </button>
+
         </div>
+
       </aside>
+
+      {/* ========================================
+          MOBILE SIDEBAR BACKDROP
+      ======================================== */}
 
       <div
         className={
@@ -213,9 +381,20 @@ export default function SuperAdminLayout({
         onClick={closeSidebar}
       />
 
+      {/* ========================================
+          MAIN
+      ======================================== */}
+
       <div className="sa-main">
+
+        {/* ======================================
+            TOPBAR
+        ====================================== */}
+
         <header className="sa-topbar">
+
           <div className="sa-topbar-left">
+
             <button
               type="button"
               className="sa-menu-toggle"
@@ -227,12 +406,16 @@ export default function SuperAdminLayout({
               <Menu size={18} />
             </button>
 
+            {/* BREADCRUMB */}
+
             <div className="sa-breadcrumb">
+
               {breadcrumb.map(
                 (crumb, index) => (
                   <React.Fragment
                     key={`${crumb}-${index}`}
                   >
+
                     {index > 0 && (
                       <span className="sa-breadcrumb-sep">
                         /
@@ -249,30 +432,47 @@ export default function SuperAdminLayout({
                     >
                       {crumb}
                     </span>
+
                   </React.Fragment>
                 )
               )}
+
             </div>
+
           </div>
 
-          <div className="sa-topbar-right">
-           
+          {/* ====================================
+              TOPBAR PROFILE
+          ==================================== */}
 
+          <div className="sa-topbar-right">
 
             <div className="sa-profile">
+
               <span className="sa-profile-avatar">
-                S
+                {profileInitial}
               </span>
 
               <div>
+
                 <div className="sa-profile-name">
-                  Super Admin
+
+                  {profileLoading
+                    ? "Loading..."
+                    : profileName}
+
                 </div>
 
                 <div className="sa-profile-role">
-                  Super Admin
+
+                  {profileLoading
+                    ? ""
+                    : profileRole}
+
                 </div>
+
               </div>
+
             </div>
 
             <button
@@ -282,13 +482,24 @@ export default function SuperAdminLayout({
             >
               <MoreVertical size={18} />
             </button>
+
           </div>
+
         </header>
+
+        {/* ========================================
+            PAGE CONTENT
+        ======================================== */}
 
         <main className="sa-content">
           <Outlet />
         </main>
+
       </div>
+
+      {/* ========================================
+          LOGOUT MODAL
+      ======================================== */}
 
       {showLogoutConfirm && (
         <Modal
@@ -331,6 +542,7 @@ export default function SuperAdminLayout({
           </p>
         </Modal>
       )}
+
     </div>
   );
 }

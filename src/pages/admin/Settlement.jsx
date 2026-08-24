@@ -36,9 +36,10 @@ const GST_RATE = 0.18;
 const STATUS = {
   PENDING: "Pending",
   AWAITING_SUPERADMIN:
-    "Awaiting Super Admin",
+    "Pending Super Admin",
   APPROVED: "Approved",
   REJECTED: "Rejected",
+  PAID: "Paid",
 };
 
 const getValue = (
@@ -88,11 +89,14 @@ const normalizeStatus = (value) => {
     .trim()
     .toLowerCase();
 
+  if (status === "paid") {
+    return STATUS.PAID;
+  }
+
   if (
     status === "approved" ||
     status === "settled" ||
-    status === "completed" ||
-    status === "paid"
+    status === "completed"
   ) {
     return STATUS.APPROVED;
   }
@@ -426,18 +430,30 @@ const normalizeTenureItem = (
 
     netSettlementAmount,
 
-    status:
-      normalizeStatus(
-        getValue(
-          source,
-          [
-            "status_name",
-            "status",
-            "settlement_status",
-          ],
-          STATUS.PENDING
-        )
-      ),
+    status: (() => {
+      const statusValue = getValue(
+        source,
+        [
+          "status_name",
+          "status",
+          "settlement_status",
+        ],
+        STATUS.PENDING
+      );
+
+      const remarks = String(
+        getValue(source, ["remarks"], "") || ""
+      ).toLowerCase();
+
+      if (
+        remarks.includes("sent to super admin") ||
+        remarks.includes("waiting for super admin")
+      ) {
+        return STATUS.AWAITING_SUPERADMIN;
+      }
+
+      return normalizeStatus(statusValue);
+    })(),
 
     type: "Tenure Timeout",
 
@@ -1083,8 +1099,8 @@ export default function Settlement() {
   const approvedCount =
     closedItems.filter(
       (item) =>
-        item.status ===
-        STATUS.APPROVED
+        item.status === STATUS.APPROVED ||
+        item.status === STATUS.PAID
     ).length;
 
   const rejectedCount =
@@ -1331,7 +1347,7 @@ export default function Settlement() {
                               <Send
                                 size={14}
                               />
-                              Approve
+                              Send to Super Admin
                             </button>
 
                             <button
@@ -1520,7 +1536,7 @@ export default function Settlement() {
                               <Send
                                 size={14}
                               />
-                              Approve
+                              Send to Super Admin
                             </button>
 
                             <button
@@ -1845,10 +1861,7 @@ export default function Settlement() {
                   confirmAction.kind ===
                     "precloseReject"
                     ? "Reject Settlement"
-                    : confirmAction.kind ===
-                      "precloseApprove"
-                    ? "Approve Pre-Close Settlement"
-                    : "Approve Tenure Timeout Settlement"}
+                    : "Send to Super Admin"}
                 </h3>
 
               </div>
@@ -1878,7 +1891,7 @@ export default function Settlement() {
                     confirmAction.kind ===
                       "precloseReject"
                       ? `Reject settlement for ${activeItem.investor} on bond ${activeItem.bondNumber}?`
-                      : `Approve ${activeItem.type || "settlement"} for ${activeItem.investor} on bond ${activeItem.bondNumber}?`}
+                      : `Send ${activeItem.type || "settlement"} for ${activeItem.investor} on bond ${activeItem.bondNumber} to Super Admin for approval?`}
                   </p>
 
                   <div className="settlement-confirm-info">
@@ -2029,7 +2042,7 @@ export default function Settlement() {
                     confirmAction.kind ===
                       "precloseReject"
                   ? "Reject"
-                  : "Confirm & Approve"}
+                  : "Confirm & Send"}
               </button>
 
             </div>

@@ -11,8 +11,7 @@ import {
   getInvestments,
   rejectInvestment,
   getPendingTenureExtensions,
-  approveTenureExtension,
-  rejectTenureExtension,
+  submitTenureExtension,
 } from "../../services/admin/investmentManagementService";
 
 import "../../Styles/Admin/investments.css";
@@ -92,11 +91,9 @@ const normalizeStatus = (value) => {
     status === "active" ||
     status === "success"
   ) {
-    if (status === "approved") {
-      return "approved";
-    }
-
-    return status;
+    return status === "approved"
+      ? "approved"
+      : status;
   }
 
   if (
@@ -126,7 +123,7 @@ const formatDate = (value) => {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return value;
+    return String(value);
   }
 
   return date.toLocaleDateString("en-IN", {
@@ -144,7 +141,7 @@ const formatDateTime = (value) => {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return value;
+    return String(value);
   }
 
   return date.toLocaleString("en-IN", {
@@ -168,7 +165,7 @@ const formatAmount = (value) => {
   const number = Number(value);
 
   if (Number.isNaN(number)) {
-    return value;
+    return String(value);
   }
 
   return `₹${number.toLocaleString("en-IN", {
@@ -176,8 +173,8 @@ const formatAmount = (value) => {
   })}`;
 };
 
-const getInvestmentStatus = (item) => {
-  return getValue(
+const getInvestmentStatus = (item) =>
+  getValue(
     item,
     [
       "status_name",
@@ -187,10 +184,9 @@ const getInvestmentStatus = (item) => {
     ],
     "Pending"
   );
-};
 
-const getTenureStatus = (item) => {
-  return getValue(
+const getTenureStatus = (item) =>
+  getValue(
     item,
     [
       "status_name",
@@ -200,7 +196,29 @@ const getTenureStatus = (item) => {
     ],
     "Pending"
   );
-};
+
+const getInvestmentId = (item) =>
+  getValue(
+    item,
+    [
+      "investment_id",
+      "id",
+      "investmentId",
+    ],
+    null
+  );
+
+const getTenureRequestId = (item) =>
+  getValue(
+    item,
+    [
+      "request_id",
+      "tenure_extension_id",
+      "extension_request_id",
+      "id",
+    ],
+    null
+  );
 
 export default function InvestmentManagement() {
   const [activeTab, setActiveTab] =
@@ -230,31 +248,39 @@ export default function InvestmentManagement() {
   ] = useState(null);
 
   const [
+    selectedInvestmentId,
+    setSelectedInvestmentId,
+  ] = useState(null);
+
+  const [
+    detailsOpen,
+    setDetailsOpen,
+  ] = useState(false);
+
+  const [
     detailsLoading,
     setDetailsLoading,
   ] = useState(false);
 
-  const [detailsOpen, setDetailsOpen] =
-    useState(false);
-
-  const [approveOpen, setApproveOpen] =
-    useState(false);
-
-  const [rejectOpen, setRejectOpen] =
-    useState(false);
+  const [
+    approveOpen,
+    setApproveOpen,
+  ] = useState(false);
 
   const [
-    selectedInvestmentId,
-    setSelectedInvestmentId,
-  ] = useState(null);
+    rejectOpen,
+    setRejectOpen,
+  ] = useState(false);
 
   const [
     interestRate,
     setInterestRate,
   ] = useState("");
 
-  const [remarks, setRemarks] =
-    useState("");
+  const [
+    remarks,
+    setRemarks,
+  ] = useState("");
 
   const [
     rejectionReason,
@@ -272,23 +298,13 @@ export default function InvestmentManagement() {
   ] = useState(null);
 
   const [
-    tenureApproveOpen,
-    setTenureApproveOpen,
-  ] = useState(false);
-
-  const [
-    tenureRejectOpen,
-    setTenureRejectOpen,
+    tenureSendOpen,
+    setTenureSendOpen,
   ] = useState(false);
 
   const [
     tenureRemarks,
     setTenureRemarks,
-  ] = useState("");
-
-  const [
-    tenureRejectionReason,
-    setTenureRejectionReason,
   ] = useState("");
 
   const [
@@ -308,15 +324,17 @@ export default function InvestmentManagement() {
             offset: 0,
           });
 
-        setInvestments(
-          Array.isArray(response?.data)
-            ? response.data
-            : []
-        );
+        const rows = Array.isArray(
+          response?.data
+        )
+          ? response.data
+          : [];
+
+        setInvestments(rows);
       } catch (err) {
         setError(
           err?.message ||
-            "Failed to load investments"
+            "Failed to load investments."
         );
 
         setInvestments([]);
@@ -330,16 +348,19 @@ export default function InvestmentManagement() {
       try {
         setTenureLoading(true);
 
-        const response = await getPendingTenureExtensions({
-  limit: 100,
-  offset: 0,
-});
+        const response =
+          await getPendingTenureExtensions({
+            limit: 100,
+            offset: 0,
+          });
 
-        setTenureRequests(
-          Array.isArray(response?.data)
-            ? response.data
-            : []
-        );
+        const rows = Array.isArray(
+          response?.data
+        )
+          ? response.data
+          : [];
+
+        setTenureRequests(rows);
       } catch (err) {
         setTenureRequests([]);
       } finally {
@@ -370,13 +391,12 @@ export default function InvestmentManagement() {
         searchText.trim().toLowerCase();
 
       if (activeTab === "pending") {
-        result = result.filter((item) => {
-          return (
+        result = result.filter(
+          (item) =>
             normalizeStatus(
               getInvestmentStatus(item)
             ) === "pending"
-          );
-        });
+        );
       }
 
       if (search) {
@@ -396,10 +416,9 @@ export default function InvestmentManagement() {
               "full_name",
             ]),
             getValue(item, [
-              "bond_name",
               "bond_id",
-              "bond_code",
               "bond_number",
+              "bond_code",
             ]),
           ];
 
@@ -438,9 +457,9 @@ export default function InvestmentManagement() {
               "full_name",
             ]),
             getValue(item, [
+              "bond_id",
               "bond_number",
               "bond_code",
-              "bond_id",
             ]),
             getValue(item, [
               "investment_id",
@@ -462,11 +481,13 @@ export default function InvestmentManagement() {
       searchText,
     ]);
 
-  const openDetails = async (id) => {
+  const openDetails = async (
+    investmentId
+  ) => {
     if (
-      id === null ||
-      id === undefined ||
-      id === ""
+      investmentId === null ||
+      investmentId === undefined ||
+      investmentId === ""
     ) {
       return;
     }
@@ -478,7 +499,9 @@ export default function InvestmentManagement() {
       setError("");
 
       const response =
-        await getInvestmentDetails(id);
+        await getInvestmentDetails(
+          investmentId
+        );
 
       setSelectedInvestment(
         response?.data || null
@@ -486,7 +509,7 @@ export default function InvestmentManagement() {
     } catch (err) {
       setError(
         err?.message ||
-          "Failed to load investment details"
+          "Failed to load investment details."
       );
 
       setDetailsOpen(false);
@@ -495,41 +518,75 @@ export default function InvestmentManagement() {
     }
   };
 
-  const openApprove = async (id) => {
+  const openApprove = async (
+    investmentId
+  ) => {
     const row = investments.find(
       (item) =>
-        String(getValue(item, ["investment_id", "id"])) ===
-        String(id)
+        String(getInvestmentId(item)) ===
+        String(investmentId)
     );
 
-    setSelectedInvestment(row || null);
-    setSelectedInvestmentId(id);
+    setSelectedInvestment(
+      row || null
+    );
+
+    setSelectedInvestmentId(
+      investmentId
+    );
+
     setInterestRate("");
     setRemarks("");
     setError("");
     setApproveOpen(true);
 
     try {
-      const response = await getInvestmentDetails(id);
-      const details = response?.data || row || null;
+      const response =
+        await getInvestmentDetails(
+          investmentId
+        );
+
+      const details =
+        response?.data ||
+        row ||
+        null;
+
       setSelectedInvestment(details);
 
       const rate = getValue(
         details,
-        ["interest_rate", "rate", "initial_rate", "current_rate"],
+        [
+          "interest_rate",
+          "rate",
+          "initial_rate",
+          "current_rate",
+        ],
         3
       );
 
+      const rateNumber =
+        String(rate).match(
+          /[\d.]+/
+        )?.[0];
+
       setInterestRate(
-        String(rate).match(/[\d.]+/)?.[0] || "3"
+        rateNumber || "3"
       );
     } catch (err) {
-      setError(err?.message || "Failed to load investment details");
+      setError(
+        err?.message ||
+          "Failed to load investment details."
+      );
     }
   };
 
-  const openReject = (id) => {
-    setSelectedInvestmentId(id);
+  const openReject = (
+    investmentId
+  ) => {
+    setSelectedInvestmentId(
+      investmentId
+    );
+
     setRejectionReason("");
     setRemarks("");
     setError("");
@@ -558,159 +615,160 @@ export default function InvestmentManagement() {
     setRemarks("");
   };
 
-  const handleApprove = async () => {
-    if (
-      selectedInvestmentId ===
-        null ||
-      selectedInvestmentId ===
-        undefined
-    ) {
-      return;
-    }
+  const handleApprove =
+    async () => {
+      if (
+        selectedInvestmentId ===
+          null ||
+        selectedInvestmentId ===
+          undefined
+      ) {
+        return;
+      }
 
-    if (
-      interestRate === "" ||
-      interestRate === null ||
-      interestRate === undefined
-    ) {
-      setError(
-        "Interest rate is required"
+      if (
+        interestRate === "" ||
+        interestRate === null ||
+        interestRate === undefined
+      ) {
+        setError(
+          "Interest rate is required."
+        );
+        return;
+      }
+
+      const numericRate =
+        Number(interestRate);
+
+      if (
+        Number.isNaN(numericRate) ||
+        numericRate < 0
+      ) {
+        setError(
+          "Please enter a valid interest rate."
+        );
+        return;
+      }
+
+      try {
+        setActionLoading(true);
+        setError("");
+
+        await approveInvestment(
+          selectedInvestmentId,
+          {
+            interestRate:
+              numericRate,
+            remarks,
+          }
+        );
+
+        setApproveOpen(false);
+        setSelectedInvestmentId(
+          null
+        );
+        setInterestRate("");
+        setRemarks("");
+
+        await loadAllData();
+      } catch (err) {
+        setError(
+          err?.message ||
+            "Investment approval failed."
+        );
+      } finally {
+        setActionLoading(false);
+      }
+    };
+
+  const handleReject =
+    async () => {
+      if (
+        selectedInvestmentId ===
+          null ||
+        selectedInvestmentId ===
+          undefined
+      ) {
+        return;
+      }
+
+      if (
+        !rejectionReason.trim()
+      ) {
+        setError(
+          "Rejection reason is required."
+        );
+        return;
+      }
+
+      try {
+        setActionLoading(true);
+        setError("");
+
+        await rejectInvestment(
+          selectedInvestmentId,
+          {
+            rejectionReason:
+              rejectionReason.trim(),
+            remarks,
+          }
+        );
+
+        setRejectOpen(false);
+        setSelectedInvestmentId(
+          null
+        );
+        setRejectionReason("");
+        setRemarks("");
+
+        await loadAllData();
+      } catch (err) {
+        setError(
+          err?.message ||
+            "Investment rejection failed."
+        );
+      } finally {
+        setActionLoading(false);
+      }
+    };
+
+  /*
+   * IMPORTANT:
+   *
+   * Admin does NOT approve/reject
+   * tenure extension requests.
+   *
+   * Admin only sends the request
+   * to Super Admin.
+   */
+
+  const openTenureSend =
+    (request) => {
+      setSelectedTenureRequest(
+        request
       );
-      return;
-    }
 
-    const numericRate =
-      Number(interestRate);
-
-    if (
-      Number.isNaN(numericRate) ||
-      numericRate < 0
-    ) {
-      setError(
-        "Please enter a valid interest rate"
-      );
-      return;
-    }
-
-    try {
-      setActionLoading(true);
+      setTenureRemarks("");
       setError("");
+      setTenureSendOpen(true);
+    };
 
-      await approveInvestment(
-        selectedInvestmentId,
-        {
-          interestRate: numericRate,
-          remarks,
-        }
+  const closeTenureSend =
+    () => {
+      if (
+        tenureActionLoading
+      ) {
+        return;
+      }
+
+      setTenureSendOpen(false);
+      setSelectedTenureRequest(
+        null
       );
+      setTenureRemarks("");
+    };
 
-      setApproveOpen(false);
-      setSelectedInvestmentId(null);
-      setInterestRate("");
-      setRemarks("");
-
-      await loadAllData();
-    } catch (err) {
-      setError(
-        err?.message ||
-          "Investment approval failed"
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (
-      selectedInvestmentId ===
-        null ||
-      selectedInvestmentId ===
-        undefined
-    ) {
-      return;
-    }
-
-    if (!rejectionReason.trim()) {
-      setError(
-        "Rejection reason is required"
-      );
-      return;
-    }
-
-    try {
-      setActionLoading(true);
-      setError("");
-
-      await rejectInvestment(
-        selectedInvestmentId,
-        {
-          rejectionReason:
-            rejectionReason.trim(),
-          remarks,
-        }
-      );
-
-      setRejectOpen(false);
-      setSelectedInvestmentId(null);
-      setRejectionReason("");
-      setRemarks("");
-
-      await loadAllData();
-    } catch (err) {
-      setError(
-        err?.message ||
-          "Investment rejection failed"
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const openTenureApprove = (
-    request
-  ) => {
-    setSelectedTenureRequest(
-      request
-    );
-    setTenureRemarks("");
-    setError("");
-    setTenureApproveOpen(true);
-  };
-
-  const openTenureReject = (
-    request
-  ) => {
-    setSelectedTenureRequest(
-      request
-    );
-    setTenureRejectionReason("");
-    setTenureRemarks("");
-    setError("");
-    setTenureRejectOpen(true);
-  };
-
-  const closeTenureApprove = () => {
-    if (tenureActionLoading) {
-      return;
-    }
-
-    setTenureApproveOpen(false);
-    setSelectedTenureRequest(null);
-    setTenureRemarks("");
-  };
-
-  const closeTenureReject = () => {
-    if (tenureActionLoading) {
-      return;
-    }
-
-    setTenureRejectOpen(false);
-    setSelectedTenureRequest(null);
-    setTenureRejectionReason("");
-    setTenureRemarks("");
-  };
-
-  const handleTenureApprove =
+  const handleSendTenure =
     async () => {
       if (
         !selectedTenureRequest
@@ -719,121 +777,70 @@ export default function InvestmentManagement() {
       }
 
       const requestId =
-        getValue(
-          selectedTenureRequest,
-          [
-            "tenure_extension_id",
-            "extension_request_id",
-            "request_id",
-            "id",
-          ],
-          null
+        getTenureRequestId(
+          selectedTenureRequest
         );
 
       if (
         requestId === null ||
-        requestId === undefined
+        requestId === undefined ||
+        requestId === ""
       ) {
         setError(
-          "Tenure extension request ID is missing"
+          "Tenure extension request ID is missing."
         );
         return;
       }
 
       try {
-        setTenureActionLoading(true);
+        setTenureActionLoading(
+          true
+        );
+
         setError("");
 
-        await approveTenureExtension(
+        await submitTenureExtension(
           requestId,
           {
             remarks:
               tenureRemarks.trim() ||
-              "Tenure extension approved by admin",
+              "Submitted to Super Admin by Admin.",
           }
         );
 
-        setTenureApproveOpen(false);
-        setSelectedTenureRequest(null);
-        setTenureRemarks("");
-
-        await loadAllData();
-      } catch (err) {
-        setError(
-          err?.message ||
-            "Tenure extension approval failed"
+        /*
+         * Remove immediately from the
+         * Admin pending list.
+         */
+        setTenureRequests(
+          (previous) =>
+            previous.filter(
+              (item) =>
+                String(
+                  getTenureRequestId(
+                    item
+                  )
+                ) !==
+                String(requestId)
+            )
         );
-      } finally {
-        setTenureActionLoading(false);
-      }
-    };
 
-  const handleTenureReject =
-    async () => {
-      if (
-        !selectedTenureRequest
-      ) {
-        return;
-      }
-
-      if (
-        !tenureRejectionReason.trim()
-      ) {
-        setError(
-          "Rejection reason is required"
-        );
-        return;
-      }
-
-      const requestId =
-        getValue(
-          selectedTenureRequest,
-          [
-            "tenure_extension_id",
-            "extension_request_id",
-            "request_id",
-            "id",
-          ],
+        setTenureSendOpen(false);
+        setSelectedTenureRequest(
           null
         );
-
-      if (
-        requestId === null ||
-        requestId === undefined
-      ) {
-        setError(
-          "Tenure extension request ID is missing"
-        );
-        return;
-      }
-
-      try {
-        setTenureActionLoading(true);
-        setError("");
-
-        await rejectTenureExtension(
-          requestId,
-          {
-            rejectionReason:
-              tenureRejectionReason.trim(),
-            remarks:
-              tenureRemarks.trim(),
-          }
-        );
-
-        setTenureRejectOpen(false);
-        setSelectedTenureRequest(null);
-        setTenureRejectionReason("");
         setTenureRemarks("");
 
-        await loadAllData();
+        await loadTenureRequests();
       } catch (err) {
         setError(
           err?.message ||
-            "Tenure extension rejection failed"
+            "Failed to send tenure extension request to Super Admin."
         );
       } finally {
-        setTenureActionLoading(false);
+        setTenureActionLoading(
+          false
+        );
       }
     };
 
@@ -870,34 +877,31 @@ export default function InvestmentManagement() {
     investments.length;
 
   const tenurePendingCount =
-    tenureRequests.filter(
-      (item) =>
-        normalizeStatus(
-          getTenureStatus(item)
-        ) === "pending"
-    ).length;
+    tenureRequests.length;
 
   const totalInvestedAmount =
     investments.reduce(
       (total, item) => {
-        const amount = Number(
-          getValue(
-            item,
-            [
-              "investment_amount",
-              "amount",
-              "principal_amount",
-              "invested_amount",
-              "total_amount",
-            ],
-            0
-          )
-        );
+        const amount =
+          Number(
+            getValue(
+              item,
+              [
+                "investment_amount",
+                "amount",
+                "principal_amount",
+                "invested_amount",
+                "total_amount",
+              ],
+              0
+            )
+          );
 
-        return total + (
-          Number.isNaN(amount)
+        return (
+          total +
+          (Number.isNaN(amount)
             ? 0
-            : amount
+            : amount)
         );
       },
       0
@@ -906,42 +910,86 @@ export default function InvestmentManagement() {
   return (
     <div className="investment-page">
 
-
       <div className="investment-stats">
+
         <div className="investment-stat-card investment-stat-card--blue">
-          <span>Total Investments</span>
-          <strong>{allInvestmentCount}</strong>
-          <small>All investment requests</small>
+          <span>
+            Total Investments
+          </span>
+
+          <strong>
+            {allInvestmentCount}
+          </strong>
+
+          <small>
+            All investment requests
+          </small>
         </div>
 
         <div className="investment-stat-card investment-stat-card--amber">
-          <span>Pending Approval</span>
-          <strong>{pendingCount}</strong>
-          <small>Waiting for admin</small>
+          <span>
+            Pending Approval
+          </span>
+
+          <strong>
+            {pendingCount}
+          </strong>
+
+          <small>
+            Waiting for admin
+          </small>
         </div>
 
         <div className="investment-stat-card investment-stat-card--green">
-          <span>Active Investments</span>
-          <strong>{approvedCount}</strong>
-          <small>Approved and active</small>
+          <span>
+            Active Investments
+          </span>
+
+          <strong>
+            {approvedCount}
+          </strong>
+
+          <small>
+            Approved and active
+          </small>
         </div>
 
         <div className="investment-stat-card investment-stat-card--red">
-          <span>Rejected</span>
-          <strong>{rejectedCount}</strong>
-          <small>Rejected requests</small>
+          <span>
+            Rejected
+          </span>
+
+          <strong>
+            {rejectedCount}
+          </strong>
+
+          <small>
+            Rejected requests
+          </small>
         </div>
 
         <div className="investment-stat-card investment-stat-card--purple">
-          <span>Total Invested</span>
-          <strong>{formatAmount(totalInvestedAmount)}</strong>
-          <small>Combined investment amount</small>
+          <span>
+            Total Invested
+          </span>
+
+          <strong>
+            {formatAmount(
+              totalInvestedAmount
+            )}
+          </strong>
+
+          <small>
+            Combined investment amount
+          </small>
         </div>
+
       </div>
 
       <div className="investment-controls-row">
-     
+
         <div className="investment-tabs">
+
           <button
             type="button"
             className={
@@ -950,12 +998,17 @@ export default function InvestmentManagement() {
                 : "investment-tab"
             }
             onClick={() => {
-              setActiveTab("pending");
+              setActiveTab(
+                "pending"
+              );
               setSearchText("");
               setError("");
             }}
           >
-            <span>Pending Approval</span>
+            <span>
+              Pending Approval
+            </span>
+
             <span className="investment-tab-count">
               {pendingCount}
             </span>
@@ -969,12 +1022,17 @@ export default function InvestmentManagement() {
                 : "investment-tab"
             }
             onClick={() => {
-              setActiveTab("tenure");
+              setActiveTab(
+                "tenure"
+              );
               setSearchText("");
               setError("");
             }}
           >
-            <span>Tenure Extend Requests</span>
+            <span>
+              Tenure Extend Requests
+            </span>
+
             <span className="investment-tab-count">
               {tenurePendingCount}
             </span>
@@ -993,16 +1051,22 @@ export default function InvestmentManagement() {
               setError("");
             }}
           >
-            <span>All Investments</span>
+            <span>
+              All Investments
+            </span>
           </button>
+
         </div>
 
         <div className="investment-toolbar">
+
           <input
             type="text"
             value={searchText}
             onChange={(event) =>
-              setSearchText(event.target.value)
+              setSearchText(
+                event.target.value
+              )
             }
             placeholder={
               activeTab === "tenure"
@@ -1017,7 +1081,9 @@ export default function InvestmentManagement() {
           >
             ↓ Export
           </button>
+
         </div>
+
       </div>
 
       {error && (
@@ -1027,9 +1093,10 @@ export default function InvestmentManagement() {
       )}
 
       {activeTab === "tenure" ? (
+
         <div className="investment-table-wrapper">
 
-          <table className={`investment-table ${activeTab === "tenure" ? "investment-table--tenure" : "investment-table--all"}`}>
+          <table className="investment-table investment-table--tenure">
 
             <thead>
               <tr>
@@ -1074,66 +1141,95 @@ export default function InvestmentManagement() {
             <tbody>
 
               {tenureLoading ? (
+
                 <tr>
                   <td
-                    colSpan="9"
+                    colSpan={9}
                     className="investment-empty"
                   >
-                    Loading tenure extension
-                    requests...
+                    Loading tenure extension requests...
                   </td>
                 </tr>
-              ) : filteredTenureRequests.length ===
-                0 ? (
+
+              ) : filteredTenureRequests.length === 0 ? (
+
                 <tr>
                   <td
-                    colSpan="9"
+                    colSpan={9}
                     className="investment-empty"
                   >
-                    No tenure extension
-                    requests found
+                    No tenure extension requests found.
                   </td>
                 </tr>
+
               ) : (
+
                 filteredTenureRequests.map(
-                  (request, index) => {
+                  (item, index) => {
 
                     const requestId =
+                      getTenureRequestId(
+                        item
+                      );
+
+                    const currentMaturity =
                       getValue(
-                        request,
+                        item,
                         [
-                          "tenure_extension_id",
-                          "extension_request_id",
-                          "request_id",
-                          "id",
+                          "current_maturity_date",
+                          "maturity_date",
+                        ]
+                      );
+
+                    const currentRate =
+                      getValue(
+                        item,
+                        [
+                          "current_interest_rate",
+                          "interest_rate",
+                          "current_rate",
                         ],
-                        index + 1
+                        "-"
+                      );
+
+                    const requestedExtension =
+                      getValue(
+                        item,
+                        [
+                          "requested_extension",
+                          "requested_tenure",
+                          "requested_tenure_months",
+                        ],
+                        "-"
+                      );
+
+                    const submittedDate =
+                      getValue(
+                        item,
+                        [
+                          "submitted_date",
+                          "requested_date",
+                          "created_date",
+                        ],
+                        null
                       );
 
                     const status =
                       getTenureStatus(
-                        request
+                        item
                       );
-
-                    const normalized =
-                      normalizeStatus(
-                        status
-                      );
-
-                    const isPending =
-                      normalized ===
-                      "pending";
 
                     return (
                       <tr
-                        key={String(
-                          requestId
-                        )}
+                        key={
+                          requestId ||
+                          `tenure-${index}`
+                        }
                       >
 
                         <td>
                           {getValue(
-                            request,
+                            item,
                             [
                               "investor_id",
                               "investor_code",
@@ -1142,91 +1238,64 @@ export default function InvestmentManagement() {
                         </td>
 
                         <td>
-                          <div className="investor-cell">
-                            <strong>
-                              {getValue(
-                                request,
-                                [
-                                  "investor_name",
-                                  "investor_full_name",
-                                  "full_name",
-                                ]
-                              )}
-                            </strong>
-                          </div>
+                          {getValue(
+                            item,
+                            [
+                              "investor_name",
+                              "investor_full_name",
+                              "full_name",
+                            ]
+                          )}
                         </td>
 
                         <td>
                           {getValue(
-                            request,
+                            item,
                             [
+                              "bond_id",
                               "bond_number",
                               "bond_code",
-                              "bond_id",
                             ]
                           )}
                         </td>
 
                         <td>
                           {formatDate(
-                            getValue(
-                              request,
-                              [
-                                "current_maturity_date",
-                                "maturity_date",
-                                "current_maturity",
-                              ],
-                              null
-                            )
+                            currentMaturity
                           )}
                         </td>
 
                         <td>
                           <span className="investment-rate-badge">
-                            {getValue(
-                              request,
-                              [
-                                "current_rate",
-                                "interest_rate",
-                                "rate",
-                              ]
-                            )}
+                            {currentRate ===
+                            "-"
+                              ? "-"
+                              : Number(
+                                  currentRate
+                                ).toFixed(2)}
                           </span>
                         </td>
 
                         <td>
                           <span className="investment-extension-badge">
-                            {getValue(
-                              request,
-                              [
-                                "requested_extension",
-                                "extension_months",
-                                "requested_months",
-                                "extension_tenure",
-                              ]
-                            )}
+                            {String(
+                              requestedExtension
+                            ).startsWith(
+                              "+"
+                            )
+                              ? requestedExtension
+                              : `+${requestedExtension}`}
                           </span>
                         </td>
 
                         <td>
                           {formatDateTime(
-                            getValue(
-                              request,
-                              [
-                                "submitted_on",
-                                "submitted_at",
-                                "created_at",
-                                "created_date",
-                              ],
-                              null
-                            )
+                            submittedDate
                           )}
                         </td>
 
                         <td>
-                          <span
-                            className={`investment-status investment-status-${normalized}`}
-                          >
+                          <span className="investment-status investment-status--pending">
                             {status}
                           </span>
                         </td>
@@ -1234,43 +1303,17 @@ export default function InvestmentManagement() {
                         <td>
                           <div className="investment-actions">
 
-                            {isPending ? (
-                              <>
-                                <button
-                                  type="button"
-                                  className="action-approve"
-                                  onClick={() =>
-                                    openTenureApprove(
-                                      request
-                                    )
-                                  }
-                                  disabled={
-                                    tenureActionLoading
-                                  }
-                                >
-                                  Review & Approve
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="action-reject"
-                                  onClick={() =>
-                                    openTenureReject(
-                                      request
-                                    )
-                                  }
-                                  disabled={
-                                    tenureActionLoading
-                                  }
-                                >
-                                  ×
-                                </button>
-                              </>
-                            ) : (
-                              <span>
-                                -
-                              </span>
-                            )}
+                            <button
+                              type="button"
+                              className="investment-btn investment-btn--approve"
+                              onClick={() =>
+                                openTenureSend(
+                                  item
+                                )
+                              }
+                            >
+                              Review &amp; Send
+                            </button>
 
                           </div>
                         </td>
@@ -1285,27 +1328,16 @@ export default function InvestmentManagement() {
 
           </table>
 
-          <div className="investment-table-footer">
-            Showing{" "}
-            {filteredTenureRequests.length}{" "}
-            records
-          </div>
-
         </div>
+
       ) : (
+
         <div className="investment-table-wrapper">
 
-          <table className={`investment-table ${activeTab === "tenure" ? "investment-table--tenure" : "investment-table--all"}`}>
+          <table className="investment-table investment-table--all">
 
             <thead>
               <tr>
-
-                {activeTab === "all" && (
-                  <th>
-                    BOND NUMBER
-                  </th>
-                )}
-
                 <th>
                   INVESTOR ID
                 </th>
@@ -1341,188 +1373,184 @@ export default function InvestmentManagement() {
                 <th>
                   ACTIONS
                 </th>
-
               </tr>
             </thead>
 
             <tbody>
 
               {loading ? (
+
                 <tr>
                   <td
-                    colSpan={
-                      activeTab === "all"
-                        ? "10"
-                        : "9"
-                    }
+                    colSpan={9}
                     className="investment-empty"
                   >
                     Loading investments...
                   </td>
                 </tr>
+
               ) : filteredInvestments.length ===
                 0 ? (
+
                 <tr>
                   <td
-                    colSpan={
-                      activeTab === "all"
-                        ? "10"
-                        : "9"
-                    }
+                    colSpan={9}
                     className="investment-empty"
                   >
-                    No investments found
+                    No investments found.
                   </td>
                 </tr>
-              ) : (
-                filteredInvestments.map(
-                  (
-                    investment,
-                    index
-                  ) => {
 
-                    const id =
-                      getValue(
-                        investment,
-                        [
-                          "investment_id",
-                          "id",
-                        ],
-                        index + 1
+              ) : (
+
+                filteredInvestments.map(
+                  (item, index) => {
+
+                    const investmentId =
+                      getInvestmentId(
+                        item
                       );
 
                     const status =
-                      getInvestmentStatus(
-                        investment
-                      );
-
-                    const normalized =
                       normalizeStatus(
-                        status
+                        getInvestmentStatus(
+                          item
+                        )
                       );
 
-                    const isPending =
-                      normalized ===
-                      "pending";
+                    const investorId =
+                      getValue(
+                        item,
+                        [
+                          "investor_id",
+                          "investor_code",
+                        ]
+                      );
+
+                    const investorName =
+                      getValue(
+                        item,
+                        [
+                          "investor_name",
+                          "investor_full_name",
+                          "full_name",
+                        ]
+                      );
+
+                    const amount =
+                      getValue(
+                        item,
+                        [
+                          "investment_amount",
+                          "amount",
+                          "principal_amount",
+                          "invested_amount",
+                        ],
+                        0
+                      );
+
+                    const rate =
+                      getValue(
+                        item,
+                        [
+                          "interest_rate",
+                          "rate",
+                          "current_interest_rate",
+                        ],
+                        "-"
+                      );
+
+                    const investedDate =
+                      getValue(
+                        item,
+                        [
+                          "investment_date",
+                          "invested_date",
+                          "created_date",
+                        ],
+                        null
+                      );
+
+                    const maturityDate =
+                      getValue(
+                        item,
+                        [
+                          "maturity_date",
+                          "current_maturity_date",
+                        ],
+                        null
+                      );
 
                     return (
                       <tr
-                        key={String(id)}
+                        key={
+                          investmentId ||
+                          `investment-${index}`
+                        }
                       >
 
-                        {activeTab === "all" && (
-                          <td>
-                            <strong>
-                              {getValue(
-                                investment,
-                                [
-                                  "bond_number",
-                                  "bond_code",
-                                  "bond_id",
-                                ]
-                              )}
-                            </strong>
-                          </td>
-                        )}
-
                         <td>
-                          {getValue(
-                            investment,
-                            [
-                              "investor_id",
-                              "investor_code",
-                            ]
-                          )}
+                          {investorId}
                         </td>
 
                         <td>
-                          <div className="investor-cell">
-
-                            <strong>
-                              {getValue(
-                                investment,
-                                [
-                                  "investor_name",
-                                  "investor_full_name",
-                                  "full_name",
-                                ]
-                              )}
-                            </strong>
-
-                          </div>
+                          {investorName}
                         </td>
 
                         <td>
-                          {getValue(
-                            investment,
-                            [
-                              "investment_id",
-                              "id",
-                            ]
-                          )}
+                          {investmentId}
                         </td>
 
                         <td>
                           {formatAmount(
-                            getValue(
-                              investment,
-                              [
-                                "investment_amount",
-                                "amount",
-                                "principal_amount",
-                              ],
-                              null
-                            )
+                            amount
                           )}
                         </td>
 
                         <td>
                           <span className="investment-rate-badge">
-                            {getValue(
-                              investment,
-                              [
-                                "interest_rate",
-                                "initial_rate",
-                                "rate",
-                              ]
-                            )}
+                            {rate === "-"
+                              ? "-"
+                              : Number(
+                                  rate
+                                ).toFixed(
+                                  2
+                                )}
                           </span>
                         </td>
 
                         <td>
                           {formatDate(
-                            getValue(
-                              investment,
-                              [
-                                "investment_date",
-                                "invested_date",
-                                "created_date",
-                                "created_at",
-                              ],
-                              null
-                            )
+                            investedDate
                           )}
                         </td>
 
                         <td>
                           {formatDate(
-                            getValue(
-                              investment,
-                              [
-                                "maturity_date",
-                                "matures_on",
-                                "maturity",
-                              ],
-                              null
-                            )
+                            maturityDate
                           )}
                         </td>
 
                         <td>
                           <span
-                            className={`investment-status investment-status-${normalized}`}
+                            className={
+                              status ===
+                              "pending"
+                                ? "investment-status investment-status--pending"
+                                : status ===
+                                  "approved" ||
+                                  status ===
+                                    "active"
+                                ? "investment-status investment-status--approved"
+                                : status ===
+                                  "rejected"
+                                ? "investment-status investment-status--rejected"
+                                : "investment-status"
+                            }
                           >
-                            {status}
+                            {getInvestmentStatus(
+                              item
+                            )}
                           </span>
                         </td>
 
@@ -1532,49 +1560,46 @@ export default function InvestmentManagement() {
 
                             <button
                               type="button"
-                              className="action-view"
+                              className="investment-btn investment-btn--view"
                               onClick={() =>
                                 openDetails(
-                                  id
+                                  investmentId
                                 )
                               }
                             >
                               View
                             </button>
 
-                            {isPending && (
-                              <>
-                                <button
-                                  type="button"
-                                  className="action-approve"
-                                  onClick={() =>
-                                    openApprove(
-                                      id
-                                    )
-                                  }
-                                  disabled={
-                                    actionLoading
-                                  }
-                                >
-                                  Approve
-                                </button>
+                            {activeTab ===
+                              "pending" &&
+                              status ===
+                                "pending" && (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="investment-btn investment-btn--approve"
+                                    onClick={() =>
+                                      openApprove(
+                                        investmentId
+                                      )
+                                    }
+                                  >
+                                    Approve
+                                  </button>
 
-                                <button
-                                  type="button"
-                                  className="action-reject"
-                                  onClick={() =>
-                                    openReject(
-                                      id
-                                    )
-                                  }
-                                  disabled={
-                                    actionLoading
-                                  }
-                                >
-                                  Reject
-                                </button>
-                              </>
-                            )}
+                                  <button
+                                    type="button"
+                                    className="investment-btn investment-btn--reject"
+                                    onClick={() =>
+                                      openReject(
+                                        investmentId
+                                      )
+                                    }
+                                  >
+                                    Reject
+                                  </button>
+                                </>
+                              )}
 
                           </div>
 
@@ -1590,13 +1615,8 @@ export default function InvestmentManagement() {
 
           </table>
 
-          <div className="investment-table-footer">
-            Showing{" "}
-            {filteredInvestments.length}{" "}
-            records
-          </div>
-
         </div>
+
       )}
 
       {detailsOpen && (
@@ -1614,16 +1634,9 @@ export default function InvestmentManagement() {
           >
 
             <div className="investment-modal-header">
-
-              <div>
-                <h2>
-                  Investment Details
-                </h2>
-
-                <p>
-                  View investment information
-                </p>
-              </div>
+              <h2>
+                Investment Details
+              </h2>
 
               <button
                 type="button"
@@ -1633,309 +1646,162 @@ export default function InvestmentManagement() {
               >
                 ×
               </button>
-
             </div>
 
-            {detailsLoading ? (
-              <div className="investment-modal-loading">
-                Loading...
-              </div>
-            ) : selectedInvestment ? (
-              <div className="investment-details-grid">
+            <div className="investment-modal-body">
 
-                {Object.entries(
-                  selectedInvestment
-                ).map(
-                  ([key, value]) => (
-                    <div
-                      className="investment-detail-item"
-                      key={key}
-                    >
+              {detailsLoading ? (
 
-                      <span>
-                        {key
-                          .replace(
-                            /_/g,
-                            " "
-                          )
-                          .replace(
-                            /\b\w/g,
-                            (letter) =>
-                              letter.toUpperCase()
-                          )}
-                      </span>
+                <div className="investment-empty">
+                  Loading details...
+                </div>
 
-                      <strong>
-                        {value === null ||
-                        value ===
-                          undefined ||
-                        value === ""
-                          ? "-"
-                          : String(
-                              value
-                            )}
-                      </strong>
+              ) : selectedInvestment ? (
 
-                    </div>
-                  )
-                )}
+                <div className="investment-details-grid">
 
-              </div>
-            ) : (
-              <div className="investment-modal-loading">
-                Investment details not
-                available
-              </div>
-            )}
+                  <div>
+                    <span>
+                      Investor ID
+                    </span>
+
+                    <strong>
+                      {getValue(
+                        selectedInvestment,
+                        [
+                          "investor_id",
+                          "investor_code",
+                        ]
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Investor
+                    </span>
+
+                    <strong>
+                      {getValue(
+                        selectedInvestment,
+                        [
+                          "investor_name",
+                          "investor_full_name",
+                          "full_name",
+                        ]
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Investment ID
+                    </span>
+
+                    <strong>
+                      {getInvestmentId(
+                        selectedInvestment
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Amount
+                    </span>
+
+                    <strong>
+                      {formatAmount(
+                        getValue(
+                          selectedInvestment,
+                          [
+                            "investment_amount",
+                            "amount",
+                          ],
+                          0
+                        )
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Interest Rate
+                    </span>
+
+                    <strong>
+                      {getValue(
+                        selectedInvestment,
+                        [
+                          "interest_rate",
+                          "rate",
+                        ]
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Maturity Date
+                    </span>
+
+                    <strong>
+                      {formatDate(
+                        getValue(
+                          selectedInvestment,
+                          [
+                            "maturity_date",
+                            "current_maturity_date",
+                          ],
+                          null
+                        )
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Status
+                    </span>
+
+                    <strong>
+                      {getInvestmentStatus(
+                        selectedInvestment
+                      )}
+                    </strong>
+                  </div>
+
+                </div>
+
+              ) : (
+
+                <div className="investment-empty">
+                  Investment details not found.
+                </div>
+
+              )}
+
+            </div>
 
           </div>
         </div>
       )}
 
       {approveOpen && (
-        <div
-          className="investment-modal-overlay"
-          onClick={closeApprove}
-        >
-          <div
-            className="im-review-modal"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="investment-modal-header">
-              <h2>Review &amp; Approve Investment</h2>
-              <button
-                type="button"
-                onClick={closeApprove}
-                disabled={actionLoading}
-              >
-                ×
-              </button>
-            </div>
+        <div className="investment-modal-overlay">
 
-            <div className="im-review-body">
-              <div className="im-review-details">
-                <h3>Investment Details</h3>
-
-                <div className="im-review-grid">
-                  <div>
-                    <span>Investor</span>
-                    <strong>
-                      {getValue(selectedInvestment, [
-                        "investor_name",
-                        "investor_full_name",
-                        "full_name",
-                      ])}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Investor ID</span>
-                    <strong>
-                      {getValue(selectedInvestment, [
-                        "investor_id",
-                        "investor_code",
-                      ])}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Branch</span>
-                    <strong>
-                      {getValue(selectedInvestment, [
-                        "branch_name",
-                        "branch",
-                        "service_location_name",
-                      ])}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Amount</span>
-                    <strong>
-                      {formatAmount(
-                        getValue(selectedInvestment, [
-                          "investment_amount",
-                          "amount",
-                          "principal_amount",
-                          "invested_amount",
-                        ])
-                      )}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Tenure</span>
-                    <strong>
-                      {(() => {
-                        const value = getValue(selectedInvestment, [
-                          "tenure",
-                          "tenure_months",
-                          "investment_tenure",
-                          "duration_months",
-                        ]);
-                        return String(value).toLowerCase().includes("month")
-                          ? value
-                          : `${value} months`;
-                      })()}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Transaction Ref</span>
-                    <strong>
-                      {getValue(selectedInvestment, [
-                        "transaction_ref",
-                        "transaction_reference",
-                        "txn_ref",
-                        "utr_number",
-                        "utr",
-                      ])}
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
-              <div className="im-rate-box">
-                <h3>Set Final Interest Rate</h3>
-
-                <p>
-                  Investor submitted at <strong>
-                    {getValue(
-                      selectedInvestment,
-                      ["interest_rate", "rate", "initial_rate"],
-                      interestRate || 3
-                    )}
-                    % per month
-                  </strong>. You can adjust the rate before approving.
-                </p>
-
-                <div className="im-rate-input-row">
-                  <div className="im-rate-input-field">
-                    <label>Interest Rate (% per month)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={interestRate}
-                      onChange={(event) =>
-                        setInterestRate(event.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div className="im-rate-preview">
-                    <span>Monthly Interest</span>
-                    <strong>
-                      {formatAmount(
-                        Number(
-                          getValue(
-                            selectedInvestment,
-                            [
-                              "investment_amount",
-                              "amount",
-                              "principal_amount",
-                              "invested_amount",
-                            ],
-                            0
-                          )
-                        ) * Number(interestRate || 0) / 100
-                      )}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="im-rate-quick-row">
-                  {[2, 2.5, 3, 3.5, 4].map((rate) => (
-                    <button
-                      key={rate}
-                      type="button"
-                      className={
-                        Number(interestRate) === rate
-                          ? "im-rate-quick-btn im-rate-quick-btn--active"
-                          : "im-rate-quick-btn"
-                      }
-                      onClick={() => setInterestRate(String(rate))}
-                    >
-                      {rate}%
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="im-info-box">
-                Approving will <strong>activate the investment</strong>,
-                assign a bond number, and generate the digital bond
-                certificate at <strong>{interestRate || 0}% per month</strong>.
-                The investor will be notified automatically.
-              </div>
-            </div>
-
-            <div className="im-review-actions">
-              <button
-                type="button"
-                className="admin-btn admin-btn--outline"
-                onClick={closeApprove}
-                disabled={actionLoading}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                className="admin-btn modal-reject"
-                onClick={() => {
-                  const id = selectedInvestmentId;
-                  closeApprove();
-                  openReject(id);
-                }}
-                disabled={actionLoading}
-              >
-                ⊗ Reject
-              </button>
-
-              <button
-                type="button"
-                className="admin-btn admin-btn--approve"
-                onClick={handleApprove}
-                disabled={actionLoading}
-              >
-                ✓ {actionLoading ? "Approving..." : "Approve & Generate Bond"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {rejectOpen && (
-        <div
-          className="investment-modal-overlay"
-          onClick={closeReject}
-        >
-          <div
-            className="investment-modal investment-action-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
+          <div className="investment-modal">
 
             <div className="investment-modal-header">
 
-              <div>
-                <h2>
-                  Reject Investment
-                </h2>
-
-                <p>
-                  Provide a reason for
-                  rejection
-                </p>
-              </div>
+              <h2>
+                Approve Investment
+              </h2>
 
               <button
                 type="button"
-                onClick={closeReject}
-                disabled={
-                  actionLoading
+                onClick={
+                  closeApprove
                 }
               >
                 ×
@@ -1943,7 +1809,104 @@ export default function InvestmentManagement() {
 
             </div>
 
-            <div className="investment-form">
+            <div className="investment-modal-body">
+
+              <p>
+                You are approving this
+                investment as Admin.
+              </p>
+
+              <label>
+                Interest Rate
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={interestRate}
+                onChange={(event) =>
+                  setInterestRate(
+                    event.target.value
+                  )
+                }
+              />
+
+              <label>
+                Remarks
+              </label>
+
+              <textarea
+                value={remarks}
+                onChange={(event) =>
+                  setRemarks(
+                    event.target.value
+                  )
+                }
+                placeholder="Optional remarks"
+              />
+
+            </div>
+
+            <div className="investment-modal-footer">
+
+              <button
+                type="button"
+                onClick={
+                  closeApprove
+                }
+                disabled={
+                  actionLoading
+                }
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="investment-btn investment-btn--approve"
+                onClick={
+                  handleApprove
+                }
+                disabled={
+                  actionLoading
+                }
+              >
+                {actionLoading
+                  ? "Approving..."
+                  : "Approve Investment"}
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {rejectOpen && (
+        <div className="investment-modal-overlay">
+
+          <div className="investment-modal">
+
+            <div className="investment-modal-header">
+
+              <h2>
+                Reject Investment
+              </h2>
+
+              <button
+                type="button"
+                onClick={
+                  closeReject
+                }
+              >
+                ×
+              </button>
+
+            </div>
+
+            <div className="investment-modal-body">
 
               <label>
                 Rejection Reason
@@ -1972,17 +1935,179 @@ export default function InvestmentManagement() {
                     event.target.value
                   )
                 }
-                placeholder="Enter remarks"
+                placeholder="Optional remarks"
               />
 
-              <div className="investment-modal-actions">
+            </div>
+
+            <div className="investment-modal-footer">
+
+              <button
+                type="button"
+                onClick={
+                  closeReject
+                }
+                disabled={
+                  actionLoading
+                }
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="investment-btn investment-btn--reject"
+                onClick={
+                  handleReject
+                }
+                disabled={
+                  actionLoading
+                }
+              >
+                {actionLoading
+                  ? "Rejecting..."
+                  : "Reject Investment"}
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {tenureSendOpen &&
+        selectedTenureRequest && (
+          <div className="investment-modal-overlay">
+
+            <div className="investment-modal">
+
+              <div className="investment-modal-header">
+
+                <h2>
+                  Review Tenure Extension
+                </h2>
 
                 <button
                   type="button"
-                  className="modal-cancel"
-                  onClick={closeReject}
+                  onClick={
+                    closeTenureSend
+                  }
+                >
+                  ×
+                </button>
+
+              </div>
+
+              <div className="investment-modal-body">
+
+                <div className="investment-review-box">
+
+                  <div>
+                    <span>
+                      Investor
+                    </span>
+
+                    <strong>
+                      {getValue(
+                        selectedTenureRequest,
+                        [
+                          "investor_name",
+                          "investor_full_name",
+                          "full_name",
+                        ]
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Bond
+                    </span>
+
+                    <strong>
+                      {getValue(
+                        selectedTenureRequest,
+                        [
+                          "bond_id",
+                          "bond_number",
+                          "bond_code",
+                        ]
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Current Maturity
+                    </span>
+
+                    <strong>
+                      {formatDate(
+                        getValue(
+                          selectedTenureRequest,
+                          [
+                            "current_maturity_date",
+                            "maturity_date",
+                          ],
+                          null
+                        )
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Requested Extension
+                    </span>
+
+                    <strong>
+                      {getValue(
+                        selectedTenureRequest,
+                        [
+                          "requested_extension",
+                          "requested_tenure",
+                          "requested_tenure_months",
+                        ]
+                      )}
+                    </strong>
+                  </div>
+
+                </div>
+
+                <div className="investment-superadmin-notice">
+                  This request will be sent to Super Admin.
+                  Admin cannot approve or reject a tenure
+                  extension request.
+                </div>
+
+                <label>
+                  Remarks
+                </label>
+
+                <textarea
+                  value={
+                    tenureRemarks
+                  }
+                  onChange={(event) =>
+                    setTenureRemarks(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Optional remarks for Super Admin"
+                />
+
+              </div>
+
+              <div className="investment-modal-footer">
+
+                <button
+                  type="button"
+                  onClick={
+                    closeTenureSend
+                  }
                   disabled={
-                    actionLoading
+                    tenureActionLoading
                   }
                 >
                   Cancel
@@ -1990,338 +2115,23 @@ export default function InvestmentManagement() {
 
                 <button
                   type="button"
-                  className="modal-reject"
+                  className="investment-btn investment-btn--approve"
                   onClick={
-                    handleReject
-                  }
-                  disabled={
-                    actionLoading
-                  }
-                >
-                  {actionLoading
-                    ? "Rejecting..."
-                    : "Reject"}
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {tenureApproveOpen &&
-        selectedTenureRequest && (
-          <div
-            className="investment-modal-overlay"
-            onClick={
-              closeTenureApprove
-            }
-          >
-            <div
-              className="investment-modal investment-action-modal"
-              onClick={(event) =>
-                event.stopPropagation()
-              }
-            >
-
-              <div className="investment-modal-header">
-
-                <div>
-                  <h2>
-                    Review & Approve
-                  </h2>
-
-                  <p>
-                    Tenure extension request
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={
-                    closeTenureApprove
+                    handleSendTenure
                   }
                   disabled={
                     tenureActionLoading
                   }
                 >
-                  ×
+                  {tenureActionLoading
+                    ? "Sending..."
+                    : "Send to Super Admin"}
                 </button>
 
               </div>
 
-              <div className="investment-details-grid investment-tenure-details-grid">
-
-                <div>
-                  <span>
-                    Investor
-                  </span>
-
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "investor_name",
-                        "investor_full_name",
-                        "full_name",
-                      ]
-                    )}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>
-                    Investor ID
-                  </span>
-
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "investor_id",
-                        "investor_code",
-                      ]
-                    )}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>
-                    Bond Number
-                  </span>
-
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "bond_number",
-                        "bond_code",
-                        "bond_id",
-                      ]
-                    )}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>
-                    Current Maturity
-                  </span>
-
-                  <strong>
-                    {formatDate(
-                      getValue(
-                        selectedTenureRequest,
-                        [
-                          "current_maturity_date",
-                          "maturity_date",
-                        ],
-                        null
-                      )
-                    )}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>
-                    Current Rate
-                  </span>
-
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "current_rate",
-                        "interest_rate",
-                        "rate",
-                      ]
-                    )}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>
-                    Requested Extension
-                  </span>
-
-                  <strong>
-                    {getValue(
-                      selectedTenureRequest,
-                      [
-                        "requested_extension",
-                        "extension_months",
-                        "requested_months",
-                      ]
-                    )}
-                  </strong>
-                </div>
-
-              </div>
-
-              <div className="investment-form">
-
-                <label>
-                  Remarks
-                </label>
-
-                <textarea
-                  value={tenureRemarks}
-                  onChange={(event) =>
-                    setTenureRemarks(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Enter remarks"
-                />
-
-                <div className="investment-modal-actions">
-
-                  <button
-                    type="button"
-                    className="modal-cancel"
-                    onClick={
-                      closeTenureApprove
-                    }
-                    disabled={
-                      tenureActionLoading
-                    }
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    className="modal-approve"
-                    onClick={
-                      handleTenureApprove
-                    }
-                    disabled={
-                      tenureActionLoading
-                    }
-                  >
-                    {tenureActionLoading
-                      ? "Approving..."
-                      : "Approve Extension"}
-                  </button>
-
-                </div>
-
-              </div>
-
             </div>
-          </div>
-        )}
 
-      {tenureRejectOpen &&
-        selectedTenureRequest && (
-          <div
-            className="investment-modal-overlay"
-            onClick={
-              closeTenureReject
-            }
-          >
-            <div
-              className="investment-modal investment-action-modal"
-              onClick={(event) =>
-                event.stopPropagation()
-              }
-            >
-
-              <div className="investment-modal-header">
-
-                <div>
-                  <h2>
-                    Reject Extension
-                  </h2>
-
-                  <p>
-                    Reject tenure extension
-                    request
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={
-                    closeTenureReject
-                  }
-                  disabled={
-                    tenureActionLoading
-                  }
-                >
-                  ×
-                </button>
-
-              </div>
-
-              <div className="investment-form">
-
-                <label>
-                  Rejection Reason
-                </label>
-
-                <textarea
-                  value={
-                    tenureRejectionReason
-                  }
-                  onChange={(event) =>
-                    setTenureRejectionReason(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Enter rejection reason"
-                />
-
-                <label>
-                  Remarks
-                </label>
-
-                <textarea
-                  value={tenureRemarks}
-                  onChange={(event) =>
-                    setTenureRemarks(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Enter remarks"
-                />
-
-                <div className="investment-modal-actions">
-
-                  <button
-                    type="button"
-                    className="modal-cancel"
-                    onClick={
-                      closeTenureReject
-                    }
-                    disabled={
-                      tenureActionLoading
-                    }
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    className="modal-reject"
-                    onClick={
-                      handleTenureReject
-                    }
-                    disabled={
-                      tenureActionLoading
-                    }
-                  >
-                    {tenureActionLoading
-                      ? "Rejecting..."
-                      : "Reject Extension"}
-                  </button>
-
-                </div>
-
-              </div>
-
-            </div>
           </div>
         )}
 

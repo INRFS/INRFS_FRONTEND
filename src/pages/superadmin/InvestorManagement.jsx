@@ -1,120 +1,92 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
-  ChevronDown,
-  Eye,
+  RefreshCw,
   Download,
-  Plus,
+  Eye,
+  X,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Users,
   UserCheck,
   UserX,
-  Clock3,
+  ShieldCheck,
   IndianRupee,
 } from "lucide-react";
+
+import {
+  getInvestorManagement,
+  getInvestorManagementSummary,
+  getInvestorManagementDetails,
+  getInvestorManagementBranches,
+  getInvestorManagementStatuses,
+  exportInvestorsCSV,
+} from "../../services/superadmin/investorManagementService";
+
 import "../../Styles/SuperAdmin/InvestorManagement.css";
-import Modal from "./Modal";
 
-const MOCK_INVESTORS = [
-  {
-    id: "INV001",
-    name: "Arjun Sharma",
-    mobile: "9876543210",
-    branch: "Mumbai HQ",
-    registered: "2025-01-12",
-    kyc: "Approved",
-    status: "Active",
-    aum: 500000,
-  },
-  {
-    id: "INV002",
-    name: "Priya Patel",
-    mobile: "9876543211",
-    branch: "Delhi North",
-    registered: "2025-01-14",
-    kyc: "Pending",
-    status: "Pending",
-    aum: 250000,
-  },
-  {
-    id: "INV003",
-    name: "Rahul Kumar",
-    mobile: "9876543212",
-    branch: "Bangalore",
-    registered: "2025-01-16",
-    kyc: "Approved",
-    status: "Active",
-    aum: 875000,
-  },
-  {
-    id: "INV004",
-    name: "Sunita Verma",
-    mobile: "9876543213",
-    branch: "Chennai",
-    registered: "2025-01-18",
-    kyc: "Rejected",
-    status: "Suspended",
-    aum: 150000,
-  },
-  {
-    id: "INV005",
-    name: "Vikram Singh",
-    mobile: "9876543214",
-    branch: "Pune",
-    registered: "2025-01-20",
-    kyc: "Pending",
-    status: "Pending",
-    aum: 325000,
-  },
-  {
-    id: "INV006",
-    name: "Neha Gupta",
-    mobile: "9876543215",
-    branch: "Mumbai HQ",
-    registered: "2025-01-22",
-    kyc: "Approved",
-    status: "Active",
-    aum: 600000,
-  },
-];
+function normalizeInvestor(row) {
+  return {
+    id: row?.investor_id ?? row?.id ?? row?.investor_code ?? "-",
+    name: row?.full_name ?? row?.investor_name ?? row?.name ?? "-",
+    mobile: row?.mobile ?? row?.mobile_number ?? row?.phone ?? "-",
+    branch: row?.branch_name ?? row?.branch ?? "-",
+    branchId:
+      row?.branch_id ??
+      row?.branchId ??
+      row?.service_location_id ??
+      "",
+    registered:
+      row?.registered_date ??
+      row?.registration_date ??
+      row?.created_at ??
+      row?.created_date ??
+      null,
+    kyc:
+      row?.kyc_status_name ??
+      row?.kyc_status ??
+      row?.kyc ??
+      "-",
+    status:
+      row?.status_name ??
+      row?.status ??
+      "-",
+    statusId:
+      row?.status_id ??
+      row?.statusId ??
+      "",
+    aum:
+      row?.aum ??
+      row?.total_investment ??
+      row?.investment_amount ??
+      0,
+    raw: row,
+  };
+}
 
-const PAGE_SIZE = 10;
+function formatDate(value) {
+  if (!value) return "-";
 
-function formatDate(iso) {
-  const d = new Date(iso);
+  const date = new Date(value);
 
-  return d.toLocaleDateString("en-GB", {
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 }
 
-function formatAUM(value) {
-  return `₹${Number(value || 0).toLocaleString("en-IN")}`;
-}
+function formatCurrency(value) {
+  const number = Number(value || 0);
 
-function badgeClass(value) {
-  const normalized = String(value || "").toLowerCase();
-
-  if (
-    normalized === "approved" ||
-    normalized === "active"
-  ) {
-    return "ivm-badge ivm-badge-green";
-  }
-
-  if (normalized === "pending") {
-    return "ivm-badge ivm-badge-orange";
-  }
-
-  if (
-    normalized === "rejected" ||
-    normalized === "suspended"
-  ) {
-    return "ivm-badge ivm-badge-red";
-  }
-
-  return "ivm-badge";
+  return `₹${number.toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function Dropdown({
@@ -127,60 +99,43 @@ function Dropdown({
   const ref = useRef(null);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        ref.current &&
-        !ref.current.contains(event.target)
-      ) {
+    const handleOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
         setOpen(false);
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
+    document.addEventListener("mousedown", handleOutside);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      document.removeEventListener("mousedown", handleOutside);
     };
   }, []);
 
+  const selected = options.find(
+    (option) => String(option.value) === String(value)
+  );
+
   return (
-    <div
-      className={
-        "ivm-dropdown" +
-        (open ? " ivm-dropdown-open" : "")
-      }
-      ref={ref}
-    >
+    <div className="ivm-dropdown" ref={ref}>
       <button
         type="button"
         className="ivm-dropdown-btn"
-        onClick={() => setOpen((state) => !state)}
+        onClick={() => setOpen((current) => !current)}
       >
-        <span>
-          {value || label}
-        </span>
-
-        <ChevronDown size={15} />
+        <span>{selected?.label || label}</span>
+        <ChevronDown size={16} />
       </button>
 
       {open && (
         <div className="ivm-dropdown-menu">
           <button
             type="button"
-            className={
-              "ivm-dropdown-item" +
-              (!value
-                ? " ivm-dropdown-item-active"
-                : "")
-            }
+            className={`ivm-dropdown-item ${
+              !value ? "ivm-dropdown-item-active" : ""
+            }`}
             onClick={() => {
-              onChange(null);
+              onChange("");
               setOpen(false);
             }}
           >
@@ -189,20 +144,19 @@ function Dropdown({
 
           {options.map((option) => (
             <button
-              key={option}
               type="button"
-              className={
-                "ivm-dropdown-item" +
-                (value === option
-                  ? " ivm-dropdown-item-active"
-                  : "")
-              }
+              key={String(option.value)}
+              className={`ivm-dropdown-item ${
+                String(value) === String(option.value)
+                  ? "ivm-dropdown-item-active"
+                  : ""
+              }`}
               onClick={() => {
-                onChange(option);
+                onChange(String(option.value));
                 setOpen(false);
               }}
             >
-              {option}
+              {option.label}
             </button>
           ))}
         </div>
@@ -211,414 +165,472 @@ function Dropdown({
   );
 }
 
-const StatCard = ({
-  label,
-  value,
-  subtitle,
-  icon: Icon,
-  tone,
-}) => (
-  <div
-    className={`ivm-stat-card ivm-stat-card-${tone}`}
-  >
-    <div className="ivm-stat-top">
-      <span className="ivm-stat-label">
-        {label}
-      </span>
-
-      <span className="ivm-stat-icon">
-        <Icon size={17} />
-      </span>
-    </div>
-
-    <strong className="ivm-stat-value">
-      {value}
-    </strong>
-
-    <span className="ivm-stat-subtitle">
-      {subtitle}
-    </span>
-  </div>
-);
-
 export default function InvestorManagement() {
+  const [investors, setInvestors] = useState([]);
+  const [summary, setSummary] = useState({});
+  const [branches, setBranches] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+
   const [search, setSearch] = useState("");
-  const [branchFilter, setBranchFilter] =
-    useState(null);
-  const [statusFilter, setStatusFilter] =
-    useState(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [branchFilter, setBranchFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
   const [page, setPage] = useState(1);
-  const [viewInvestor, setViewInvestor] =
-    useState(null);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
 
-  const branches = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          MOCK_INVESTORS.map(
-            (investor) => investor.branch
-          )
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+
+  const [selectedInvestor, setSelectedInvestor] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+
+  const offset = (page - 1) * limit;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  const loadSummary = async () => {
+    try {
+      const response = await getInvestorManagementSummary();
+      setSummary(response?.data || {});
+    } catch (err) {
+      console.error("Investor summary error:", err);
+    }
+  };
+
+  const loadFilters = async () => {
+    try {
+      const [branchResponse, statusResponse] =
+        await Promise.all([
+          getInvestorManagementBranches(),
+          getInvestorManagementStatuses(),
+        ]);
+
+      const branchRows = Array.isArray(branchResponse?.data)
+        ? branchResponse.data
+        : [];
+
+      const statusRows = Array.isArray(statusResponse?.data)
+        ? statusResponse.data
+        : [];
+
+      const branchOptions = branchRows
+        .filter(
+          (item) =>
+            item?.id !== null &&
+            item?.id !== undefined &&
+            item?.branch_name
         )
-      ),
-    []
-  );
+        .map((item) => ({
+          value: String(item.id),
+          label: String(item.branch_name),
+        }));
 
-  const statuses = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          MOCK_INVESTORS.map(
-            (investor) => investor.status
-          )
+      const statusOptions = statusRows
+        .filter(
+          (item) =>
+            item?.id !== null &&
+            item?.id !== undefined &&
+            (item?.status_name || item?.status)
         )
-      ),
-    []
-  );
+        .map((item) => ({
+          value: String(item.id),
+          label: String(
+            item.status_name || item.status
+          ),
+        }));
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return MOCK_INVESTORS.filter((investor) => {
-      const matchesSearch =
-        !query ||
-        investor.name
-          .toLowerCase()
-          .includes(query) ||
-        investor.mobile.includes(query) ||
-        investor.id
-          .toLowerCase()
-          .includes(query);
-
-      const matchesBranch =
-        !branchFilter ||
-        investor.branch === branchFilter;
-
-      const matchesStatus =
-        !statusFilter ||
-        investor.status === statusFilter;
-
-      return (
-        matchesSearch &&
-        matchesBranch &&
-        matchesStatus
+      setBranches(branchOptions);
+      setStatuses(statusOptions);
+    } catch (err) {
+      console.error(
+        "Investor filters loading error:",
+        err
       );
-    });
-  }, [
-    search,
-    branchFilter,
-    statusFilter,
-  ]);
+      setBranches([]);
+      setStatuses([]);
+    }
+  };
 
-  const stats = useMemo(() => {
-    const active = MOCK_INVESTORS.filter(
-      (investor) =>
-        investor.status === "Active"
-    ).length;
+  const loadInvestors = async ({
+    showLoader = true,
+  } = {}) => {
+    if (showLoader) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
 
-    const pending = MOCK_INVESTORS.filter(
-      (investor) =>
-        investor.status === "Pending"
-    ).length;
+    setError("");
 
-    const suspended = MOCK_INVESTORS.filter(
-      (investor) =>
-        investor.status === "Suspended"
-    ).length;
+    try {
+      const response = await getInvestorManagement({
+        search,
+        branchId: branchFilter,
+        statusId: statusFilter,
+        limit,
+        offset,
+      });
 
-    const totalAum = MOCK_INVESTORS.reduce(
-      (sum, investor) =>
-        sum + Number(investor.aum || 0),
-      0
-    );
+      const rows = Array.isArray(response?.data)
+        ? response.data
+        : [];
 
-    return {
-      total: MOCK_INVESTORS.length,
-      active,
-      pending,
-      suspended,
-      totalAum,
-    };
-  }, []);
+      const normalized = rows.map(normalizeInvestor);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filtered.length / PAGE_SIZE)
-  );
-
-  const pageSafe = Math.min(
-    page,
-    totalPages
-  );
-
-  const paginated = filtered.slice(
-    (pageSafe - 1) * PAGE_SIZE,
-    pageSafe * PAGE_SIZE
-  );
+      setInvestors(normalized);
+      setTotal(
+        Number(
+          response?.total ??
+          response?.count ??
+          normalized.length
+        )
+      );
+    } catch (err) {
+      console.error("Investor loading error:", err);
+      setInvestors([]);
+      setTotal(0);
+      setError(err?.message || "Unable to load investors.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
+    loadSummary();
+    loadFilters();
+  }, []);
+
+  useEffect(() => {
+    loadInvestors({
+      showLoader: true,
+    });
+  }, [search, branchFilter, statusFilter, page]);
+
+  const handleSearch = () => {
     setPage(1);
-  }, [
-    search,
-    branchFilter,
-    statusFilter,
-  ]);
+    setSearch(searchInput.trim());
+  };
 
-  function handleExport() {
-    const headers = [
-      "Investor ID",
-      "Name",
-      "Mobile",
-      "Branch",
-      "Registered",
-      "KYC",
-      "Status",
-      "AUM",
-    ];
+  const handleReset = () => {
+    setSearchInput("");
+    setSearch("");
+    setBranchFilter("");
+    setStatusFilter("");
+    setPage(1);
+  };
 
-    const rows = filtered.map((investor) => [
-      investor.id,
-      investor.name,
-      investor.mobile,
-      investor.branch,
-      formatDate(investor.registered),
-      investor.kyc,
-      investor.status,
-      investor.aum,
+  const handleRefresh = async () => {
+    await Promise.all([
+      loadInvestors({ showLoader: false }),
+      loadSummary(),
     ]);
+  };
 
-    const csv = [
-      headers,
-      ...rows,
-    ]
-      .map((row) =>
-        row
-          .map((value) =>
-            `"${String(value).replaceAll(
-              '"',
-              '""'
-            )}"`
-          )
-          .join(",")
-      )
-      .join("\n");
+  const openDetails = async (investor) => {
+    setSelectedInvestor({
+      ...investor,
+      details: null,
+    });
 
-    const blob = new Blob(
-      [csv],
-      {
-        type: "text/csv;charset=utf-8;",
-      }
+    setDetailsLoading(true);
+
+    try {
+      const response =
+        await getInvestorManagementDetails(investor.id);
+
+      setSelectedInvestor({
+        ...investor,
+        details: response?.data || {},
+      });
+    } catch (err) {
+      console.error("Investor details error:", err);
+
+      setSelectedInvestor({
+        ...investor,
+        details: {
+          error:
+            err?.message ||
+            "Unable to load investor details.",
+        },
+      });
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const closeDetails = () => {
+    setSelectedInvestor(null);
+  };
+
+  const handleExport = () => {
+    if (!investors.length) return;
+
+    exportInvestorsCSV(
+      investors,
+      "investors.csv"
     );
+  };
 
-    const url =
-      URL.createObjectURL(blob);
+  const stats = useMemo(() => {
+    const totalInvestors =
+      summary?.total_investors ??
+      summary?.investor_count ??
+      summary?.total ??
+      total;
 
-    const anchor =
-      document.createElement("a");
+    const active =
+      summary?.active_investors ??
+      summary?.active_count ??
+      investors.filter(
+        (item) =>
+          String(item.status).toLowerCase() === "active"
+      ).length;
 
-    anchor.href = url;
-    anchor.download =
-      "investors.csv";
+    const inactive =
+      summary?.inactive_investors ??
+      summary?.inactive_count ??
+      investors.filter(
+        (item) =>
+          String(item.status).toLowerCase() === "inactive"
+      ).length;
 
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
+    const aum =
+      summary?.total_aum ??
+      summary?.aum ??
+      summary?.total_investment ??
+      investors.reduce(
+        (sum, item) => sum + Number(item.aum || 0),
+        0
+      );
 
-    URL.revokeObjectURL(url);
-  }
+    return [
+      {
+        title: "Total Investors",
+        value: totalInvestors,
+        icon: Users,
+      },
+      {
+        title: "Active Investors",
+        value: active,
+        icon: UserCheck,
+      },
+      {
+        title: "Inactive Investors",
+        value: inactive,
+        icon: UserX,
+      },
+      {
+        title: "Total AUM",
+        value: formatCurrency(aum),
+        icon: IndianRupee,
+      },
+    ];
+  }, [summary, investors, total]);
 
   return (
     <div className="ivm-page">
-      <div className="ivm-page-head">
+      {/* <div className="ivm-header">
         <div>
           <h1>Investor Management</h1>
-
           <p>
-            Manage investors, branches,
-            KYC and account status
+            Manage and monitor all investors across branches.
           </p>
         </div>
 
-        <div className="ivm-page-actions">
-          <button
-            type="button"
-            className="ivm-add-btn"
-          >
-            <Plus size={15} />
-            Add Investor
-          </button>
+        <button
+          type="button"
+          className="ivm-refresh-btn"
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw
+            size={16}
+            className={refreshing ? "ivm-spin" : ""}
+          />
+          Refresh
+        </button>
+      </div> */}
 
-          <button
-            type="button"
-            className="ivm-export-btn"
-            onClick={handleExport}
-          >
-            <Download size={15} />
-            Export
-          </button>
-        </div>
+      <div className="ivm-stats-grid">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+
+          return (
+            <div className="ivm-stat-card" key={stat.title}>
+              <div className="ivm-stat-icon">
+                <Icon size={20} />
+              </div>
+
+              <div>
+                <div className="ivm-stat-title">
+                  {stat.title}
+                </div>
+                <div className="ivm-stat-value">
+                  {stat.value}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="ivm-stat-grid">
-        <StatCard
-          label="TOTAL INVESTORS"
-          value={stats.total}
-          subtitle="All registered investors"
-          icon={Users}
-          tone="blue"
-        />
+      <div className="ivm-toolbar">
+        <div className="ivm-search">
+          <Search size={17} />
 
-        <StatCard
-          label="ACTIVE INVESTORS"
-          value={stats.active}
-          subtitle="Active accounts"
-          icon={UserCheck}
-          tone="green"
-        />
-
-        <StatCard
-          label="PENDING"
-          value={stats.pending}
-          subtitle="Awaiting verification"
-          icon={Clock3}
-          tone="orange"
-        />
-
-        <StatCard
-          label="SUSPENDED"
-          value={stats.suspended}
-          subtitle="Suspended accounts"
-          icon={UserX}
-          tone="red"
-        />
-
-        <StatCard
-          label="TOTAL INVESTMENT"
-          value={formatAUM(
-            stats.totalAum
-          )}
-          subtitle="Combined AUM"
-          icon={IndianRupee}
-          tone="purple"
-        />
-      </div>
-
-      <div className="ivm-card">
-        <div className="ivm-filter-head">
-          <div>
-            <h2>Investor Directory</h2>
-            <span>
-              {filtered.length} matching records
-            </span>
-          </div>
-
-          <div className="ivm-filter-status">
-            {statusFilter
-              ? `Status: ${statusFilter}`
-              : "All Status"}
-          </div>
-        </div>
-
-        <div className="ivm-toolbar">
-          <div className="ivm-search">
-            <Search size={16} />
-
-            <input
-              type="text"
-              placeholder="Search by name, ID or mobile..."
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
+          <input
+            type="text"
+            value={searchInput}
+            placeholder="Search investor..."
+            onChange={(event) =>
+              setSearchInput(event.target.value)
+            }
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                handleSearch();
               }
-            />
-          </div>
-
-          <Dropdown
-            label="All Branches"
-            options={branches}
-            value={branchFilter}
-            onChange={setBranchFilter}
+            }}
           />
 
-          <Dropdown
-            label="All Status"
-            options={statuses}
-            value={statusFilter}
-            onChange={setStatusFilter}
-          />
-
-          {(search ||
-            branchFilter ||
-            statusFilter) && (
+          {searchInput && (
             <button
               type="button"
-              className="ivm-clear-btn"
-              onClick={() => {
-                setSearch("");
-                setBranchFilter(null);
-                setStatusFilter(null);
-              }}
+              className="ivm-search-clear"
+              onClick={() => setSearchInput("")}
             >
-              Clear
+              <X size={14} />
             </button>
           )}
         </div>
 
-        <div className="ivm-table-wrap">
-          <table className="ivm-table">
-            <thead>
-              <tr>
-                <th>Investor ID</th>
-                <th>Name</th>
-                <th>Mobile</th>
-                <th>Branch</th>
-                <th>Registered</th>
-                <th>KYC</th>
-                <th>Status</th>
-                <th>AUM</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+        <button
+          type="button"
+          className="ivm-search-btn"
+          onClick={handleSearch}
+        >
+          <Search size={16} />
+          Search
+        </button>
 
-            <tbody>
-              {paginated.length === 0 ? (
+        <Dropdown
+          label="All Branches"
+          options={branches}
+          value={branchFilter}
+          onChange={(value) => {
+            setBranchFilter(value);
+            setPage(1);
+          }}
+        />
+
+        <Dropdown
+          label="All Status"
+          options={statuses}
+          value={statusFilter}
+          onChange={(value) => {
+            setStatusFilter(value);
+            setPage(1);
+          }}
+        />
+
+        <button
+          type="button"
+          className="ivm-reset-btn"
+          onClick={handleReset}
+        >
+          Reset
+        </button>
+
+        <button
+          type="button"
+          className="ivm-export-btn"
+          onClick={handleExport}
+          disabled={!investors.length}
+        >
+          <Download size={16} />
+          Export
+        </button>
+      </div>
+
+      {error && (
+        <div className="ivm-error">
+          {error}
+        </div>
+      )}
+
+      <div className="ivm-table-card">
+        {/* <div className="ivm-table-header">
+          <div>
+            <h2>Investors</h2>
+            <span>
+              {total} investor{total === 1 ? "" : "s"} found
+            </span>
+          </div>
+
+          {refreshing && (
+            <RefreshCw
+              size={16}
+              className="ivm-spin"
+            />
+          )}
+        </div> */}
+
+        {loading ? (
+          <div className="ivm-loading">
+            <RefreshCw
+              size={28}
+              className="ivm-spin"
+            />
+            <p>Loading investors...</p>
+          </div>
+        ) : investors.length === 0 ? (
+          <div className="ivm-empty">
+            <Users size={42} />
+            <h3>No investors found</h3>
+            <p>
+              Try changing your search or filters.
+            </p>
+          </div>
+        ) : (
+          <div className="ivm-table-wrap">
+            <table className="ivm-table">
+              <thead>
                 <tr>
-                  <td
-                    colSpan={9}
-                    className="ivm-empty"
-                  >
-                    <div className="ivm-empty-box">
-                      <Search size={22} />
-                      <strong>
-                        No investors found
-                      </strong>
-                      <span>
-                        Try changing your
-                        search or filters.
-                      </span>
-                    </div>
-                  </td>
+                  <th>Investor</th>
+                  <th>Mobile</th>
+                  <th>Branch</th>
+                  <th>Registered</th>
+                  <th>KYC</th>
+                  <th>Status</th>
+                  <th>AUM</th>
+                  <th>Action</th>
                 </tr>
-              ) : (
-                paginated.map((investor) => (
+              </thead>
+
+              <tbody>
+                {investors.map((investor) => (
                   <tr key={investor.id}>
                     <td>
-                      <button
-                        type="button"
-                        className="ivm-id-link"
-                        onClick={() =>
-                          setViewInvestor(
-                            investor
+                      <div className="ivm-investor">
+                        <div className="ivm-avatar">
+                          {String(
+                            investor.name || "I"
                           )
-                        }
-                      >
-                        {investor.id}
-                      </button>
-                    </td>
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
 
-                    <td className="ivm-name">
-                      {investor.name}
+                        <div>
+                          <strong>
+                            {investor.name}
+                          </strong>
+                          <small>
+                            {investor.id}
+                          </small>
+                        </div>
+                      </div>
                     </td>
 
                     <td>
@@ -626,12 +638,10 @@ export default function InvestorManagement() {
                     </td>
 
                     <td>
-                      <span className="ivm-branch-text">
-                        {investor.branch}
-                      </span>
+                      {investor.branch}
                     </td>
 
-                    <td className="ivm-muted">
+                    <td>
                       {formatDate(
                         investor.registered
                       )}
@@ -639,9 +649,11 @@ export default function InvestorManagement() {
 
                     <td>
                       <span
-                        className={badgeClass(
+                        className={`ivm-badge ivm-kyc-${String(
                           investor.kyc
-                        )}
+                        )
+                          .toLowerCase()
+                          .replaceAll(" ", "-")}`}
                       >
                         {investor.kyc}
                       </span>
@@ -649,16 +661,18 @@ export default function InvestorManagement() {
 
                     <td>
                       <span
-                        className={badgeClass(
+                        className={`ivm-badge ivm-status-${String(
                           investor.status
-                        )}
+                        )
+                          .toLowerCase()
+                          .replaceAll(" ", "-")}`}
                       >
                         {investor.status}
                       </span>
                     </td>
 
                     <td className="ivm-aum">
-                      {formatAUM(
+                      {formatCurrency(
                         investor.aum
                       )}
                     </td>
@@ -668,164 +682,240 @@ export default function InvestorManagement() {
                         type="button"
                         className="ivm-view-btn"
                         onClick={() =>
-                          setViewInvestor(
+                          openDetails(
                             investor
                           )
                         }
-                        aria-label="View investor"
                       >
                         <Eye size={15} />
+                        View
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-        <div className="ivm-footer">
-          <span className="ivm-footer-text">
-            Showing{" "}
-            {filtered.length === 0
-              ? 0
-              : (pageSafe - 1) *
-                  PAGE_SIZE +
-                1}
-            –
-            {Math.min(
-              pageSafe * PAGE_SIZE,
-              filtered.length
-            )}{" "}
-            of {filtered.length} records
-          </span>
-
+        {!loading && total > 0 && (
           <div className="ivm-pagination">
-            <button
-              type="button"
-              className="ivm-page-btn"
-              disabled={pageSafe === 1}
-              onClick={() =>
-                setPage((current) =>
-                  Math.max(
-                    1,
-                    current - 1
-                  )
-                )
-              }
-            >
-              ‹
-            </button>
-
-            <span className="ivm-page-current">
-              {pageSafe}
+            <span>
+              Page {page} of {totalPages}
             </span>
 
-            <button
-              type="button"
-              className="ivm-page-btn"
-              disabled={
-                pageSafe === totalPages
-              }
-              onClick={() =>
-                setPage((current) =>
-                  Math.min(
-                    totalPages,
-                    current + 1
+            <div className="ivm-pagination-buttons">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() =>
+                  setPage(
+                    (current) =>
+                      Math.max(
+                        1,
+                        current - 1
+                      )
                   )
-                )
-              }
-            >
-              ›
-            </button>
+                }
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  page >= totalPages
+                }
+                onClick={() =>
+                  setPage(
+                    (current) =>
+                      Math.min(
+                        totalPages,
+                        current + 1
+                      )
+                  )
+                }
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {viewInvestor && (
-        <Modal
-          title={viewInvestor.name}
-          onClose={() =>
-            setViewInvestor(null)
-          }
+      {selectedInvestor && (
+        <div
+          className="ivm-modal-overlay"
+          onMouseDown={(event) => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              closeDetails();
+            }
+          }}
         >
-          <div className="ivm-modal-grid">
-            <div>
-              <span className="ivm-modal-label">
-                Investor ID
-              </span>
-              <span className="ivm-modal-value">
-                {viewInvestor.id}
-              </span>
-            </div>
+          <div className="ivm-modal">
+            <div className="ivm-modal-header">
+              <div>
+                <h2>
+                  Investor Details
+                </h2>
+                <p>
+                  {selectedInvestor.id}
+                </p>
+              </div>
 
-            <div>
-              <span className="ivm-modal-label">
-                Mobile
-              </span>
-              <span className="ivm-modal-value">
-                {viewInvestor.mobile}
-              </span>
-            </div>
-
-            <div>
-              <span className="ivm-modal-label">
-                Branch
-              </span>
-              <span className="ivm-modal-value">
-                {viewInvestor.branch}
-              </span>
-            </div>
-
-            <div>
-              <span className="ivm-modal-label">
-                Registered
-              </span>
-              <span className="ivm-modal-value">
-                {formatDate(
-                  viewInvestor.registered
-                )}
-              </span>
-            </div>
-
-            <div>
-              <span className="ivm-modal-label">
-                KYC
-              </span>
-              <span
-                className={badgeClass(
-                  viewInvestor.kyc
-                )}
+              <button
+                type="button"
+                className="ivm-close-btn"
+                onClick={
+                  closeDetails
+                }
               >
-                {viewInvestor.kyc}
-              </span>
+                <X size={19} />
+              </button>
             </div>
 
-            <div>
-              <span className="ivm-modal-label">
-                Status
-              </span>
-              <span
-                className={badgeClass(
-                  viewInvestor.status
-                )}
-              >
-                {viewInvestor.status}
-              </span>
-            </div>
+            {detailsLoading ? (
+              <div className="ivm-modal-loading">
+                <RefreshCw
+                  size={28}
+                  className="ivm-spin"
+                />
+                <p>
+                  Loading investor details...
+                </p>
+              </div>
+            ) : selectedInvestor.details?.error ? (
+              <div className="ivm-modal-error">
+                {selectedInvestor.details.error}
+              </div>
+            ) : (
+              <div className="ivm-details">
+                <div className="ivm-details-profile">
+                  <div className="ivm-details-avatar">
+                    {String(
+                      selectedInvestor.name ||
+                        "I"
+                    )
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
 
-            <div>
-              <span className="ivm-modal-label">
-                AUM
-              </span>
-              <span className="ivm-modal-value">
-                {formatAUM(
-                  viewInvestor.aum
-                )}
-              </span>
-            </div>
+                  <div>
+                    <h3>
+                      {selectedInvestor.name}
+                    </h3>
+                    <span>
+                      {selectedInvestor.id}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="ivm-detail-grid">
+                  <div>
+                    <label>Mobile</label>
+                    <strong>
+                      {selectedInvestor.mobile}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <label>Branch</label>
+                    <strong>
+                      {selectedInvestor.branch}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <label>Registered</label>
+                    <strong>
+                      {formatDate(
+                        selectedInvestor.registered
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <label>KYC</label>
+                    <strong>
+                      {selectedInvestor.kyc}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <label>Status</label>
+                    <strong>
+                      {selectedInvestor.status}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <label>Total Investment</label>
+                    <strong>
+                      {formatCurrency(
+                        selectedInvestor.aum
+                      )}
+                    </strong>
+                  </div>
+                </div>
+
+                {selectedInvestor.details &&
+                  Object.keys(
+                    selectedInvestor.details
+                  ).length > 0 && (
+                    <div className="ivm-raw-details">
+                      <h3>
+                        Additional Information
+                      </h3>
+
+                      <div className="ivm-raw-grid">
+                        {Object.entries(
+                          selectedInvestor.details
+                        ).map(
+                          ([key, value]) => (
+                            <div
+                              key={key}
+                            >
+                              <label>
+                                {key
+                                  .replaceAll(
+                                    "_",
+                                    " "
+                                  )
+                                  .replace(
+                                    /\b\w/g,
+                                    (char) =>
+                                      char.toUpperCase()
+                                  )}
+                              </label>
+
+                              <strong>
+                                {value ===
+                                  null ||
+                                value ===
+                                  undefined
+                                  ? "-"
+                                  : typeof value ===
+                                    "object"
+                                  ? JSON.stringify(
+                                      value
+                                    )
+                                  : String(
+                                      value
+                                    )}
+                              </strong>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            )}
           </div>
-        </Modal>
+        </div>
       )}
     </div>
   );
