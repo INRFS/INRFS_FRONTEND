@@ -28,6 +28,11 @@ import {
   approvePayment,
   rejectPayment,
   markPaymentPaid,
+  getMonthlyInterestPaymentQueue,
+  getMonthlyInterestPaymentDetails,
+  approveMonthlyInterestPayment,
+  rejectMonthlyInterestPayment,
+  markMonthlyInterestPaymentPaid,
   getAllTenureExtensions,
   getTenureExtensionDetails,
   approveTenureExtension,
@@ -294,25 +299,38 @@ const normalizePayment = (
         )
       : toNumber(storedNet);
 
-  const monthlyAmount = toNumber(
+  const monthlyInterestAmount = toNumber(
     getValue(
       row,
       [
-        "payment_amount",
-        "paymentAmount",
-        "amount",
-        "approved_amount",
-        "approvedAmount",
+        "interest_amount",
+        "interestAmount",
         "interest_due",
         "interest_due_amount",
+        "payment_amount",
+        "paymentAmount",
       ],
       0
     )
   );
 
+  const monthlyNetAmount = toNumber(
+    getValue(
+      row,
+      [
+        "net_interest_amount",
+        "netInterestAmount",
+        "net_interest",
+        "netInterest",
+        "amount",
+      ],
+      monthlyInterestAmount - gst
+    )
+  );
+
   const amount =
     type === "Monthly Interest"
-      ? monthlyAmount
+      ? monthlyNetAmount
       : settlementNet;
 
   const sourceId = getValue(
@@ -386,6 +404,8 @@ const normalizePayment = (
     gst,
     penalty,
     netSettlement: settlementNet,
+    monthlyInterestAmount,
+    monthlyNetAmount,
 
     amount,
 
@@ -705,11 +725,17 @@ export default function Payments() {
       setLoading(true);
       setError("");
 
-      const response = await getPaymentQueue({
-        paymentType: activeTab,
-        limit: 100,
-        offset: 0,
-      });
+      const response =
+        activeTab === "Monthly Interest"
+          ? await getMonthlyInterestPaymentQueue({
+              limit: 100,
+              offset: 0,
+            })
+          : await getPaymentQueue({
+              paymentType: activeTab,
+              limit: 100,
+              offset: 0,
+            });
 
       const rows = getList(response);
 
@@ -878,10 +904,14 @@ export default function Payments() {
 
     try {
       const response =
-        await getPaymentDetails(
-          payment.sourceId,
-          payment.type
-        );
+        payment.type === "Monthly Interest"
+          ? await getMonthlyInterestPaymentDetails(
+              payment.sourceId
+            )
+          : await getPaymentDetails(
+              payment.sourceId,
+              payment.type
+            );
 
       const details =
         response?.data ||
@@ -950,10 +980,16 @@ export default function Payments() {
       setActionLoading(true);
       setError("");
 
-      await approvePayment(
-        payment.sourceId,
-        payment.type
-      );
+      if (payment.type === "Monthly Interest") {
+        await approveMonthlyInterestPayment(
+          payment.sourceId
+        );
+      } else {
+        await approvePayment(
+          payment.sourceId,
+          payment.type
+        );
+      }
 
       closeConfirmation();
       closeApproval();
@@ -997,11 +1033,18 @@ export default function Payments() {
       setActionLoading(true);
       setError("");
 
-      await rejectPayment(
-        payment.sourceId,
-        payment.type,
-        reason
-      );
+      if (payment.type === "Monthly Interest") {
+        await rejectMonthlyInterestPayment(
+          payment.sourceId,
+          reason
+        );
+      } else {
+        await rejectPayment(
+          payment.sourceId,
+          payment.type,
+          reason
+        );
+      }
 
       closeConfirmation();
       closeApproval();
@@ -1035,10 +1078,16 @@ export default function Payments() {
       setActionLoading(true);
       setError("");
 
-      await markPaymentPaid(
-        payment.sourceId,
-        payment.type
-      );
+      if (payment.type === "Monthly Interest") {
+        await markMonthlyInterestPaymentPaid(
+          payment.sourceId
+        );
+      } else {
+        await markPaymentPaid(
+          payment.sourceId,
+          payment.type
+        );
+      }
 
       closeConfirmation();
 
@@ -1708,7 +1757,7 @@ export default function Payments() {
 
                 <td className="pq-amount">
                   {formatAmount(
-                    payment.amount
+                    payment.monthlyInterestAmount
                   )}
                 </td>
 
@@ -1720,8 +1769,7 @@ export default function Payments() {
 
                 <td className="pq-amount">
                   {formatAmount(
-                    payment.amount -
-                      payment.gst
+                    payment.monthlyNetAmount
                   )}
                 </td>
 
@@ -1978,12 +2026,7 @@ export default function Payments() {
   return (
     <div className="pq-page">
       <div className="pq-page-head">
-        <div>
-          <h1>Payment Queue</h1>
-          <p>
-            Payment requests from all branch admins
-          </p>
-        </div>
+      
 
         <div className="pq-head-actions">
           <div className="pq-pending-card">
@@ -1998,30 +2041,7 @@ export default function Payments() {
             </span>
           </div>
 
-          <button
-            type="button"
-            className="pq-refresh-btn"
-            onClick={() => {
-              loadPayments();
-              loadTenureRequests();
-            }}
-            disabled={
-              loading ||
-              tenureLoading ||
-              actionLoading
-            }
-          >
-            <RefreshCw
-              size={15}
-              className={
-                loading ||
-                tenureLoading
-                  ? "pq-spin"
-                  : ""
-              }
-            />
-            Refresh
-          </button>
+        
         </div>
       </div>
 
@@ -2125,9 +2145,10 @@ export default function Payments() {
                       </h3>
 
                       <p>
-                        Review the complete settlement
-                        amount before approving or rejecting
-                        this request.
+                        {selectedPayment.type ===
+                        "Monthly Interest"
+                          ? "Review the monthly interest amount before approving or rejecting this request."
+                          : "Review the complete settlement amount before approving or rejecting this request."}
                       </p>
                     </div>
                   </div>
@@ -2135,7 +2156,10 @@ export default function Payments() {
                   <div className="pq-payment-summary">
                     <div className="pq-summary-main">
                       <span>
-                        NET SETTLEMENT
+                        {selectedPayment.type ===
+                        "Monthly Interest"
+                          ? "NET INTEREST"
+                          : "NET SETTLEMENT"}
                       </span>
 
                       <strong>

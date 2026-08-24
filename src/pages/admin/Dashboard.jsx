@@ -15,8 +15,6 @@ import {
   Building2,
   BarChart3,
   Plus,
-  Check,
-  X,
   Eye,
   RefreshCw,
   AlertCircle,
@@ -25,8 +23,8 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -91,6 +89,38 @@ const formatCurrency = (value) => {
   return `₹${new Intl.NumberFormat("en-IN", {
     maximumFractionDigits: 2,
   }).format(number)}`;
+};
+
+const formatCompactCurrency = (value) => {
+  const number = Number(value || 0);
+
+  if (Math.abs(number) >= 10000000) {
+    return `₹${(number / 10000000).toFixed(1)}Cr`;
+  }
+
+  if (Math.abs(number) >= 100000) {
+    return `₹${(number / 100000).toFixed(1)}L`;
+  }
+
+  if (Math.abs(number) >= 1000) {
+    return `₹${(number / 1000).toFixed(1)}K`;
+  }
+
+  return `₹${Math.round(number)}`;
+};
+
+const formatCompactNumber = (value) => {
+  const number = Number(value || 0);
+
+  if (Math.abs(number) >= 1000000) {
+    return `${(number / 1000000).toFixed(1)}M`;
+  }
+
+  if (Math.abs(number) >= 1000) {
+    return `${(number / 1000).toFixed(1)}K`;
+  }
+
+  return `${Math.round(number)}`;
 };
 
 const formatAum = (value) => {
@@ -214,74 +244,118 @@ const normalizeSummary = (summary) => {
       source?.recent_activity ||
         source?.recentActivity ||
         source?.recent_investments ||
-        source?.recentInvestments
+        source?.recentInvestments ||
+        source?.recent_activity_list ||
+        source?.recentActivityList
     ),
 
     kycPendingList: getArray(
       source?.kyc_pending_list ||
         source?.kycPendingList ||
         source?.pending_kyc_list ||
-        source?.pendingKycList
+        source?.pendingKycList ||
+        source?.kyc_pending ||
+        source?.kycPending
     ),
   };
 };
 
-const normalizeInvestorGrowth = (response) => {
-  const list = getArray(response);
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
 
-  return list.map((item) => ({
-    month:
+const monthIndex = (value) => {
+  const text = String(value || "").trim().slice(0, 3).toLowerCase();
+  return MONTHS.findIndex(
+    (month) => month.toLowerCase() === text
+  );
+};
+
+const normalizeMonthlyData = (response, valueKeys, outputKey) => {
+  const list = getArray(response);
+  const source = new Map();
+
+  list.forEach((item) => {
+    const index = monthIndex(
       item?.month ||
       item?.month_name ||
       item?.monthName ||
-      item?.label ||
-      "",
+      item?.label
+    );
 
-    count: Number(
-      getValue(
-        item,
-        [
-          "count",
-          "investor_count",
-          "investors",
-          "total_investors",
-          "value",
-        ],
-        0
-      )
-    ),
-  }));
+    if (index < 0) return;
+
+    source.set(
+      index,
+      Number(getValue(item, valueKeys, 0))
+    );
+  });
+
+  const currentMonth = new Date().getMonth();
+
+  return MONTHS
+    .slice(0, currentMonth + 1)
+    .map((month, index) => ({
+      month,
+      [outputKey]: source.get(index) || 0,
+    }));
 };
 
-const normalizeInvestmentTrend = (response) => {
-  const list = getArray(response);
+const normalizeInvestorGrowth = (response) =>
+  normalizeMonthlyData(
+    response,
+    [
+      "count",
+      "investor_count",
+      "investors",
+      "total_investors",
+      "value",
+    ],
+    "count"
+  );
 
-  return list.map((item) => ({
-    month:
-      item?.month ||
-      item?.month_name ||
-      item?.monthName ||
-      item?.label ||
-      "",
-
-    amount: Number(
-      getValue(
-        item,
-        [
-          "amount",
-          "investment_amount",
-          "total_amount",
-          "investment",
-          "value",
-        ],
-        0
-      )
-    ),
-  }));
-};
+const normalizeInvestmentTrend = (response) =>
+  normalizeMonthlyData(
+    response,
+    [
+      "amount",
+      "investment_amount",
+      "total_amount",
+      "investment",
+      "value",
+    ],
+    "amount"
+  );
 
 const normalizeRecentActivity = (list) => {
-  return list.map((item, index) => ({
+  const ordered = [...list].sort((a, b) => {
+    const aDate =
+      a?.created_at ||
+      a?.createdAt ||
+      a?.registration_date ||
+      a?.registrationDate ||
+      a?.investment_date ||
+      a?.investmentDate ||
+      a?.date ||
+      "";
+
+    const bDate =
+      b?.created_at ||
+      b?.createdAt ||
+      b?.registration_date ||
+      b?.registrationDate ||
+      b?.investment_date ||
+      b?.investmentDate ||
+      b?.date ||
+      "";
+
+    if (!aDate || !bDate) return 0;
+
+    return new Date(bDate).getTime() - new Date(aDate).getTime();
+  });
+
+  return ordered.map((item, index) => ({
     id:
       item?.investment_id ||
       item?.investor_registration_id ||
@@ -405,30 +479,57 @@ export default function Dashboard() {
         const response =
           await getAdminDashboardData();
 
+        const responseData =
+          response?.data || response || {};
+
         const summary =
           normalizeSummary(
-            response.summary
+            response?.summary ||
+              responseData?.summary ||
+              responseData
           );
 
         const trend =
           normalizeInvestmentTrend(
-            response.investmentTrend
+            response?.investmentTrend ||
+              responseData?.investmentTrend ||
+              responseData?.investment_trend
           );
 
         const growth =
           normalizeInvestorGrowth(
-            response.investorGrowth
+            response?.investorGrowth ||
+              responseData?.investorGrowth ||
+              responseData?.investor_growth
           );
+
+        const recentActivitySource =
+          response?.recentActivity ||
+          response?.recent_activity ||
+          responseData?.recentActivity ||
+          responseData?.recent_activity ||
+          responseData?.recentInvestments ||
+          responseData?.recent_investments ||
+          summary.recentActivity;
+
+        const kycPendingSource =
+          response?.kycPendingList ||
+          response?.kyc_pending_list ||
+          responseData?.kycPendingList ||
+          responseData?.kyc_pending_list ||
+          responseData?.pendingKycList ||
+          responseData?.pending_kyc_list ||
+          summary.kycPendingList;
 
         setDashboard({
           ...summary,
           recentActivity:
             normalizeRecentActivity(
-              summary.recentActivity
-            ),
+              getArray(recentActivitySource)
+            ).slice(0, 4),
           kycPendingList:
             normalizeKycPending(
-              summary.kycPendingList
+              getArray(kycPendingSource)
             ),
         });
 
@@ -598,282 +699,251 @@ export default function Dashboard() {
       )}
 
       <div className="chart-grid">
-        <div className="panel">
-          <div className="panel-title">
-            Monthly Investment Trend
-          </div>
+        <div className="panel chart-panel">
+          <div className="panel-title">Monthly Investment Trend</div>
+          <div className="panel-sub">Investment amount per month</div>
 
-          <div className="panel-sub">
-            Investment amount per month
-          </div>
+          {investmentTrend.length === 0 ? (
+            <div className="chart-empty">
+              <BarChart3 size={22} />
+              <strong>No investment trend data</strong>
+              <span>Monthly investment data will appear here.</span>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={285}>
+              <AreaChart
+                data={investmentTrend}
+                margin={{ top: 10, right: 12, left: 4, bottom: 4 }}
+              >
+                <defs>
+                  <linearGradient id="investmentTrendFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopOpacity={0.28} />
+                    <stop offset="100%" stopOpacity={0.03} />
+                  </linearGradient>
+                </defs>
 
-          <ResponsiveContainer
-            width="100%"
-            height={260}
-          >
-            <BarChart
-              data={investmentTrend}
-            >
-              <CartesianGrid
-                stroke="#eef0f6"
-                vertical={false}
-              />
+                <CartesianGrid
+                  stroke="#eef0f6"
+                  vertical={false}
+                />
 
-              <XAxis
-                dataKey="month"
-                tick={{
-                  fontSize: 11,
-                  fill: "#9aa1b5",
-                }}
-                axisLine={false}
-                tickLine={false}
-              />
+                <XAxis
+                  dataKey="month"
+                  tick={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fill: "#68758d",
+                  }}
+                  axisLine={false}
+                  tickLine={false}
+                  dy={8}
+                />
 
-              <YAxis
-                tick={{
-                  fontSize: 11,
-                  fill: "#9aa1b5",
-                }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(value) =>
-                  `₹${value}`
-                }
-              />
+                <YAxis
+                  width={62}
+                  tick={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    fill: "#68758d",
+                  }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={formatCompactCurrency}
+                />
 
-              <Tooltip
-                content={
-                  <CustomTooltip />
-                }
-                cursor={{
-                  fill: "#f1f3fa",
-                }}
-              />
+                <Tooltip
+                  formatter={(value) => [
+                    formatCurrency(value),
+                    "Investment",
+                  ]}
+                  labelStyle={{
+                    fontWeight: 800,
+                    color: "#0b1220",
+                  }}
+                  contentStyle={{
+                    borderRadius: 10,
+                    border: "1px solid #dfe5ef",
+                    boxShadow: "0 12px 28px rgba(20,30,60,.12)",
+                  }}
+                />
 
-              <Bar
-                dataKey="amount"
-                fill="#2f5cf0"
-                radius={[
-                  4,
-                  4,
-                  0,
-                  0,
-                ]}
-                maxBarSize={38}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+                <Area
+                  type="monotone"
+                  dataKey="amount"
+                  stroke="#2f5cf0"
+                  strokeWidth={3}
+                  fill="url(#investmentTrendFill)"
+                  dot={{
+                    r: 4,
+                    strokeWidth: 2,
+                  }}
+                  activeDot={{
+                    r: 6,
+                    strokeWidth: 2,
+                  }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
-        <div className="panel">
-          <div className="panel-title">
-            Investor Growth
-          </div>
+        <div className="panel chart-panel">
+          <div className="panel-title">Investor Growth</div>
+          <div className="panel-sub">Total investor count by month</div>
 
-          <div className="panel-sub">
-            Investor count growth
-          </div>
+          {investorGrowth.length === 0 ? (
+            <div className="chart-empty">
+              <Users size={22} />
+              <strong>No investor growth data</strong>
+              <span>Monthly investor counts will appear here.</span>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={275}>
+              <AreaChart
+                data={investorGrowth}
+                margin={{ top: 14, right: 10, left: 0, bottom: 2 }}
+              >
+                <defs>
+                  <linearGradient id="investorGrowthFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22a05a" stopOpacity={0.24} />
+                    <stop offset="100%" stopColor="#22a05a" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
 
-          <ResponsiveContainer
-            width="100%"
-            height={260}
-          >
-            <LineChart
-              data={investorGrowth}
-            >
-              <CartesianGrid
-                stroke="#eef0f6"
-                vertical={false}
-              />
+                <CartesianGrid
+                  stroke="#eef0f6"
+                  vertical={false}
+                />
 
-              <XAxis
-                dataKey="month"
-                tick={{
-                  fontSize: 11,
-                  fill: "#9aa1b5",
-                }}
-                axisLine={false}
-                tickLine={false}
-              />
+                <XAxis
+                  dataKey="month"
+                  tick={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    fill: "#68758d",
+                  }}
+                  axisLine={false}
+                  tickLine={false}
+                  dy={8}
+                />
 
-              <YAxis
-                tick={{
-                  fontSize: 11,
-                  fill: "#9aa1b5",
-                }}
-                axisLine={false}
-                tickLine={false}
-              />
+                <YAxis
+                  width={32}
+                  allowDecimals={false}
+                  tick={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fill: "#68758d",
+                  }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={formatCompactNumber}
+                />
 
-              <Tooltip />
+                <Tooltip
+                  formatter={(value) => [
+                    formatNumber(value),
+                    "Investors",
+                  ]}
+                  labelStyle={{
+                    fontWeight: 800,
+                    color: "#0b1220",
+                  }}
+                  contentStyle={{
+                    borderRadius: 10,
+                    border: "1px solid #dfe5ef",
+                    boxShadow: "0 12px 28px rgba(20,30,60,.12)",
+                  }}
+                />
 
-              <Line
-                type="monotone"
-                dataKey="count"
-                stroke="#16a34a"
-                strokeWidth={2.5}
-                dot={{
-                  r: 4,
-                  fill: "#16a34a",
-                }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#16a34a"
+                  strokeWidth={3}
+                  fill="url(#investorGrowthFill)"
+                  dot={{
+                    r: 4,
+                    strokeWidth: 2,
+                  }}
+                  activeDot={{
+                    r: 6,
+                    strokeWidth: 2,
+                  }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
-
       <div className="bottom-grid">
-        <div className="panel">
-          <div className="panel-header-row">
+        <div className="panel recent-investors-panel">
+          <div className="panel-header-row recent-investors-header">
             <div>
-              <div className="panel-title">
-                Recent Activity
-              </div>
-
-              <div className="panel-sub">
-                Latest investor activity
-              </div>
+              <div className="panel-title">Recent Investors</div>
+              <div className="panel-sub">Latest 4 investor registrations</div>
             </div>
 
             <button
               type="button"
               className="link-btn"
-              onClick={() =>
-                navigate(
-                  "/admin/investors"
-                )
-              }
+              onClick={() => navigate("/admin/investors")}
             >
               View All
             </button>
           </div>
 
-          <div className="activity-table-wrapper">
-            <table className="activity-table">
-              <thead>
-                <tr>
-                  <th>INVESTOR</th>
-                  <th>BRANCH</th>
-                  <th>KYC</th>
-                  <th>STATUS</th>
-                  <th>ACTIONS</th>
-                </tr>
-              </thead>
+          <div className="recent-investors-list">
+            {dashboard.recentActivity.length === 0 ? (
+              <div className="dashboard-empty dashboard-empty-compact">
+                <Clock size={20} />
+                <strong>No recent investors</strong>
+                <span>Latest investor registrations will appear here.</span>
+              </div>
+            ) : (
+              dashboard.recentActivity.map((row, index) => (
+                <div
+                  className="recent-investor-row"
+                  key={`${row.id}-${index}`}
+                >
+                  <div className="recent-investor-main">
+                    <span className="investor-avatar">
+                      {getInitial(row.name)}
+                    </span>
 
-              <tbody>
-                {dashboard.recentActivity
-                  .length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      style={{
-                        textAlign:
-                          "center",
-                        padding: "30px",
-                      }}
+                    <div className="recent-investor-info">
+                      <div className="investor-name">{row.name}</div>
+                      <div className="investor-id">{row.id}</div>
+                    </div>
+                  </div>
+
+                  <div className="recent-investor-branch">
+                    <span className="recent-label">Branch</span>
+                    <span>{row.branch}</span>
+                  </div>
+
+                  <div className="recent-investor-status">
+                    <span className="recent-label">Status</span>
+                    <span
+                      className={`badge badge-${String(row.status)
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")}`}
                     >
-                      No recent activity
-                    </td>
-                  </tr>
-                ) : (
-                  dashboard.recentActivity.map(
-                    (row, index) => (
-                      <tr
-                        key={`${row.id}-${index}`}
-                      >
-                        <td>
-                          <div className="investor-cell">
-                            <span className="investor-avatar">
-                              {getInitial(
-                                row.name
-                              )}
-                            </span>
+                      {row.status}
+                    </span>
+                  </div>
 
-                            <div>
-                              <div className="investor-name">
-                                {row.name}
-                              </div>
-
-                              <div className="investor-id">
-                                {row.id}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="branch-cell">
-                          {row.branch}
-                        </td>
-
-                        <td>
-                          <span
-                            className={`badge badge-${String(
-                              row.kyc
-                            )
-                              .toLowerCase()
-                              .replace(
-                                /\s+/g,
-                                "-"
-                              )}`}
-                          >
-                            {row.kyc}
-                          </span>
-                        </td>
-
-                        <td>
-                          <span
-                            className={`badge badge-${String(
-                              row.status
-                            )
-                              .toLowerCase()
-                              .replace(
-                                /\s+/g,
-                                "-"
-                              )}`}
-                          >
-                            {row.status}
-                          </span>
-                        </td>
-
-                        <td>
-                          <div className="row-actions">
-                            <button
-                              type="button"
-                              className="icon-btn icon-btn-green"
-                              title="Approve"
-                            >
-                              <Check
-                                size={13}
-                              />
-                            </button>
-
-                            <button
-                              type="button"
-                              className="icon-btn icon-btn-red"
-                              title="Reject"
-                            >
-                              <X
-                                size={13}
-                              />
-                            </button>
-
-                            <button
-                              type="button"
-                              className="icon-btn icon-btn-neutral"
-                              title="View"
-                            >
-                              <Eye
-                                size={13}
-                              />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  )
-                )}
-              </tbody>
-            </table>
+                  <button
+                    type="button"
+                    className="activity-view-btn"
+                    onClick={() => navigate("/admin/investors")}
+                  >
+                    <Eye size={13} />
+                    View
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -956,17 +1026,10 @@ export default function Dashboard() {
             <div className="kyc-pending-list">
               {dashboard.kycPendingList
                 .length === 0 ? (
-                <div
-                  style={{
-                    padding:
-                      "20px 0",
-                    textAlign:
-                      "center",
-                    color:
-                      "#8a94a6",
-                  }}
-                >
-                  No pending KYC
+                <div className="dashboard-empty dashboard-empty-compact">
+                  <FileText size={20} />
+                  <strong>No pending KYC</strong>
+                  <span>Investors waiting for KYC review will appear here.</span>
                 </div>
               ) : (
                 dashboard.kycPendingList.map(
@@ -991,7 +1054,7 @@ export default function Dashboard() {
 
                       <button
                         type="button"
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-primary btn-sm kyc-review-btn"
                         onClick={() =>
                           navigate(
                             "/admin/investors"

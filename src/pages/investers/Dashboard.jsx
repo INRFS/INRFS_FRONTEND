@@ -1742,7 +1742,7 @@ export default function InvestorDashboard() {
               }
             >
               <Award size={13} />
-              My Bonds
+              My Investments
             </button>
 
             <button

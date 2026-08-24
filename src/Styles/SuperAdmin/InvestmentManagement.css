@@ -797,3 +797,160 @@
     font-size: 5.3px;
   }
 }
+
+/* Compact summary cards */
+.ivt-stat-card {
+  height: 78px;
+  padding: 10px 12px;
+}
+
+.ivt-stat-value {
+  font-size: 24px;
+}
+
+.ivt-stat-label {
+  font-size: 9px;
+}
+
+.ivt-stat-subtitle {
+  font-size: 8px;
+}
+
+/* Scroll only inside investment table */
+.ivt-table-wrap {
+  max-height: 390px;
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+  overscroll-behavior: contain;
+}
+
+.ivt-table-wrap::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.ivt-table-wrap::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.ivt-table-wrap::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.ivt-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Sticky header while table rows scroll */
+.ivt-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #f8fafc;
+}
+
+/* Larger readable table content */
+.ivt-table th {
+  padding: 9px 11px;
+  font-size: 9.5px;
+}
+
+.ivt-table td {
+  padding: 9px 11px;
+  font-size: 12.5px;
+  line-height: 1.25;
+}
+
+.ivt-bond-number,
+.ivt-name,
+.ivt-branch-text,
+.ivt-amount,
+.ivt-interest {
+  font-size: 12.5px;
+}
+
+.ivt-rate-badge,
+.ivt-badge {
+  min-height: 24px;
+  padding: 3px 9px;
+  font-size: 9.5px;
+}
+
+.ivt-view-btn {
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
+}
+
+.ivt-bond-btn {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 9.5px;
+}
+
+/* Compact but readable rows */
+.ivt-table tbody tr {
+  height: 52px;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .ivt-stat-card {
+    height: 72px;
+  }
+
+  .ivt-stat-value {
+    font-size: 21px;
+  }
+
+  .ivt-stat-label {
+    font-size: 8px;
+  }
+
+  .ivt-stat-subtitle {
+    font-size: 7px;
+  }
+
+  .ivt-table-wrap {
+    max-height: 360px;
+  }
+
+  .ivt-table td {
+    font-size: 12px;
+  }
+
+  .ivt-bond-number,
+  .ivt-name,
+  .ivt-branch-text,
+  .ivt-amount,
+  .ivt-interest {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .ivt-stat-card {
+    height: 68px;
+  }
+
+  .ivt-stat-value {
+    font-size: 20px;
+  }
+
+  .ivt-table-wrap {
+    max-height: 330px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ivt-stat-card {
+    height: 66px;
+  }
+
+  .ivt-stat-value {
+    font-size: 19px;
+  }
+}

@@ -1,6 +1,6 @@
 const API_URL =
   process.env.REACT_APP_API_URL ||
-  "http://localhost:8000";
+ "http://187.52.115.32:8000";
 
 const getToken = () => {
   return (
@@ -125,27 +125,21 @@ export const getAdminStatuses = async () => {
     `${API_URL}/api/superadmin/admins/filters/statuses`
   );
 };
-
-export const createAdmin = async (
-  payload
-) => {
+export const createAdmin = async (payload) => {
   return request(
     `${API_URL}/api/superadmin/admins`,
     {
       method: "POST",
       body: JSON.stringify({
-        full_name:
-          payload.full_name,
-        email:
-          payload.email,
-        mobile:
-          payload.mobile,
-        branch_id:
-          Number(payload.branch_id),
-        role_id:
-          Number(payload.role_id),
-        status_id:
-          Number(payload.status_id),
+        full_name: payload.full_name,
+        email: payload.email,
+        mobile: payload.mobile,
+        branch_id: Number(payload.branch_id),
+        role_id: Number(payload.role_id),
+        status_id: Number(payload.status_id),
+
+        // IMPORTANT
+        password: payload.password,
       }),
     }
   );

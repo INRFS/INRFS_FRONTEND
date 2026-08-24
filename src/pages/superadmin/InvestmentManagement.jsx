@@ -366,7 +366,7 @@ export default function InvestmentManagement() {
     if (!filtered.length) return;
 
     const headers = [
-      "Bond Number",
+      // "Bond Number",
       "Investor",
       "Branch",
       "Amount",
@@ -476,7 +476,7 @@ export default function InvestmentManagement() {
       </div>
 
       <div className="ivt-card">
-        <div className="ivt-filter-head">
+        {/* <div className="ivt-filter-head">
           <div>
             <h2>Investment Directory</h2>
             <span>
@@ -489,7 +489,7 @@ export default function InvestmentManagement() {
               ? `Status: ${statusFilter}`
               : "All Status"}
           </div>
-        </div>
+        </div> */}
 
         <div className="ivt-toolbar">
           <div className="ivt-search">
@@ -547,7 +547,7 @@ export default function InvestmentManagement() {
           <table className="ivt-table">
             <thead>
               <tr>
-                <th>Bond Number</th>
+                {/* <th>Bond Number</th> */}
                 <th>Investor</th>
                 <th>Branch</th>
                 <th>Amount</th>
@@ -582,7 +582,7 @@ export default function InvestmentManagement() {
               ) : (
                 paginated.map((investment) => (
                   <tr key={investment.key}>
-                    <td>
+                    {/* <td>
                       {investment.bond ? (
                         <span className="ivt-bond-number">
                           {investment.bond}
@@ -590,7 +590,7 @@ export default function InvestmentManagement() {
                       ) : (
                         <span className="ivt-muted">—</span>
                       )}
-                    </td>
+                    </td> */}
 
                     <td className="ivt-name">
                       {investment.investor}

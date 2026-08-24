@@ -561,7 +561,7 @@ export default function InvestorManagement() {
       )}
 
       <div className="ivm-table-card">
-        <div className="ivm-table-header">
+        {/* <div className="ivm-table-header">
           <div>
             <h2>Investors</h2>
             <span>
@@ -575,7 +575,7 @@ export default function InvestorManagement() {
               className="ivm-spin"
             />
           )}
-        </div>
+        </div> */}
 
         {loading ? (
           <div className="ivm-loading">

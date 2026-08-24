@@ -876,3 +876,283 @@
     padding: 12px;
   }
 }
+
+
+/* Final compact investor management overrides */
+
+.ivm-stat-card {
+  height: 78px;
+  padding: 10px 13px;
+  gap: 10px;
+}
+
+.ivm-stat-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 9px;
+}
+
+.ivm-stat-title {
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+
+.ivm-stat-value {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.ivm-table-wrap {
+  width: 100%;
+  max-height: 390px;
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+  overscroll-behavior: contain;
+}
+
+.ivm-table-wrap::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.ivm-table-wrap::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.ivm-table-wrap::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.ivm-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/*
+  Fixed table width prevents the browser from stretching
+  the Investor column and creating a large Investor-Mobile gap.
+*/
+.ivm-table {
+  width: 1150px;
+  min-width: 1150px;
+  max-width: none;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.ivm-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #f8fafc;
+}
+
+.ivm-table th {
+  height: 36px;
+  padding: 0 8px;
+  font-size: 9.5px;
+}
+
+.ivm-table td {
+  padding: 9px 8px;
+  font-size: 12.5px;
+  line-height: 1.25;
+}
+
+.ivm-table tbody tr {
+  height: 52px;
+}
+
+/* Investor */
+.ivm-table th:nth-child(1),
+.ivm-table td:nth-child(1) {
+  width: 205px;
+}
+
+/* Mobile - intentionally close to Investor */
+.ivm-table th:nth-child(2),
+.ivm-table td:nth-child(2) {
+  width: 130px;
+}
+
+/* Branch */
+.ivm-table th:nth-child(3),
+.ivm-table td:nth-child(3) {
+  width: 175px;
+}
+
+/* Registered */
+.ivm-table th:nth-child(4),
+.ivm-table td:nth-child(4) {
+  width: 135px;
+}
+
+/* KYC */
+.ivm-table th:nth-child(5),
+.ivm-table td:nth-child(5) {
+  width: 95px;
+}
+
+/* Status */
+.ivm-table th:nth-child(6),
+.ivm-table td:nth-child(6) {
+  width: 95px;
+}
+
+/* AUM */
+.ivm-table th:nth-child(7),
+.ivm-table td:nth-child(7) {
+  width: 100px;
+}
+
+/* Action */
+.ivm-table th:nth-child(8),
+.ivm-table td:nth-child(8) {
+  width: 95px;
+}
+
+.ivm-investor {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ivm-avatar {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  font-size: 13px;
+}
+
+.ivm-investor strong {
+  max-width: 135px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.ivm-investor small {
+  margin-top: 3px;
+  font-size: 9.5px;
+}
+
+.ivm-aum {
+  font-size: 12.5px !important;
+  font-weight: 800;
+}
+
+.ivm-badge {
+  min-height: 24px;
+  padding: 3px 9px;
+  font-size: 9.5px;
+}
+
+.ivm-view-btn {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.ivm-pagination {
+  min-height: 50px;
+}
+
+/* Tablet */
+@media (max-width: 1050px) {
+  .ivm-table {
+    width: 1120px;
+    min-width: 1120px;
+  }
+
+  .ivm-table th:nth-child(1),
+  .ivm-table td:nth-child(1) {
+    width: 200px;
+  }
+
+  .ivm-table th:nth-child(2),
+  .ivm-table td:nth-child(2) {
+    width: 125px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 760px) {
+  .ivm-stat-card {
+    height: 72px;
+  }
+
+  .ivm-stat-value {
+    font-size: 21px;
+  }
+
+  .ivm-table-wrap {
+    max-height: 360px;
+  }
+
+  .ivm-table {
+    width: 1050px;
+    min-width: 1050px;
+  }
+
+  .ivm-table th:nth-child(1),
+  .ivm-table td:nth-child(1) {
+    width: 190px;
+  }
+
+  .ivm-table th:nth-child(2),
+  .ivm-table td:nth-child(2) {
+    width: 120px;
+  }
+
+  .ivm-table th:nth-child(3),
+  .ivm-table td:nth-child(3) {
+    width: 160px;
+  }
+
+  .ivm-table td {
+    font-size: 12px;
+  }
+
+  .ivm-investor strong {
+    font-size: 12px;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .ivm-stat-card {
+    height: 68px;
+  }
+
+  .ivm-stat-value {
+    font-size: 20px;
+  }
+
+  .ivm-table-wrap {
+    max-height: 330px;
+  }
+
+  .ivm-table {
+    width: 1030px;
+    min-width: 1030px;
+  }
+
+  .ivm-table th:nth-child(1),
+  .ivm-table td:nth-child(1) {
+    width: 185px;
+  }
+
+  .ivm-table th:nth-child(2),
+  .ivm-table td:nth-child(2) {
+    width: 115px;
+  }
+
+  .ivm-table th:nth-child(3),
+  .ivm-table td:nth-child(3) {
+    width: 155px;
+  }
+}

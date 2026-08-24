@@ -4,11 +4,11 @@ import React, {
   useState,
 } from "react";
 
+import { useNavigate } from "react-router-dom";
+
 import {
-  Activity,
   ArrowUpRight,
   Building2,
-  CheckCircle2,
   DollarSign,
   Shield,
   TrendingUp,
@@ -18,8 +18,6 @@ import {
 
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
   BarChart,
   Bar,
   PieChart,
@@ -82,20 +80,14 @@ const currencyFormat = (value) => {
   }
 
   if (Math.abs(number) >= 10000000) {
-    return `₹${(
-      number / 10000000
-    ).toFixed(2)}Cr`;
+    return `₹${(number / 10000000).toFixed(2)}Cr`;
   }
 
   if (Math.abs(number) >= 100000) {
-    return `₹${(
-      number / 100000
-    ).toFixed(2)}L`;
+    return `₹${(number / 100000).toFixed(2)}L`;
   }
 
-  return `₹${number.toLocaleString(
-    "en-IN"
-  )}`;
+  return `₹${number.toLocaleString("en-IN")}`;
 };
 
 const getValue = (
@@ -155,34 +147,48 @@ const formatDate = (value) => {
     return String(value);
   }
 
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
-const normalizeMonthlyData = (
-  rows
-) => {
+const formatMonth = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    month: "short",
+  });
+};
+
+const normalizeMonthlyData = (rows) => {
   return rows.map((item) => ({
-    month:
+    month: formatMonth(
       getValue(
         item,
         [
+          "o_month",
           "month_name",
           "month",
           "label",
         ],
         ""
-      ),
+      )
+    ),
     investments: Number(
       getValue(
         item,
         [
+          "o_investment_count",
           "investment_count",
           "investments",
           "count",
@@ -194,6 +200,7 @@ const normalizeMonthlyData = (
       getValue(
         item,
         [
+          "o_investment_amount",
           "investment_amount",
           "amount",
           "total_amount",
@@ -206,6 +213,7 @@ const normalizeMonthlyData = (
       getValue(
         item,
         [
+          "o_interest_amount",
           "interest_amount",
           "interest",
           "total_interest",
@@ -216,24 +224,25 @@ const normalizeMonthlyData = (
   }));
 };
 
-const normalizeInvestorGrowth = (
-  rows
-) => {
+const normalizeInvestorGrowth = (rows) => {
   return rows.map((item) => ({
-    month:
+    month: formatMonth(
       getValue(
         item,
         [
+          "o_month",
           "month_name",
           "month",
           "label",
         ],
         ""
-      ),
+      )
+    ),
     investors: Number(
       getValue(
         item,
         [
+          "o_investor_count",
           "investor_count",
           "investors",
           "count",
@@ -246,25 +255,45 @@ const normalizeInvestorGrowth = (
 };
 
 const normalizeStatus = (rows) => {
-  return rows.map((item) => ({
-    name:
-      getValue(
-        item,
-        [
-          "status_name",
-          "name",
-          "label",
-          "investment_status",
-        ],
-        "Unknown"
-      ),
+  return rows.map((item, index) => ({
+    id: getValue(
+      item,
+      [
+        "o_status_id",
+        "status_id",
+        "id",
+      ],
+      `status-${index}`
+    ),
+    name: getValue(
+      item,
+      [
+        "o_status_name",
+        "status_name",
+        "name",
+        "label",
+        "investment_status",
+      ],
+      `Status ${index + 1}`
+    ),
     value: Number(
       getValue(
         item,
         [
+          "o_percentage",
           "percentage",
           "percent",
           "value",
+        ],
+        0
+      )
+    ),
+    count: Number(
+      getValue(
+        item,
+        [
+          "o_investment_count",
+          "investment_count",
           "count",
         ],
         0
@@ -274,21 +303,22 @@ const normalizeStatus = (rows) => {
 };
 
 const normalizeBranches = (rows) => {
-  return rows.map((item) => ({
-    branch:
-      getValue(
-        item,
-        [
-          "branch_name",
-          "name",
-          "branch",
-        ],
-        "Branch"
-      ),
+  return rows.map((item, index) => ({
+    branch: getValue(
+      item,
+      [
+        "o_branch_name",
+        "branch_name",
+        "name",
+        "branch",
+      ],
+      `Branch ${index + 1}`
+    ),
     investors: Number(
       getValue(
         item,
         [
+          "o_investor_count",
           "investor_count",
           "investors",
           "total_investors",
@@ -356,12 +386,8 @@ const ChartTooltip = ({
           <b>
             {item.dataKey === "amount" ||
             item.dataKey === "interest"
-              ? currencyFormat(
-                  item.value
-                )
-              : numberFormat(
-                  item.value
-                )}
+              ? currencyFormat(item.value)
+              : numberFormat(item.value)}
           </b>
         </div>
       ))}
@@ -385,12 +411,11 @@ const StatusTooltip = ({
 
   return (
     <div className="sa-chart-tooltip">
-      <strong>
-        {item.name}
-      </strong>
+      <strong>{item.name}</strong>
 
       <div>
         <span>Value</span>
+
         <b>
           {item.value}
         </b>
@@ -400,91 +425,80 @@ const StatusTooltip = ({
 };
 
 export default function SuperAdminDashboard() {
-  const [
-    dashboard,
-    setDashboard,
-  ] = useState(null);
+  const navigate = useNavigate();
 
-  const [
-    recentAdmins,
-    setRecentAdmins,
-  ] = useState([]);
+  const [dashboard, setDashboard] =
+    useState(null);
+
+  const [recentAdmins, setRecentAdmins] =
+    useState([]);
 
   const [
     recentInvestors,
     setRecentInvestors,
   ] = useState([]);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [
-    error,
-    setError,
-  ] = useState("");
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
     let mounted = true;
 
-    const loadDashboard =
-      async () => {
-        try {
-          setLoading(true);
-          setError("");
+    const loadDashboard = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-          const [
-            dashboardResponse,
-            adminsResponse,
-            investorsResponse,
-          ] = await Promise.all([
-            getSuperAdminDashboard(),
-            getRecentAdmins(5),
-            getRecentInvestors(5),
-          ]);
+        const [
+          dashboardResponse,
+          adminsResponse,
+          investorsResponse,
+        ] = await Promise.all([
+          getSuperAdminDashboard(),
+          getRecentAdmins(5),
+          getRecentInvestors(5),
+        ]);
 
-          if (!mounted) {
-            return;
-          }
-
-          setDashboard(
-            dashboardResponse?.data ||
-              dashboardResponse ||
-              {}
-          );
-
-          setRecentAdmins(
-            getRows(
-              adminsResponse
-            )
-          );
-
-          setRecentInvestors(
-            getRows(
-              investorsResponse
-            )
-          );
-        } catch (err) {
-          if (!mounted) {
-            return;
-          }
-
-          console.error(
-            "SuperAdmin dashboard error:",
-            err
-          );
-
-          setError(
-            err?.message ||
-              "Unable to load dashboard."
-          );
-        } finally {
-          if (mounted) {
-            setLoading(false);
-          }
+        if (!mounted) {
+          return;
         }
-      };
+
+        setDashboard(
+          dashboardResponse?.data ||
+            dashboardResponse ||
+            {}
+        );
+
+        setRecentAdmins(
+          getRows(adminsResponse)
+        );
+
+        setRecentInvestors(
+          getRows(investorsResponse)
+        );
+      } catch (err) {
+        if (!mounted) {
+          return;
+        }
+
+        console.error(
+          "SuperAdmin dashboard error:",
+          err
+        );
+
+        setError(
+          err?.message ||
+            "Unable to load dashboard."
+        );
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
 
     loadDashboard();
 
@@ -493,10 +507,9 @@ export default function SuperAdminDashboard() {
     };
   }, []);
 
-  const summary =
-    getFirstObject(
-      dashboard?.summary
-    );
+  const summary = getFirstObject(
+    dashboard?.summary
+  );
 
   const investmentSummary =
     getFirstObject(
@@ -536,87 +549,65 @@ export default function SuperAdminDashboard() {
       )
     );
 
-  const totalBranches =
-    getValue(
-      summary,
-      [
-        "total_branches",
-        "branch_count",
-        "branches",
-      ],
-      0
-    );
+  const totalBranches = getValue(
+    summary,
+    [
+      "o_total_branches",
+      "total_branches",
+      "branch_count",
+      "branches",
+    ],
+    0
+  );
 
-  const totalAdmins =
-    getValue(
-      summary,
-      [
-        "total_admins",
-        "admin_count",
-        "admins",
-      ],
-      0
-    );
+  const totalAdmins = getValue(
+    summary,
+    [
+      "o_total_admins",
+      "total_admins",
+      "admin_count",
+      "admins",
+    ],
+    0
+  );
 
-  const activeAdmins =
-    getValue(
-      summary,
-      [
-        "active_admins",
-        "active_admin_count",
-      ],
-      0
-    );
+  const activeAdmins = getValue(
+    summary,
+    [
+      "o_active_admins",
+      "active_admins",
+      "active_admin_count",
+    ],
+    0
+  );
 
-  const totalInvestors =
-    getValue(
-      investorSummary,
-      [
-        "total_investors",
-        "investor_count",
-        "investors",
-      ],
-      0
-    );
+  const totalInvestors = getValue(
+    investorSummary,
+    [
+      "o_total_investors",
+      "total_investors",
+      "investor_count",
+      "investors",
+    ],
+    0
+  );
 
-  const totalAum =
-    getValue(
-      investmentSummary,
-      [
-        "total_aum",
-        "aum",
-        "total_investment",
-        "investment_amount",
-      ],
-      0
-    );
-
-  const activeSessions =
-    getValue(
-      summary,
-      [
-        "active_sessions",
-        "active_session_count",
-        "sessions",
-      ],
-      0
-    );
-
-  const systemHealth =
-    getValue(
-      summary,
-      [
-        "system_health",
-        "health_percentage",
-        "health",
-      ],
-      "100%"
-    );
+  const totalAum = getValue(
+    summary,
+    [
+      "o_system_aum",
+      "system_aum",
+      "total_aum",
+      "aum",
+    ],
+    0
+  );
 
   const investorGrowthValue =
     getValue(
       investorSummary,
       [
+        "o_growth_percentage",
         "growth_percentage",
         "growth",
         "growth_percent",
@@ -624,16 +615,16 @@ export default function SuperAdminDashboard() {
       null
     );
 
-  const monthlyGrowth =
-    getValue(
-      investmentSummary,
-      [
-        "monthly_growth",
-        "growth_percentage",
-        "growth_percent",
-      ],
-      null
-    );
+  const monthlyGrowth = getValue(
+    investmentSummary,
+    [
+      "o_monthly_growth",
+      "monthly_growth",
+      "growth_percentage",
+      "growth_percent",
+    ],
+    null
+  );
 
   const totalInvestmentCount =
     getValue(
@@ -652,30 +643,28 @@ export default function SuperAdminDashboard() {
   const recentInvestorCount =
     recentInvestors.length;
 
-  const adminActiveCount =
-    useMemo(() => {
-      return recentAdmins.filter(
-        (item) => {
-          const status = String(
-            getValue(
-              item,
-              [
-                "status_name",
-                "status",
-              ],
-              ""
-            )
-          ).toLowerCase();
+  const adminActiveCount = useMemo(() => {
+    return recentAdmins.filter(
+      (item) => {
+        const status = String(
+          getValue(
+            item,
+            [
+              "o_status_name",
+              "status_name",
+              "status",
+            ],
+            ""
+          )
+        ).toLowerCase();
 
-          return (
-            !status ||
-            status.includes(
-              "active"
-            )
-          );
-        }
-      ).length;
-    }, [recentAdmins]);
+        return (
+          !status ||
+          status.includes("active")
+        );
+      }
+    ).length;
+  }, [recentAdmins]);
 
   if (loading) {
     return (
@@ -695,9 +684,7 @@ export default function SuperAdminDashboard() {
             Unable to load dashboard
           </strong>
 
-          <span>
-            {error}
-          </span>
+          <span>{error}</span>
         </div>
       </div>
     );
@@ -760,29 +747,6 @@ export default function SuperAdminDashboard() {
           }
         />
 
-        <StatCard
-          label="ACTIVE SESSIONS"
-          value={numberFormat(
-            activeSessions
-          )}
-          icon={Activity}
-          tint="sa-tint-orange"
-          note="Current system activity"
-        />
-
-        <StatCard
-          label="SYSTEM HEALTH"
-          value={
-            typeof systemHealth ===
-            "number"
-              ? `${systemHealth}%`
-              : systemHealth
-          }
-          icon={CheckCircle2}
-          tint="sa-tint-green"
-          note="System status"
-        />
-
       </div>
 
       <div className="sa-dashboard-grid">
@@ -815,14 +779,17 @@ export default function SuperAdminDashboard() {
 
           <div className="sa-activity-list">
 
-            {recentAdmins.length ===
-            0 ? (
+            {recentAdmins.length === 0 ? (
               <div className="sa-activity-row">
+
                 <div className="sa-activity-main">
+
                   <span>
                     No recent admins found.
                   </span>
+
                 </div>
+
               </div>
             ) : (
               recentAdmins.map(
@@ -860,6 +827,7 @@ export default function SuperAdminDashboard() {
                     getValue(
                       admin,
                       [
+                        "o_status_name",
                         "status_name",
                         "status",
                       ],
@@ -885,13 +853,23 @@ export default function SuperAdminDashboard() {
                         "id",
                         "user_id",
                       ],
-                      index
+                      `admin-${index}`
+                    );
+
+                  const normalizedStatus =
+                    String(
+                      status
+                    ).toLowerCase();
+
+                  const isActive =
+                    normalizedStatus.includes(
+                      "active"
                     );
 
                   return (
                     <div
                       className="sa-activity-row"
-                      key={id}
+                      key={`${id}-${index}`}
                     >
 
                       <div className="sa-activity-icon sa-activity-profile">
@@ -921,19 +899,29 @@ export default function SuperAdminDashboard() {
                             {branch}
                           </span>
 
-                          <span>
-                            {status}
-                          </span>
-
                         </div>
 
                       </div>
 
-                      <span className="sa-activity-time">
-                        {formatDate(
-                          createdAt
-                        )}
-                      </span>
+                      <div className="sa-activity-right">
+
+                        <strong
+                          className={
+                            isActive
+                              ? "sa-admin-status sa-admin-status-active"
+                              : "sa-admin-status sa-admin-status-inactive"
+                          }
+                        >
+                          {status}
+                        </strong>
+
+                        <span className="sa-activity-status-date">
+                          {formatDate(
+                            createdAt
+                          )}
+                        </span>
+
+                      </div>
 
                     </div>
                   );
@@ -984,11 +972,18 @@ export default function SuperAdminDashboard() {
             <button
               type="button"
               className="sa-report-link"
+              onClick={() =>
+                navigate(
+                  "/superadmin/admins"
+                )
+              }
             >
               View Admins
+
               <ArrowUpRight
                 size={14}
               />
+
             </button>
 
           </div>
@@ -1021,46 +1016,19 @@ export default function SuperAdminDashboard() {
 
           </div>
 
-          <div className="sa-investor-summary">
-
-            <div>
-
-              <span>
-                Total Investors
-              </span>
-
-              <strong>
-                {numberFormat(
-                  totalInvestors
-                )}
-              </strong>
-
-            </div>
-
-            <span className="sa-growth-badge">
-              <TrendingUp
-                size={12}
-              />
-
-              {investorGrowthValue !==
-              null
-                ? `${investorGrowthValue}%`
-                : "Live"}
-
-            </span>
-
-          </div>
-
           <div className="sa-investor-list">
 
-            {recentInvestors.length ===
-            0 ? (
+            {recentInvestors.length === 0 ? (
               <div className="sa-investor-row">
+
                 <div className="sa-investor-main">
+
                   <span>
                     No recent investors found.
                   </span>
+
                 </div>
+
               </div>
             ) : (
               recentInvestors.map(
@@ -1091,6 +1059,7 @@ export default function SuperAdminDashboard() {
                     getValue(
                       investor,
                       [
+                        "o_status_name",
                         "status_name",
                         "status",
                       ],
@@ -1116,19 +1085,17 @@ export default function SuperAdminDashboard() {
                         "id",
                         "investor_registration_id",
                       ],
-                      index
+                      `investor-${index}`
                     );
 
                   return (
                     <div
                       className="sa-investor-row"
-                      key={id}
+                      key={`${id}-${index}`}
                     >
 
                       <div className="sa-investor-avatar">
-                        {String(
-                          name
-                        )
+                        {String(name)
                           .charAt(0)
                           .toUpperCase()}
                       </div>
@@ -1183,12 +1150,18 @@ export default function SuperAdminDashboard() {
             <button
               type="button"
               className="sa-report-link"
+              onClick={() =>
+                navigate(
+                  "/superadmin/investors"
+                )
+              }
             >
               View Investors
 
               <ArrowUpRight
                 size={14}
               />
+
             </button>
 
           </div>
@@ -1216,63 +1189,33 @@ export default function SuperAdminDashboard() {
             </div>
 
             <span className="sa-chart-head-icon sa-tint-blue">
-              <TrendingUp
-                size={17}
-              />
+              <TrendingUp size={17} />
             </span>
 
           </div>
 
           <div className="sa-chart-box">
 
-            {investmentPerformance.length ===
-            0 ? (
+            {investmentPerformance.length === 0 ? (
               <div className="sa-empty-chart">
                 No investment performance data.
               </div>
             ) : (
               <ResponsiveContainer
                 width="100%"
-                height={290}
+                height={260}
               >
 
-                <AreaChart
-                  data={
-                    investmentPerformance
-                  }
+                <BarChart
+                  data={investmentPerformance}
                   margin={{
                     top: 10,
                     right: 8,
-                    left: -12,
+                    left: 0,
                     bottom: 0,
                   }}
+                  barSize={34}
                 >
-
-                  <defs>
-
-                    <linearGradient
-                      id="investmentAreaDynamic"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-
-                      <stop
-                        offset="0%"
-                        stopColor="#3b5bfe"
-                        stopOpacity={0.25}
-                      />
-
-                      <stop
-                        offset="100%"
-                        stopColor="#3b5bfe"
-                        stopOpacity={0}
-                      />
-
-                    </linearGradient>
-
-                  </defs>
 
                   <CartesianGrid
                     stroke="#edf1f7"
@@ -1296,16 +1239,19 @@ export default function SuperAdminDashboard() {
                     }
                   />
 
-                  <Area
-                    type="monotone"
+                  <Bar
                     dataKey="amount"
                     name="Investment"
-                    stroke="#3b5bfe"
-                    strokeWidth={2.5}
-                    fill="url(#investmentAreaDynamic)"
+                    fill="#3b5bfe"
+                    radius={[
+                      7,
+                      7,
+                      0,
+                      0,
+                    ]}
                   />
 
-                </AreaChart>
+                </BarChart>
 
               </ResponsiveContainer>
             )}
@@ -1315,7 +1261,6 @@ export default function SuperAdminDashboard() {
           <div className="sa-chart-footer-stats">
 
             <div>
-
               <span>
                 Total AUM
               </span>
@@ -1325,26 +1270,21 @@ export default function SuperAdminDashboard() {
                   totalAum
                 )}
               </strong>
-
             </div>
 
             <div>
-
               <span>
                 Growth
               </span>
 
               <strong className="sa-positive">
-                {monthlyGrowth !==
-                null
+                {monthlyGrowth !== null
                   ? `${monthlyGrowth}%`
                   : "-"}
               </strong>
-
             </div>
 
             <div>
-
               <span>
                 Investments
               </span>
@@ -1354,7 +1294,6 @@ export default function SuperAdminDashboard() {
                   totalInvestmentCount
                 )}
               </strong>
-
             </div>
 
           </div>
@@ -1385,8 +1324,7 @@ export default function SuperAdminDashboard() {
 
           <div className="sa-status-chart">
 
-            {investmentStatus.length ===
-            0 ? (
+            {investmentStatus.length === 0 ? (
               <div className="sa-empty-chart">
                 No status data.
               </div>
@@ -1399,9 +1337,7 @@ export default function SuperAdminDashboard() {
                 <PieChart>
 
                   <Pie
-                    data={
-                      investmentStatus
-                    }
+                    data={investmentStatus}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -1417,9 +1353,7 @@ export default function SuperAdminDashboard() {
                         index
                       ) => (
                         <Cell
-                          key={
-                            item.name
-                          }
+                          key={item.id || `status-${index}`}
                           fill={
                             pieColors[
                               index %
@@ -1454,7 +1388,7 @@ export default function SuperAdminDashboard() {
               ) => (
                 <div
                   className="sa-status-row"
-                  key={item.name}
+                  key={item.id || `status-${index}`}
                 >
 
                   <div>
@@ -1511,54 +1445,26 @@ export default function SuperAdminDashboard() {
 
           <div className="sa-chart-box">
 
-            {investorGrowth.length ===
-            0 ? (
+            {investorGrowth.length === 0 ? (
               <div className="sa-empty-chart">
                 No investor growth data.
               </div>
             ) : (
               <ResponsiveContainer
                 width="100%"
-                height={270}
+                height={250}
               >
 
-                <AreaChart
-                  data={
-                    investorGrowth
-                  }
+                <BarChart
+                  data={investorGrowth}
                   margin={{
                     top: 10,
                     right: 8,
-                    left: -12,
+                    left: 0,
                     bottom: 0,
                   }}
+                  barSize={34}
                 >
-
-                  <defs>
-
-                    <linearGradient
-                      id="investorGrowthDynamic"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-
-                      <stop
-                        offset="0%"
-                        stopColor="#16a34a"
-                        stopOpacity={0.2}
-                      />
-
-                      <stop
-                        offset="100%"
-                        stopColor="#16a34a"
-                        stopOpacity={0}
-                      />
-
-                    </linearGradient>
-
-                  </defs>
 
                   <CartesianGrid
                     stroke="#edf1f7"
@@ -1578,16 +1484,19 @@ export default function SuperAdminDashboard() {
 
                   <Tooltip />
 
-                  <Area
-                    type="monotone"
+                  <Bar
                     dataKey="investors"
                     name="Investors"
-                    stroke="#16a34a"
-                    strokeWidth={2.5}
-                    fill="url(#investorGrowthDynamic)"
+                    fill="#16a34a"
+                    radius={[
+                      7,
+                      7,
+                      0,
+                      0,
+                    ]}
                   />
 
-                </AreaChart>
+                </BarChart>
 
               </ResponsiveContainer>
             )}
@@ -1612,9 +1521,7 @@ export default function SuperAdminDashboard() {
 
             <div className="sa-mini-growth">
 
-              <TrendingUp
-                size={13}
-              />
+              <TrendingUp size={13} />
 
               <span>
                 {investorGrowthValue !==
@@ -1646,30 +1553,25 @@ export default function SuperAdminDashboard() {
             </div>
 
             <span className="sa-chart-head-icon sa-tint-orange">
-              <Building2
-                size={17}
-              />
+              <Building2 size={17} />
             </span>
 
           </div>
 
           <div className="sa-chart-box">
 
-            {branchPerformance.length ===
-            0 ? (
+            {branchPerformance.length === 0 ? (
               <div className="sa-empty-chart">
                 No branch performance data.
               </div>
             ) : (
               <ResponsiveContainer
                 width="100%"
-                height={270}
+                height={250}
               >
 
                 <BarChart
-                  data={
-                    branchPerformance
-                  }
+                  data={branchPerformance}
                   barSize={28}
                   margin={{
                     top: 10,
