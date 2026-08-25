@@ -1748,3 +1748,536 @@ body {
     margin-bottom: 9px !important;
   }
 }
+
+/* =========================================================
+   INVEST NOW - FIT VIEWPORT / REDUCE VERTICAL SCROLL
+   ========================================================= */
+
+.investor-content{
+  overflow-y:auto;
+  overflow-x:hidden;
+  min-height:0;
+}
+
+.investor-page{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:12px 16px 16px !important;
+  box-sizing:border-box;
+  min-height:0 !important;
+  height:auto !important;
+}
+
+.invest-layout{
+  width:100%;
+  grid-template-columns:minmax(0,1.72fr) minmax(300px,.78fr) !important;
+  gap:14px !important;
+  align-items:stretch !important;
+}
+
+.invest-form-card,
+.invest-summary-card,
+.invest-workflow-card{
+  padding:14px 16px !important;
+  border-radius:12px !important;
+  box-shadow:0 5px 18px rgba(15,23,42,.04) !important;
+}
+
+.invest-stepper{
+  margin-bottom:12px !important;
+}
+
+.invest-step{
+  min-width:80px !important;
+  gap:3px !important;
+}
+
+.invest-step__num{
+  width:28px !important;
+  height:28px !important;
+  font-size:11px !important;
+}
+
+.invest-step__label{
+  font-size:11px !important;
+}
+
+.invest-step__connector{
+  margin:0 7px 20px !important;
+}
+
+.invest-rate-banner{
+  padding:9px 12px !important;
+  margin-bottom:10px !important;
+  gap:9px !important;
+}
+
+.invest-rate-banner p{
+  font-size:11px !important;
+  line-height:1.4 !important;
+}
+
+.invest-field-label{
+  margin:9px 0 5px !important;
+  font-size:12px !important;
+}
+
+.invest-field-hint{
+  margin-top:3px !important;
+  font-size:10px !important;
+}
+
+.invest-amount-input{
+  min-height:44px !important;
+  padding:0 12px !important;
+  border-radius:8px !important;
+}
+
+.invest-amount-input > span,
+.invest-amount-input input{
+  font-size:14px !important;
+}
+
+.invest-quick-amounts{
+  gap:5px !important;
+  margin-top:6px !important;
+}
+
+.invest-chip{
+  padding:5px 9px !important;
+  font-size:10px !important;
+}
+
+.invest-tenure-grid{
+  gap:7px !important;
+}
+
+.invest-tenure-card{
+  min-height:58px !important;
+  padding:7px 5px !important;
+  border-radius:8px !important;
+}
+
+.invest-tenure-card__months{
+  font-size:17px !important;
+}
+
+.invest-tenure-card__unit{
+  font-size:9px !important;
+}
+
+.invest-calculation-box{
+  margin-top:10px !important;
+  border-radius:8px !important;
+}
+
+.invest-calculation-box > div{
+  padding:8px 10px !important;
+}
+
+.invest-calculation-box span{
+  font-size:9px !important;
+}
+
+.invest-calculation-box strong{
+  font-size:13px !important;
+}
+
+.invest-form-actions{
+  margin-top:10px !important;
+  gap:8px !important;
+}
+
+.investor-btn{
+  min-height:38px !important;
+  padding:7px 13px !important;
+  font-size:11px !important;
+  border-radius:8px !important;
+}
+
+.invest-side-col{
+  gap:10px !important;
+}
+
+.invest-summary-card,
+.invest-workflow-card{
+  padding:13px 15px !important;
+}
+
+.investor-section__title{
+  margin-bottom:7px !important;
+  font-size:13px !important;
+}
+
+.invest-summary-row{
+  padding:6px 0 !important;
+  font-size:11px !important;
+}
+
+.invest-summary-row--total{
+  padding-top:8px !important;
+  font-size:12px !important;
+}
+
+.invest-workflow-title{
+  margin-bottom:9px !important;
+  font-size:13px !important;
+}
+
+.invest-workflow-row{
+  gap:8px !important;
+  margin-bottom:8px !important;
+}
+
+.invest-workflow-num{
+  width:22px !important;
+  height:22px !important;
+  font-size:9px !important;
+}
+
+.invest-workflow-row__title{
+  font-size:11px !important;
+}
+
+.invest-workflow-row__desc{
+  margin-top:1px !important;
+  font-size:9px !important;
+  line-height:1.3 !important;
+}
+
+/* Fit the main desktop experience inside typical laptop heights */
+@media (min-width:1201px) and (max-height:900px){
+  .investor-page{
+    padding-top:8px !important;
+    padding-bottom:10px !important;
+  }
+
+  .invest-layout{
+    gap:12px !important;
+  }
+
+  .invest-form-card{
+    padding:12px 14px !important;
+  }
+
+  .invest-summary-card,
+  .invest-workflow-card{
+    padding:11px 13px !important;
+  }
+
+  .invest-stepper{
+    margin-bottom:10px !important;
+  }
+
+  .invest-step__num{
+    width:25px !important;
+    height:25px !important;
+  }
+
+  .invest-step__label{
+    font-size:10px !important;
+  }
+
+  .invest-rate-banner{
+    padding:7px 10px !important;
+    margin-bottom:7px !important;
+  }
+
+  .invest-field-label{
+    margin-top:7px !important;
+    margin-bottom:4px !important;
+  }
+
+  .invest-amount-input{
+    min-height:40px !important;
+  }
+
+  .invest-tenure-card{
+    min-height:52px !important;
+  }
+
+  .invest-calculation-box{
+    margin-top:7px !important;
+  }
+
+  .invest-form-actions{
+    margin-top:7px !important;
+  }
+}
+
+/* Wider desktop: use available width better */
+@media (min-width:1400px){
+  .invest-layout{
+    grid-template-columns:minmax(0,1.78fr) minmax(330px,.72fr) !important;
+    gap:14px !important;
+  }
+}
+
+/* Tablet */
+@media (max-width:1000px){
+  .investor-page{
+    padding:12px 14px 20px !important;
+  }
+
+  .invest-layout{
+    grid-template-columns:1fr !important;
+    gap:12px !important;
+  }
+
+  .invest-form-card{
+    min-height:0 !important;
+  }
+
+  .invest-side-col{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:12px !important;
+  }
+}
+
+/* Mobile */
+@media (max-width:760px){
+  .investor-page{
+    padding:10px 10px 20px !important;
+  }
+
+  .invest-layout{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+
+  .invest-form-card,
+  .invest-summary-card,
+  .invest-workflow-card{
+    padding:12px !important;
+  }
+
+  .invest-side-col{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+
+  .invest-step{
+    min-width:48px !important;
+  }
+
+  .invest-step__label{
+    display:none !important;
+  }
+
+  .invest-tenure-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+}
+
+@media (max-width:560px){
+  .invest-tenure-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .invest-calculation-box{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  .payment-method-grid{
+    grid-template-columns:1fr !important;
+  }
+}
+
+@media (max-width:380px){
+  .investor-page{
+    padding-left:7px !important;
+    padding-right:7px !important;
+  }
+
+  .invest-calculation-box{
+    grid-template-columns:1fr !important;
+  }
+}
+
+/* Prevent unwanted black/vertical internal scrollbars */
+.investor-page,
+.invest-layout,
+.invest-form-card,
+.invest-summary-card,
+.invest-workflow-card,
+.invest-side-col{
+  overflow:visible !important;
+  scrollbar-width:none;
+}
+
+.investor-page::-webkit-scrollbar,
+.invest-layout::-webkit-scrollbar,
+.invest-form-card::-webkit-scrollbar,
+.invest-summary-card::-webkit-scrollbar,
+.invest-workflow-card::-webkit-scrollbar,
+.invest-side-col::-webkit-scrollbar{
+  display:none;
+  width:0;
+  height:0;
+}
+
+/* =========================================================
+   INVEST NOW - REVIEW DETAILS 2-COLUMN LAYOUT
+   ========================================================= */
+
+.invest-review-card{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  column-gap:28px !important;
+  row-gap:0 !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  padding:4px 18px !important;
+  border:1px solid #e8edf4 !important;
+  border-radius:12px !important;
+  background:#f8fafc !important;
+}
+
+.invest-review-row{
+  min-width:0 !important;
+  min-height:52px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:16px !important;
+  padding:9px 0 !important;
+  border-bottom:1px solid #e5ebf3 !important;
+  color:#64748b !important;
+  font-size:12px !important;
+}
+
+.invest-review-row span:first-child{
+  min-width:0 !important;
+  flex:1 1 auto !important;
+  color:#64748b !important;
+  font-size:12px !important;
+  font-weight:500 !important;
+  white-space:normal !important;
+}
+
+.invest-review-row span:last-child{
+  min-width:0 !important;
+  max-width:58% !important;
+  flex:0 0 auto !important;
+  color:#172033 !important;
+  font-size:12px !important;
+  font-weight:750 !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.invest-review-row:nth-child(5) span:last-child,
+.invest-review-row:nth-child(6) span:last-child{
+  color:#16a34a !important;
+  font-weight:800 !important;
+}
+
+.invest-review-row--last{
+  border-bottom:none !important;
+}
+
+.invest-review-card .invest-review-row:nth-last-child(1),
+.invest-review-card .invest-review-row:nth-last-child(2){
+  border-bottom:none !important;
+}
+
+/* Keep the review area compact on desktop */
+@media (min-width:1201px){
+  .invest-review-card{
+    column-gap:32px !important;
+    padding:4px 20px !important;
+  }
+
+  .invest-review-row{
+    min-height:50px !important;
+    padding:8px 0 !important;
+  }
+}
+
+/* Tablet */
+@media (max-width:1000px){
+  .invest-review-card{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    column-gap:20px !important;
+    padding:4px 14px !important;
+  }
+
+  .invest-review-row{
+    gap:10px !important;
+    min-height:48px !important;
+    font-size:11.5px !important;
+  }
+
+  .invest-review-row span:first-child{
+    font-size:11.5px !important;
+  }
+
+  .invest-review-row span:last-child{
+    font-size:11.5px !important;
+    max-width:55% !important;
+  }
+}
+
+/* Mobile: one field per row */
+@media (max-width:760px){
+  .invest-review-card{
+    grid-template-columns:1fr !important;
+    column-gap:0 !important;
+    padding:4px 12px !important;
+  }
+
+  .invest-review-row{
+    min-height:46px !important;
+    padding:8px 0 !important;
+    gap:12px !important;
+    font-size:11px !important;
+  }
+
+  .invest-review-row span:first-child{
+    font-size:11px !important;
+  }
+
+  .invest-review-row span:last-child{
+    max-width:52% !important;
+    font-size:11px !important;
+  }
+
+  .invest-review-card .invest-review-row:nth-last-child(1),
+  .invest-review-card .invest-review-row:nth-last-child(2){
+    border-bottom:1px solid #e5ebf3 !important;
+  }
+
+  .invest-review-card .invest-review-row:last-child{
+    border-bottom:none !important;
+  }
+}
+
+/* Very small mobile */
+@media (max-width:420px){
+  .invest-review-card{
+    padding:3px 10px !important;
+    border-radius:10px !important;
+  }
+
+  .invest-review-row{
+    min-height:44px !important;
+    padding:7px 0 !important;
+    gap:8px !important;
+  }
+
+  .invest-review-row span:first-child,
+  .invest-review-row span:last-child{
+    font-size:10.5px !important;
+  }
+
+  .invest-review-row span:last-child{
+    max-width:50% !important;
+  }
+}

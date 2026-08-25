@@ -17,76 +17,35 @@ import {
   TrendingUp,
   User,
   LogOut,
-  
   Menu,
   X,
 } from "lucide-react";
 
-import { useInvestorData } from "./InvestorDataContext";
-
-import {
-  getCurrentUser,
-} from "../../services/authService";
-
+import { getCurrentUser } from "../../services/authService";
 import "../../Styles/Investor/InvestorLayout.css";
 
 export default function InvestorLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // const { notifications } =
-  //   useInvestorData();
-
-  const [sidebarOpen, setSidebarOpen] =
-    useState(false);
-
-  const [profile, setProfile] =
-    useState(null);
-
-  const [profileLoading, setProfileLoading] =
-    useState(true);
-
-  const [profileError, setProfileError] =
-    useState("");
-
-  // const unreadCount =
-  //   notifications.filter(
-  //     (n) => n.isNew
-  //   ).length;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const navItems = [
-    {
-      to: "/investor/dashboard",
-      label: "Dashboard",
-      icon: LayoutGrid,
-    },
-    {
-      to: "/investor/invest-now",
-      label: "Invest Now",
-      icon: Plus,
-    },
-    {
-      to: "/investor/my-investments",
-      label: "My Investments",
-      icon: TrendingUp,
-    },
-    {
-      to: "/investor/profile",
-      label: "Profile",
-      icon: User,
-    },
+    { to: "/investor/dashboard", label: "Dashboard", icon: LayoutGrid },
+    { to: "/investor/invest-now", label: "Invest Now", icon: Plus },
+    { to: "/investor/my-investments", label: "My Investments", icon: TrendingUp },
+    { to: "/investor/profile", label: "Profile", icon: User },
   ];
 
-  const activeItem = navItems.find(
-    (item) =>
-      location.pathname.startsWith(
-        item.to
-      )
+  const activeItem = navItems.find((item) =>
+    location.pathname.startsWith(item.to)
   );
 
-  const currentLabel = activeItem
-    ? activeItem.label
-    : "Investor Portal";
+  const currentLabel = activeItem ? activeItem.label : "Investor Portal";
 
   useEffect(() => {
     let mounted = true;
@@ -96,43 +55,29 @@ export default function InvestorLayout() {
         setProfileLoading(true);
         setProfileError("");
 
-        const data =
-          await getCurrentUser();
+        const data = await getCurrentUser();
 
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
 
         setProfile(data);
       } catch (error) {
-        console.error(
-          "Failed to load investor profile:",
-          error
-        );
+        console.error("Failed to load investor profile:", error);
 
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
 
-        setProfileError(
-          error?.message ||
-            "Unable to load profile"
-        );
+        setProfileError(error?.message || "Unable to load profile");
 
         const token =
-          localStorage.getItem(
-            "access_token"
-          );
+          localStorage.getItem("access_token") ||
+          localStorage.getItem("token") ||
+          sessionStorage.getItem("access_token") ||
+          sessionStorage.getItem("token");
 
         if (!token) {
-          navigate("/login", {
-            replace: true,
-          });
+          navigate("/login", { replace: true });
         }
       } finally {
-        if (mounted) {
-          setProfileLoading(false);
-        }
+        if (mounted) setProfileLoading(false);
       }
     };
 
@@ -148,40 +93,36 @@ export default function InvestorLayout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    document.body.style.overflow =
-      sidebarOpen
-        ? "hidden"
-        : "";
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
 
     return () => {
-      document.body.style.overflow =
-        "";
+      document.body.style.overflow = previousOverflow;
     };
   }, [sidebarOpen]);
 
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setLogoutModalOpen(false);
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
   const investorUser = useMemo(() => {
-    const fullName =
-      profile?.full_name ||
-      profile?.name ||
-      "Investor";
-
-    const email =
-      profile?.email ||
-      "";
-
-    const role =
-      profile?.role ||
-      "INVESTOR";
-
-    const loginId =
-      profile?.login_id ||
-      "";
-
+    const fullName = profile?.full_name || profile?.name || "Investor";
+    const email = profile?.email || "";
+    const role = profile?.role || "INVESTOR";
+    const loginId = profile?.login_id || "";
     const initial =
-      String(fullName)
-        .trim()
-        .charAt(0)
-        .toUpperCase() || "I";
+      String(fullName).trim().charAt(0).toUpperCase() || "I";
 
     return {
       name: fullName,
@@ -192,46 +133,27 @@ export default function InvestorLayout() {
     };
   }, [profile]);
 
-  const handleLogout = () => {
-    localStorage.removeItem(
-      "access_token"
-    );
-
-    localStorage.removeItem(
-      "token"
-    );
-
-    localStorage.removeItem(
-      "token_type"
-    );
-
-    localStorage.removeItem(
-      "user_id"
-    );
-
-    localStorage.removeItem(
-      "login_id"
-    );
-
-    localStorage.removeItem(
-      "full_name"
-    );
-
-    localStorage.removeItem(
-      "role"
-    );
-
-    sessionStorage.removeItem(
-      "access_token"
-    );
-
-    sessionStorage.removeItem(
-      "token"
-    );
-
-    navigate("/login", {
-      replace: true,
+  const confirmLogout = () => {
+    [
+      "access_token",
+      "token",
+      "token_type",
+      "user_id",
+      "login_id",
+      "full_name",
+      "role",
+    ].forEach((key) => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
     });
+
+    setLogoutModalOpen(false);
+
+    navigate("/login", { replace: true });
+  };
+
+  const cancelLogout = () => {
+    setLogoutModalOpen(false);
   };
 
   return (
@@ -239,9 +161,7 @@ export default function InvestorLayout() {
       <aside
         className={
           "investor-sidebar" +
-          (sidebarOpen
-            ? " investor-sidebar-open"
-            : "")
+          (sidebarOpen ? " investor-sidebar-open" : "")
         }
       >
         <div>
@@ -261,9 +181,7 @@ export default function InvestorLayout() {
             <button
               type="button"
               className="investor-sidebar-close"
-              onClick={() =>
-                setSidebarOpen(false)
-              }
+              onClick={() => setSidebarOpen(false)}
               aria-label="Close menu"
             >
               <X size={18} />
@@ -271,39 +189,25 @@ export default function InvestorLayout() {
           </div>
 
           <nav className="investor-nav">
-            {navItems.map(
-              ({
-                to,
-                label,
-                icon: Icon,
-                badge,
-              }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  className={({
-                    isActive,
-                  }) =>
-                    "investor-nav-item" +
-                    (isActive
-                      ? " investor-nav-item-active"
-                      : "")
-                  }
-                >
-                  <Icon size={16} />
+            {navItems.map(({ to, label, icon: Icon, badge }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  "investor-nav-item" +
+                  (isActive ? " investor-nav-item-active" : "")
+                }
+              >
+                <Icon size={16} />
+                <span>{label}</span>
 
-                  <span>
-                    {label}
+                {badge ? (
+                  <span className="investor-nav-badge">
+                    {badge}
                   </span>
-
-                  {badge ? (
-                    <span className="investor-nav-badge">
-                      {badge}
-                    </span>
-                  ) : null}
-                </NavLink>
-              )
-            )}
+                ) : null}
+              </NavLink>
+            ))}
           </nav>
         </div>
 
@@ -315,15 +219,11 @@ export default function InvestorLayout() {
 
             <div>
               <div className="investor-user-name">
-                {profileLoading
-                  ? "Loading..."
-                  : investorUser.name}
+                {profileLoading ? "Loading..." : investorUser.name}
               </div>
 
               <div className="investor-user-email">
-                {profileLoading
-                  ? ""
-                  : investorUser.email}
+                {profileLoading ? "" : investorUser.email}
               </div>
             </div>
           </div>
@@ -331,7 +231,7 @@ export default function InvestorLayout() {
           <button
             type="button"
             className="investor-logout"
-            onClick={handleLogout}
+            onClick={() => setLogoutModalOpen(true)}
           >
             <LogOut size={14} />
             Logout
@@ -342,13 +242,9 @@ export default function InvestorLayout() {
       <div
         className={
           "investor-sidebar-backdrop" +
-          (sidebarOpen
-            ? " investor-sidebar-backdrop-open"
-            : "")
+          (sidebarOpen ? " investor-sidebar-backdrop-open" : "")
         }
-        onClick={() =>
-          setSidebarOpen(false)
-        }
+        onClick={() => setSidebarOpen(false)}
       />
 
       <div className="investor-main">
@@ -357,31 +253,19 @@ export default function InvestorLayout() {
             <button
               type="button"
               className="investor-menu-toggle"
-              onClick={() =>
-                setSidebarOpen(true)
-              }
+              onClick={() => setSidebarOpen(true)}
               aria-label="Open menu"
             >
               <Menu size={20} />
             </button>
 
             <div className="investor-breadcrumb">
-              <span className="investor-breadcrumb-link">
-                Home
-              </span>
-
-              <span className="investor-breadcrumb-sep">
-                /
-              </span>
-
+              <span className="investor-breadcrumb-link">Home</span>
+              <span className="investor-breadcrumb-sep">/</span>
               <span className="investor-breadcrumb-link">
                 Investor Portal
               </span>
-
-              <span className="investor-breadcrumb-sep">
-                /
-              </span>
-
+              <span className="investor-breadcrumb-sep">/</span>
               <span className="investor-breadcrumb-current">
                 {currentLabel}
               </span>
@@ -389,9 +273,6 @@ export default function InvestorLayout() {
           </div>
 
           <div className="investor-topbar-right">
-     
-
-          
             <div className="investor-profile">
               <span className="investor-profile-avatar">
                 {investorUser.initial}
@@ -399,16 +280,13 @@ export default function InvestorLayout() {
 
               <div>
                 <div className="investor-profile-name">
-                  {profileLoading
-                    ? "Loading..."
-                    : investorUser.name}
+                  {profileLoading ? "Loading..." : investorUser.name}
                 </div>
 
                 <div className="investor-profile-role">
                   {profileLoading
                     ? ""
-                    : investorUser.role ===
-                      "INVESTOR"
+                    : investorUser.role === "INVESTOR"
                     ? "Investor Portal"
                     : investorUser.role}
                 </div>
@@ -427,6 +305,51 @@ export default function InvestorLayout() {
           <Outlet />
         </main>
       </div>
+
+      {logoutModalOpen && (
+        <div
+          className="investor-logout-overlay"
+          onClick={cancelLogout}
+          role="presentation"
+        >
+          <div
+            className="investor-logout-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="investor-logout-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="investor-logout-icon">
+              <LogOut size={22} />
+            </div>
+
+            <div className="investor-logout-content">
+              <h3 id="investor-logout-title">Logout</h3>
+              <p>
+                Are you sure you want to logout from your investor portal?
+              </p>
+            </div>
+
+            <div className="investor-logout-actions">
+              <button
+                type="button"
+                className="investor-logout-cancel"
+                onClick={cancelLogout}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="investor-logout-confirm"
+                onClick={confirmLogout}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
