@@ -2033,46 +2033,7 @@ export default function Reports() {
 
   return (
     <div className="reports-page">
-      <div className="reports-page-header">
-       
 
-        {/* <div className="reports-header-actions">
-          <select
-            value={year}
-            onChange={(event) =>
-              setYear(
-                Number(
-                  event.target.value
-                )
-              )
-            }
-          >
-            {[currentYear, currentYear - 1, currentYear - 2].map(
-              (item) => (
-                <option
-                  key={item}
-                  value={item}
-                >
-                  {item}
-                </option>
-              )
-            )}
-          </select>
-
-       
-
-          <button
-            type="button"
-            className="reports-export-btn"
-            onClick={
-              downloadAllInvestors
-            }
-          >
-            <Download size={14} />
-            Download Investors
-          </button>
-        </div> */}
-      </div>
 
       {error && (
         <div className="reports-error">
@@ -2080,7 +2041,7 @@ export default function Reports() {
         </div>
       )}
 
-      <div className="reports-stat-grid">
+      {/* <div className="reports-stat-grid">
         <StatCard
           label="TOTAL INVESTORS"
           value={
@@ -2163,7 +2124,7 @@ export default function Reports() {
           icon={Percent}
           tone="teal"
         />
-      </div>
+      </div> */}
 
       <div className="reports-tab-bar">
         {tabs.map((tab) => {
