@@ -3490,64 +3490,259 @@
   transform: translateY(-1px) !important;
 }
 
-@media (max-width: 900px) {
-  .investment-stats {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-}
 
-@media (max-width: 640px) {
-  .investment-page {
-    padding: 10px !important;
+
+
+
+
+
+
+
+@media (max-width: 800px) {
+  .investment-stats {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 2px 2px 5px !important;
+    margin-bottom: 8px !important;
+    box-sizing: border-box !important;
+    scroll-behavior: smooth;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .investment-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 7px !important;
+  .investment-stats::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   .investment-stat-card {
+    flex: 0 0 145px !important;
+    width: 145px !important;
+    min-width: 145px !important;
+    max-width: 145px !important;
+    height: 86px !important;
+    padding: 10px 10px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    border-radius: 9px !important;
+  }
+
+  .investment-stat-card span {
+    display: block;
+    margin-bottom: 6px !important;
+    font-size: 7.5px !important;
+    line-height: 1.2 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .investment-stat-card strong {
+    display: block;
+    font-size: 16px !important;
+    line-height: 1.15 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .investment-stat-card small {
+    display: block;
+    margin-top: 5px !important;
+    font-size: 6.5px !important;
+    line-height: 1.15 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .investment-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-bottom: 8px !important;
+  }
+
+  .investment-toolbar input {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 38px !important;
+    padding: 0 11px !important;
+    font-size: 11px !important;
+    box-sizing: border-box !important;
+  }
+
+  .investment-toolbar select {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 38px !important;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    box-sizing: border-box !important;
+  }
+
+  .investment-export {
+    width: 100% !important;
+    height: 38px !important;
+    min-width: 0 !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    box-sizing: border-box !important;
+  }
+
+  .investment-tabs {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none;
+    margin-bottom: 8px !important;
+  }
+
+  .investment-tabs::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .investment-tab {
+    flex: 0 0 auto !important;
+    min-height: 34px !important;
+    padding: 6px 10px !important;
+    font-size: 9.5px !important;
+    white-space: nowrap !important;
+  }
+
+  .investment-tab-count {
+    min-width: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    font-size: 8px !important;
+  }
+
+  .investment-table-wrapper {
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none;
+  }
+
+  .investment-table-wrapper::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .investment-stats {
+    gap: 8px !important;
+  }
+
+  .investment-stat-card {
+    flex-basis: 145px !important;
+    width: 145px !important;
+    min-width: 145px !important;
+    max-width: 145px !important;
+    height: 84px !important;
+    padding: 9px 10px !important;
+  }
+
+  .investment-stat-card span {
+    font-size: 7px !important;
+  }
+
+  .investment-stat-card strong {
+    font-size: 15px !important;
+  }
+
+  .investment-stat-card small {
+    font-size: 6px !important;
+  }
+
+  .investment-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 7px !important;
+  }
+
+  .investment-toolbar input,
+  .investment-toolbar select,
+  .investment-export {
+    height: 37px !important;
+    font-size: 10.5px !important;
+  }
+
+  .investment-tab {
+    min-height: 33px !important;
+    padding: 6px 9px !important;
+    font-size: 9px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .investment-stats {
+    gap: 8px !important;
+  }
+
+  .investment-stat-card {
+    flex-basis: 142px !important;
+    width: 142px !important;
+    min-width: 142px !important;
+    max-width: 142px !important;
+    height: 82px !important;
     padding: 8px 9px !important;
+  }
+
+  .investment-stat-card span {
+    font-size: 6.5px !important;
   }
 
   .investment-stat-card strong {
     font-size: 14px !important;
   }
 
-  .investment-modal-overlay {
-    padding: 10px !important;
+  .investment-stat-card small {
+    font-size: 5.7px !important;
   }
 
-  .investment-modal-overlay > .investment-modal {
-    width: 100% !important;
-    max-width: 100% !important;
-    border-radius: 15px !important;
+  .investment-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 6px !important;
   }
 
-  .investment-modal-header {
-    min-height: 60px !important;
-    padding: 0 15px !important;
+  .investment-toolbar input,
+  .investment-toolbar select,
+  .investment-export {
+    height: 36px !important;
+    font-size: 10px !important;
   }
 
-  .investment-modal-header h2 {
-    font-size: 16px !important;
+  .investment-tab {
+    min-height: 32px !important;
+    padding: 5px 8px !important;
+    font-size: 8.5px !important;
   }
 
-  .investment-modal-body {
-    padding: 16px !important;
-  }
-
-  .investment-details-grid,
-  .investment-review-box {
-    grid-template-columns: 1fr !important;
-  }
-
-  .investment-modal-footer {
-    padding: 12px 15px !important;
-  }
-
-  .investment-modal-footer button {
-    flex: 1 !important;
-    min-width: 0 !important;
+  .investment-tab-count {
+    min-width: 17px !important;
+    width: 17px !important;
+    height: 17px !important;
+    font-size: 7.5px !important;
   }
 }

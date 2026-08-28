@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import {
   Search,
   RefreshCw,
@@ -11,7 +17,6 @@ import {
   Users,
   UserCheck,
   UserX,
-  ShieldCheck,
   IndianRupee,
 } from "lucide-react";
 
@@ -28,45 +33,72 @@ import "../../Styles/SuperAdmin/InvestorManagement.css";
 
 function normalizeInvestor(row) {
   return {
-    id: row?.investor_id ?? row?.id ?? row?.investor_code ?? "-",
-    name: row?.full_name ?? row?.investor_name ?? row?.name ?? "-",
-    mobile: row?.mobile ?? row?.mobile_number ?? row?.phone ?? "-",
-    branch: row?.branch_name ?? row?.branch ?? "-",
+    id:
+      row?.investor_id ??
+      row?.id ??
+      row?.investor_code ??
+      "-",
+
+    name:
+      row?.full_name ??
+      row?.investor_name ??
+      row?.name ??
+      "-",
+
+    mobile:
+      row?.mobile ??
+      row?.mobile_number ??
+      row?.phone ??
+      "-",
+
+    branch:
+      row?.branch_name ??
+      row?.branch ??
+      "-",
+
     branchId:
       row?.branch_id ??
       row?.branchId ??
       row?.service_location_id ??
       "",
+
     registered:
       row?.registered_date ??
       row?.registration_date ??
       row?.created_at ??
       row?.created_date ??
       null,
+
     kyc:
       row?.kyc_status_name ??
       row?.kyc_status ??
       row?.kyc ??
       "-",
+
     status:
       row?.status_name ??
       row?.status ??
       "-",
+
     statusId:
       row?.status_id ??
       row?.statusId ??
       "",
+
     aum:
       row?.aum ??
       row?.total_investment ??
       row?.investment_amount ??
       0,
+
     raw: row,
   };
 }
 
 function formatDate(value) {
-  if (!value) return "-";
+  if (!value) {
+    return "-";
+  }
 
   const date = new Date(value);
 
@@ -100,30 +132,48 @@ function Dropdown({
 
   useEffect(() => {
     const handleOutside = (event) => {
-      if (ref.current && !ref.current.contains(event.target)) {
+      if (
+        ref.current &&
+        !ref.current.contains(event.target)
+      ) {
         setOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener(
+      "mousedown",
+      handleOutside
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener(
+        "mousedown",
+        handleOutside
+      );
     };
   }, []);
 
   const selected = options.find(
-    (option) => String(option.value) === String(value)
+    (option) =>
+      String(option.value) === String(value)
   );
 
   return (
-    <div className="ivm-dropdown" ref={ref}>
+    <div
+      className="ivm-dropdown"
+      ref={ref}
+    >
       <button
         type="button"
         className="ivm-dropdown-btn"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() =>
+          setOpen((current) => !current)
+        }
       >
-        <span>{selected?.label || label}</span>
+        <span>
+          {selected?.label || label}
+        </span>
+
         <ChevronDown size={16} />
       </button>
 
@@ -132,7 +182,9 @@ function Dropdown({
           <button
             type="button"
             className={`ivm-dropdown-item ${
-              !value ? "ivm-dropdown-item-active" : ""
+              !value
+                ? "ivm-dropdown-item-active"
+                : ""
             }`}
             onClick={() => {
               onChange("");
@@ -147,12 +199,15 @@ function Dropdown({
               type="button"
               key={String(option.value)}
               className={`ivm-dropdown-item ${
-                String(value) === String(option.value)
+                String(value) ===
+                String(option.value)
                   ? "ivm-dropdown-item-active"
                   : ""
               }`}
               onClick={() => {
-                onChange(String(option.value));
+                onChange(
+                  String(option.value)
+                );
                 setOpen(false);
               }}
             >
@@ -166,88 +221,147 @@ function Dropdown({
 }
 
 export default function InvestorManagement() {
-  const [investors, setInvestors] = useState([]);
-  const [summary, setSummary] = useState({});
-  const [branches, setBranches] = useState([]);
-  const [statuses, setStatuses] = useState([]);
+  const [investors, setInvestors] =
+    useState([]);
 
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [branchFilter, setBranchFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [summary, setSummary] =
+    useState({});
 
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [total, setTotal] = useState(0);
+  const [branches, setBranches] =
+    useState([]);
 
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState("");
+  const [statuses, setStatuses] =
+    useState([]);
 
-  const [selectedInvestor, setSelectedInvestor] = useState(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [searchInput, setSearchInput] =
+    useState("");
 
-  const offset = (page - 1) * limit;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const [search, setSearch] =
+    useState("");
+
+  const [branchFilter, setBranchFilter] =
+    useState("");
+
+  const [statusFilter, setStatusFilter] =
+    useState("");
+
+  const [page, setPage] =
+    useState(1);
+
+  const [limit] =
+    useState(10);
+
+  const [total, setTotal] =
+    useState(0);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [refreshing, setRefreshing] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [selectedInvestor, setSelectedInvestor] =
+    useState(null);
+
+  const [detailsLoading, setDetailsLoading] =
+    useState(false);
+
+  const offset =
+    (page - 1) * limit;
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(total / limit)
+  );
 
   const loadSummary = async () => {
     try {
-      const response = await getInvestorManagementSummary();
-      setSummary(response?.data || {});
+      const response =
+        await getInvestorManagementSummary();
+
+      setSummary(
+        response?.data || {}
+      );
     } catch (err) {
-      console.error("Investor summary error:", err);
+      console.error(
+        "Investor summary error:",
+        err
+      );
     }
   };
 
   const loadFilters = async () => {
     try {
-      const [branchResponse, statusResponse] =
-        await Promise.all([
-          getInvestorManagementBranches(),
-          getInvestorManagementStatuses(),
-        ]);
+      const [
+        branchResponse,
+        statusResponse,
+      ] = await Promise.all([
+        getInvestorManagementBranches(),
+        getInvestorManagementStatuses(),
+      ]);
 
-      const branchRows = Array.isArray(branchResponse?.data)
-        ? branchResponse.data
-        : [];
-
-      const statusRows = Array.isArray(statusResponse?.data)
-        ? statusResponse.data
-        : [];
-
-      const branchOptions = branchRows
-        .filter(
-          (item) =>
-            item?.id !== null &&
-            item?.id !== undefined &&
-            item?.branch_name
+      const branchRows =
+        Array.isArray(
+          branchResponse?.data
         )
-        .map((item) => ({
-          value: String(item.id),
-          label: String(item.branch_name),
-        }));
+          ? branchResponse.data
+          : [];
 
-      const statusOptions = statusRows
-        .filter(
-          (item) =>
-            item?.id !== null &&
-            item?.id !== undefined &&
-            (item?.status_name || item?.status)
+      const statusRows =
+        Array.isArray(
+          statusResponse?.data
         )
-        .map((item) => ({
-          value: String(item.id),
-          label: String(
-            item.status_name || item.status
-          ),
-        }));
+          ? statusResponse.data
+          : [];
 
-      setBranches(branchOptions);
-      setStatuses(statusOptions);
+      const branchOptions =
+        branchRows
+          .filter(
+            (item) =>
+              item?.id !== null &&
+              item?.id !== undefined &&
+              item?.branch_name
+          )
+          .map((item) => ({
+            value: String(item.id),
+            label: String(
+              item.branch_name
+            ),
+          }));
+
+      const statusOptions =
+        statusRows
+          .filter(
+            (item) =>
+              item?.id !== null &&
+              item?.id !== undefined &&
+              (item?.status_name ||
+                item?.status)
+          )
+          .map((item) => ({
+            value: String(item.id),
+            label: String(
+              item.status_name ||
+                item.status
+            ),
+          }));
+
+      setBranches(
+        branchOptions
+      );
+
+      setStatuses(
+        statusOptions
+      );
     } catch (err) {
       console.error(
         "Investor filters loading error:",
         err
       );
+
       setBranches([]);
       setStatuses([]);
     }
@@ -265,33 +379,51 @@ export default function InvestorManagement() {
     setError("");
 
     try {
-      const response = await getInvestorManagement({
-        search,
-        branchId: branchFilter,
-        statusId: statusFilter,
-        limit,
-        offset,
-      });
+      const response =
+        await getInvestorManagement({
+          search,
+          branchId: branchFilter,
+          statusId: statusFilter,
+          limit,
+          offset,
+        });
 
-      const rows = Array.isArray(response?.data)
-        ? response.data
-        : [];
+      const rows =
+        Array.isArray(
+          response?.data
+        )
+          ? response.data
+          : [];
 
-      const normalized = rows.map(normalizeInvestor);
+      const normalized =
+        rows.map(
+          normalizeInvestor
+        );
 
-      setInvestors(normalized);
+      setInvestors(
+        normalized
+      );
+
       setTotal(
         Number(
           response?.total ??
-          response?.count ??
-          normalized.length
+            response?.count ??
+            normalized.length
         )
       );
     } catch (err) {
-      console.error("Investor loading error:", err);
+      console.error(
+        "Investor loading error:",
+        err
+      );
+
       setInvestors([]);
       setTotal(0);
-      setError(err?.message || "Unable to load investors.");
+
+      setError(
+        err?.message ||
+          "Unable to load investors."
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -307,29 +439,42 @@ export default function InvestorManagement() {
     loadInvestors({
       showLoader: true,
     });
-  }, [search, branchFilter, statusFilter, page]);
+  }, [
+    search,
+    branchFilter,
+    statusFilter,
+    page,
+  ]);
 
-  const handleSearch = () => {
+  const handleSearchChange = (
+    event
+  ) => {
+    const value =
+      event.target.value;
+
+    setSearchInput(value);
+    setSearch(value.trim());
     setPage(1);
-    setSearch(searchInput.trim());
   };
 
-  const handleReset = () => {
+  const clearSearch = () => {
     setSearchInput("");
     setSearch("");
-    setBranchFilter("");
-    setStatusFilter("");
     setPage(1);
   };
 
   const handleRefresh = async () => {
     await Promise.all([
-      loadInvestors({ showLoader: false }),
+      loadInvestors({
+        showLoader: false,
+      }),
       loadSummary(),
     ]);
   };
 
-  const openDetails = async (investor) => {
+  const openDetails = async (
+    investor
+  ) => {
     setSelectedInvestor({
       ...investor,
       details: null,
@@ -339,14 +484,20 @@ export default function InvestorManagement() {
 
     try {
       const response =
-        await getInvestorManagementDetails(investor.id);
+        await getInvestorManagementDetails(
+          investor.id
+        );
 
       setSelectedInvestor({
         ...investor,
-        details: response?.data || {},
+        details:
+          response?.data || {},
       });
     } catch (err) {
-      console.error("Investor details error:", err);
+      console.error(
+        "Investor details error:",
+        err
+      );
 
       setSelectedInvestor({
         ...investor,
@@ -366,7 +517,9 @@ export default function InvestorManagement() {
   };
 
   const handleExport = () => {
-    if (!investors.length) return;
+    if (!investors.length) {
+      return;
+    }
 
     exportInvestorsCSV(
       investors,
@@ -386,7 +539,10 @@ export default function InvestorManagement() {
       summary?.active_count ??
       investors.filter(
         (item) =>
-          String(item.status).toLowerCase() === "active"
+          String(
+            item.status
+          ).toLowerCase() ===
+          "active"
       ).length;
 
     const inactive =
@@ -394,7 +550,10 @@ export default function InvestorManagement() {
       summary?.inactive_count ??
       investors.filter(
         (item) =>
-          String(item.status).toLowerCase() === "inactive"
+          String(
+            item.status
+          ).toLowerCase() ===
+          "inactive"
       ).length;
 
     const aum =
@@ -402,7 +561,11 @@ export default function InvestorManagement() {
       summary?.aum ??
       summary?.total_investment ??
       investors.reduce(
-        (sum, item) => sum + Number(item.aum || 0),
+        (sum, item) =>
+          sum +
+          Number(
+            item.aum || 0
+          ),
         0
       );
 
@@ -424,42 +587,29 @@ export default function InvestorManagement() {
       },
       {
         title: "Total AUM",
-        value: formatCurrency(aum),
+        value: formatCurrency(
+          aum
+        ),
         icon: IndianRupee,
       },
     ];
-  }, [summary, investors, total]);
+  }, [
+    summary,
+    investors,
+    total,
+  ]);
 
   return (
     <div className="ivm-page">
-      {/* <div className="ivm-header">
-        <div>
-          <h1>Investor Management</h1>
-          <p>
-            Manage and monitor all investors across branches.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="ivm-refresh-btn"
-          onClick={handleRefresh}
-          disabled={refreshing}
-        >
-          <RefreshCw
-            size={16}
-            className={refreshing ? "ivm-spin" : ""}
-          />
-          Refresh
-        </button>
-      </div> */}
-
       <div className="ivm-stats-grid">
         {stats.map((stat) => {
           const Icon = stat.icon;
 
           return (
-            <div className="ivm-stat-card" key={stat.title}>
+            <div
+              className="ivm-stat-card"
+              key={stat.title}
+            >
               <div className="ivm-stat-icon">
                 <Icon size={20} />
               </div>
@@ -468,6 +618,7 @@ export default function InvestorManagement() {
                 <div className="ivm-stat-title">
                   {stat.title}
                 </div>
+
                 <div className="ivm-stat-value">
                   {stat.value}
                 </div>
@@ -485,35 +636,24 @@ export default function InvestorManagement() {
             type="text"
             value={searchInput}
             placeholder="Search investor..."
-            onChange={(event) =>
-              setSearchInput(event.target.value)
+            onChange={
+              handleSearchChange
             }
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                handleSearch();
-              }
-            }}
           />
 
           {searchInput && (
             <button
               type="button"
               className="ivm-search-clear"
-              onClick={() => setSearchInput("")}
+              onClick={
+                clearSearch
+              }
+              aria-label="Clear search"
             >
               <X size={14} />
             </button>
           )}
         </div>
-
-        <button
-          type="button"
-          className="ivm-search-btn"
-          onClick={handleSearch}
-        >
-          <Search size={16} />
-          Search
-        </button>
 
         <Dropdown
           label="All Branches"
@@ -537,17 +677,13 @@ export default function InvestorManagement() {
 
         <button
           type="button"
-          className="ivm-reset-btn"
-          onClick={handleReset}
-        >
-          Reset
-        </button>
-
-        <button
-          type="button"
           className="ivm-export-btn"
-          onClick={handleExport}
-          disabled={!investors.length}
+          onClick={
+            handleExport
+          }
+          disabled={
+            !investors.length
+          }
         >
           <Download size={16} />
           Export
@@ -561,36 +697,28 @@ export default function InvestorManagement() {
       )}
 
       <div className="ivm-table-card">
-        {/* <div className="ivm-table-header">
-          <div>
-            <h2>Investors</h2>
-            <span>
-              {total} investor{total === 1 ? "" : "s"} found
-            </span>
-          </div>
-
-          {refreshing && (
-            <RefreshCw
-              size={16}
-              className="ivm-spin"
-            />
-          )}
-        </div> */}
-
         {loading ? (
           <div className="ivm-loading">
             <RefreshCw
               size={28}
               className="ivm-spin"
             />
-            <p>Loading investors...</p>
+
+            <p>
+              Loading investors...
+            </p>
           </div>
         ) : investors.length === 0 ? (
           <div className="ivm-empty">
             <Users size={42} />
-            <h3>No investors found</h3>
+
+            <h3>
+              No investors found
+            </h3>
+
             <p>
-              Try changing your search or filters.
+              Try changing your
+              search or filters.
             </p>
           </div>
         ) : (
@@ -598,149 +726,209 @@ export default function InvestorManagement() {
             <table className="ivm-table">
               <thead>
                 <tr>
-                  <th>Investor</th>
-                  <th>Mobile</th>
-                  <th>Branch</th>
-                  <th>Registered</th>
-                  <th>KYC</th>
-                  <th>Status</th>
-                  <th>AUM</th>
-                  <th>Action</th>
+                  <th>
+                    Investor
+                  </th>
+
+                  <th>
+                    Mobile
+                  </th>
+
+                  <th>
+                    Branch
+                  </th>
+
+                  <th>
+                    Registered
+                  </th>
+
+                  <th>
+                    KYC
+                  </th>
+
+                  <th>
+                    Status
+                  </th>
+
+                  <th>
+                    AUM
+                  </th>
+
+                  <th>
+                    Action
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
-                {investors.map((investor) => (
-                  <tr key={investor.id}>
-                    <td>
-                      <div className="ivm-investor">
-                        <div className="ivm-avatar">
-                          {String(
-                            investor.name || "I"
-                          )
-                            .charAt(0)
-                            .toUpperCase()}
+                {investors.map(
+                  (investor) => (
+                    <tr
+                      key={
+                        investor.id
+                      }
+                    >
+                      <td>
+                        <div className="ivm-investor">
+                          <div className="ivm-avatar">
+                            {String(
+                              investor.name ||
+                                "I"
+                            )
+                              .charAt(
+                                0
+                              )
+                              .toUpperCase()}
+                          </div>
+
+                          <div>
+                            <strong>
+                              {
+                                investor.name
+                              }
+                            </strong>
+
+                            <small>
+                              {
+                                investor.id
+                              }
+                            </small>
+                          </div>
                         </div>
+                      </td>
 
-                        <div>
-                          <strong>
-                            {investor.name}
-                          </strong>
-                          <small>
-                            {investor.id}
-                          </small>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td>
-                      {investor.mobile}
-                    </td>
-
-                    <td>
-                      {investor.branch}
-                    </td>
-
-                    <td>
-                      {formatDate(
-                        investor.registered
-                      )}
-                    </td>
-
-                    <td>
-                      <span
-                        className={`ivm-badge ivm-kyc-${String(
-                          investor.kyc
-                        )
-                          .toLowerCase()
-                          .replaceAll(" ", "-")}`}
-                      >
-                        {investor.kyc}
-                      </span>
-                    </td>
-
-                    <td>
-                      <span
-                        className={`ivm-badge ivm-status-${String(
-                          investor.status
-                        )
-                          .toLowerCase()
-                          .replaceAll(" ", "-")}`}
-                      >
-                        {investor.status}
-                      </span>
-                    </td>
-
-                    <td className="ivm-aum">
-                      {formatCurrency(
-                        investor.aum
-                      )}
-                    </td>
-
-                    <td>
-                      <button
-                        type="button"
-                        className="ivm-view-btn"
-                        onClick={() =>
-                          openDetails(
-                            investor
-                          )
+                      <td>
+                        {
+                          investor.mobile
                         }
-                      >
-                        <Eye size={15} />
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      <td>
+                        {
+                          investor.branch
+                        }
+                      </td>
+
+                      <td>
+                        {formatDate(
+                          investor.registered
+                        )}
+                      </td>
+
+                      <td>
+                        <span
+                          className={`ivm-badge ivm-kyc-${String(
+                            investor.kyc
+                          )
+                            .toLowerCase()
+                            .replaceAll(
+                              " ",
+                              "-"
+                            )}`}
+                        >
+                          {
+                            investor.kyc
+                          }
+                        </span>
+                      </td>
+
+                      <td>
+                        <span
+                          className={`ivm-badge ivm-status-${String(
+                            investor.status
+                          )
+                            .toLowerCase()
+                            .replaceAll(
+                              " ",
+                              "-"
+                            )}`}
+                        >
+                          {
+                            investor.status
+                          }
+                        </span>
+                      </td>
+
+                      <td className="ivm-aum">
+                        {formatCurrency(
+                          investor.aum
+                        )}
+                      </td>
+
+                      <td>
+                        <button
+                          type="button"
+                          className="ivm-view-btn"
+                          onClick={() =>
+                            openDetails(
+                              investor
+                            )
+                          }
+                        >
+                          <Eye size={15} />
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </div>
         )}
 
-        {!loading && total > 0 && (
-          <div className="ivm-pagination">
-            <span>
-              Page {page} of {totalPages}
-            </span>
+        {!loading &&
+          total > 0 && (
+            <div className="ivm-pagination">
+              <span>
+                Page {page} of{" "}
+                {totalPages}
+              </span>
 
-            <div className="ivm-pagination-buttons">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() =>
-                  setPage(
-                    (current) =>
-                      Math.max(
-                        1,
-                        current - 1
-                      )
-                  )
-                }
-              >
-                <ChevronLeft size={16} />
-              </button>
+              <div className="ivm-pagination-buttons">
+                <button
+                  type="button"
+                  disabled={
+                    page <= 1
+                  }
+                  onClick={() =>
+                    setPage(
+                      (current) =>
+                        Math.max(
+                          1,
+                          current - 1
+                        )
+                    )
+                  }
+                >
+                  <ChevronLeft
+                    size={16}
+                  />
+                </button>
 
-              <button
-                type="button"
-                disabled={
-                  page >= totalPages
-                }
-                onClick={() =>
-                  setPage(
-                    (current) =>
-                      Math.min(
-                        totalPages,
-                        current + 1
-                      )
-                  )
-                }
-              >
-                <ChevronRight size={16} />
-              </button>
+                <button
+                  type="button"
+                  disabled={
+                    page >=
+                    totalPages
+                  }
+                  onClick={() =>
+                    setPage(
+                      (current) =>
+                        Math.min(
+                          totalPages,
+                          current + 1
+                        )
+                    )
+                  }
+                >
+                  <ChevronRight
+                    size={16}
+                  />
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
 
       {selectedInvestor && (
@@ -761,8 +949,11 @@ export default function InvestorManagement() {
                 <h2>
                   Investor Details
                 </h2>
+
                 <p>
-                  {selectedInvestor.id}
+                  {
+                    selectedInvestor.id
+                  }
                 </p>
               </div>
 
@@ -772,6 +963,7 @@ export default function InvestorManagement() {
                 onClick={
                   closeDetails
                 }
+                aria-label="Close"
               >
                 <X size={19} />
               </button>
@@ -783,13 +975,19 @@ export default function InvestorManagement() {
                   size={28}
                   className="ivm-spin"
                 />
+
                 <p>
-                  Loading investor details...
+                  Loading investor
+                  details...
                 </p>
               </div>
-            ) : selectedInvestor.details?.error ? (
+            ) : selectedInvestor.details
+                ?.error ? (
               <div className="ivm-modal-error">
-                {selectedInvestor.details.error}
+                {
+                  selectedInvestor
+                    .details.error
+                }
               </div>
             ) : (
               <div className="ivm-details">
@@ -805,31 +1003,49 @@ export default function InvestorManagement() {
 
                   <div>
                     <h3>
-                      {selectedInvestor.name}
+                      {
+                        selectedInvestor.name
+                      }
                     </h3>
+
                     <span>
-                      {selectedInvestor.id}
+                      {
+                        selectedInvestor.id
+                      }
                     </span>
                   </div>
                 </div>
 
                 <div className="ivm-detail-grid">
                   <div>
-                    <label>Mobile</label>
+                    <label>
+                      Mobile
+                    </label>
+
                     <strong>
-                      {selectedInvestor.mobile}
+                      {
+                        selectedInvestor.mobile
+                      }
                     </strong>
                   </div>
 
                   <div>
-                    <label>Branch</label>
+                    <label>
+                      Branch
+                    </label>
+
                     <strong>
-                      {selectedInvestor.branch}
+                      {
+                        selectedInvestor.branch
+                      }
                     </strong>
                   </div>
 
                   <div>
-                    <label>Registered</label>
+                    <label>
+                      Registered
+                    </label>
+
                     <strong>
                       {formatDate(
                         selectedInvestor.registered
@@ -838,21 +1054,34 @@ export default function InvestorManagement() {
                   </div>
 
                   <div>
-                    <label>KYC</label>
+                    <label>
+                      KYC
+                    </label>
+
                     <strong>
-                      {selectedInvestor.kyc}
+                      {
+                        selectedInvestor.kyc
+                      }
                     </strong>
                   </div>
 
                   <div>
-                    <label>Status</label>
+                    <label>
+                      Status
+                    </label>
+
                     <strong>
-                      {selectedInvestor.status}
+                      {
+                        selectedInvestor.status
+                      }
                     </strong>
                   </div>
 
                   <div>
-                    <label>Total Investment</label>
+                    <label>
+                      Total Investment
+                    </label>
+
                     <strong>
                       {formatCurrency(
                         selectedInvestor.aum
@@ -867,7 +1096,8 @@ export default function InvestorManagement() {
                   ).length > 0 && (
                     <div className="ivm-raw-details">
                       <h3>
-                        Additional Information
+                        Additional
+                        Information
                       </h3>
 
                       <div className="ivm-raw-grid">

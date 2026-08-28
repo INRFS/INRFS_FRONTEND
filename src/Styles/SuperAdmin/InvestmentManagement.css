@@ -896,30 +896,254 @@
   height: 52px;
 }
 
-/* Mobile */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @media (max-width: 700px) {
-  .ivt-stat-card {
-    height: 72px;
+  .ivt-page {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 
-  .ivt-stat-value {
-    font-size: 21px;
+  .ivt-page-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .ivt-page-head h1 {
+    font-size: 19px;
+    line-height: 1.2;
+  }
+
+  .ivt-page-head p {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .ivt-page-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .ivt-page-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ivt-stat-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 2px 2px 7px !important;
+    margin-bottom: 10px !important;
+    box-sizing: border-box !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ivt-stat-grid::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .ivt-stat-card {
+    flex: 0 0 145px !important;
+    width: 145px !important;
+    min-width: 145px !important;
+    max-width: 145px !important;
+    height: 88px !important;
+    min-height: 88px !important;
+    padding: 10px 10px !important;
+    box-sizing: border-box !important;
+    scroll-snap-align: start;
+    overflow: hidden;
+  }
+
+  .ivt-stat-top {
+    gap: 5px;
   }
 
   .ivt-stat-label {
-    font-size: 8px;
+    min-width: 0;
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ivt-stat-icon {
+    width: 25px !important;
+    height: 25px !important;
+    flex: 0 0 25px !important;
+  }
+
+  .ivt-stat-value {
+    margin-top: 7px !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .ivt-stat-subtitle {
-    font-size: 7px;
+    margin-top: 5px !important;
+    font-size: 7px !important;
+    line-height: 1.2 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ivt-card {
+    width: 100%;
+    min-width: 0;
+    padding: 10px;
+    border-radius: 12px;
+    box-sizing: border-box;
+  }
+
+  .ivt-filter-head {
+    align-items: flex-start;
+    gap: 7px;
+    margin-bottom: 8px;
+  }
+
+  .ivt-filter-head h2 {
+    font-size: 12px;
+  }
+
+  .ivt-filter-head span {
+    font-size: 8px;
+  }
+
+  .ivt-filter-status {
+    font-size: 7.5px;
+    padding: 5px 7px;
+  }
+
+  .ivt-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-bottom: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .ivt-search {
+    grid-column: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    padding: 0 9px !important;
+    box-sizing: border-box !important;
+  }
+
+  .ivt-search input {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 9.5px !important;
+  }
+
+  .ivt-dropdown {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .ivt-dropdown-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    padding: 0 8px !important;
+    font-size: 9px !important;
+    box-sizing: border-box !important;
+  }
+
+  .ivt-dropdown-btn span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ivt-clear-btn {
+    grid-column: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    padding: 0 8px !important;
+    font-size: 9px !important;
+    box-sizing: border-box !important;
+  }
+
+  .ivt-dropdown-menu {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-height: 210px !important;
+    z-index: 100 !important;
+  }
+
+  .ivt-dropdown-item {
+    padding: 8px 9px !important;
+    font-size: 9px !important;
   }
 
   .ivt-table-wrap {
-    max-height: 360px;
+    width: 100%;
+    max-width: 100%;
+    max-height: 360px !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    margin-left: -1px;
+    margin-right: -1px;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ivt-table {
+    width: max-content !important;
+    min-width: 980px !important;
+  }
+
+  .ivt-table th {
+    padding: 9px 10px !important;
+    font-size: 8.5px !important;
   }
 
   .ivt-table td {
-    font-size: 12px;
+    padding: 10px !important;
+    font-size: 11px !important;
   }
 
   .ivt-bond-number,
@@ -927,30 +1151,189 @@
   .ivt-branch-text,
   .ivt-amount,
   .ivt-interest {
-    font-size: 12px;
+    font-size: 11px !important;
+  }
+
+  .ivt-rate-badge,
+  .ivt-badge {
+    min-height: 22px !important;
+    padding: 3px 8px !important;
+    font-size: 8px !important;
+  }
+
+  .ivt-view-btn {
+    width: 29px !important;
+    height: 29px !important;
+    flex-basis: 29px !important;
+  }
+
+  .ivt-bond-btn {
+    height: 29px !important;
+    padding: 0 9px !important;
+    font-size: 8.5px !important;
+  }
+
+  .ivt-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .ivt-footer-text {
+    font-size: 8px;
+  }
+
+  .ivt-pagination {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .ivt-page-btn,
+  .ivt-page-current {
+    width: 29px;
+    height: 29px;
+  }
+
+  .ivt-modal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .ivt-modal-label {
+    font-size: 7px;
+  }
+
+  .ivt-modal-value {
+    font-size: 10px;
   }
 }
 
 @media (max-width: 520px) {
+  .ivt-page-head h1 {
+    font-size: 18px;
+  }
+
+  .ivt-stat-grid {
+    gap: 7px !important;
+  }
+
   .ivt-stat-card {
-    height: 68px;
+    flex-basis: 140px !important;
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    height: 86px !important;
+    min-height: 86px !important;
+    padding: 9px !important;
+  }
+
+  .ivt-stat-label {
+    font-size: 7.5px !important;
   }
 
   .ivt-stat-value {
-    font-size: 20px;
+    font-size: 17px !important;
+  }
+
+  .ivt-stat-subtitle {
+    font-size: 6.7px !important;
+  }
+
+  .ivt-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 5px !important;
+  }
+
+  .ivt-search,
+  .ivt-dropdown-btn,
+  .ivt-clear-btn {
+    height: 35px !important;
+  }
+
+  .ivt-search input,
+  .ivt-dropdown-btn,
+  .ivt-clear-btn {
+    font-size: 9px !important;
   }
 
   .ivt-table-wrap {
-    max-height: 330px;
+    max-height: 330px !important;
+  }
+
+  .ivt-table td {
+    font-size: 10.5px !important;
+  }
+
+  .ivt-bond-number,
+  .ivt-name,
+  .ivt-branch-text,
+  .ivt-amount,
+  .ivt-interest {
+    font-size: 10.5px !important;
+  }
+
+  .ivt-modal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 
 @media (max-width: 380px) {
+  .ivt-page-head h1 {
+    font-size: 17px;
+  }
+
+  .ivt-stat-grid {
+    gap: 6px !important;
+  }
+
   .ivt-stat-card {
-    height: 66px;
+    flex-basis: 135px !important;
+    width: 135px !important;
+    min-width: 135px !important;
+    max-width: 135px !important;
+    height: 84px !important;
+    min-height: 84px !important;
+    padding: 8px !important;
+  }
+
+  .ivt-stat-label {
+    font-size: 7px !important;
   }
 
   .ivt-stat-value {
-    font-size: 19px;
+    font-size: 16px !important;
+  }
+
+  .ivt-stat-subtitle {
+    font-size: 6.3px !important;
+  }
+
+  .ivt-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 5px !important;
+  }
+
+  .ivt-search,
+  .ivt-dropdown-btn,
+  .ivt-clear-btn {
+    height: 34px !important;
+  }
+
+  .ivt-search input,
+  .ivt-dropdown-btn,
+  .ivt-clear-btn {
+    font-size: 8.5px !important;
+  }
+
+  .ivt-table-wrap {
+    max-height: 310px !important;
+  }
+
+  .ivt-table td {
+    font-size: 10px !important;
+  }
+
+  .ivt-modal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }

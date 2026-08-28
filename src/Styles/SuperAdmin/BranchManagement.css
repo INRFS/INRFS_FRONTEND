@@ -413,12 +413,20 @@
   color: var(--sa-text-muted);
   font-size: 13px;
 }
-
 @media (max-width: 900px) {
-  .sa-card-toolbar { padding: 16px; }
+  .sa-card-toolbar {
+    padding: 16px;
+  }
+
   .sa-table thead th,
-  .sa-table tbody td { padding-left: 15px; padding-right: 15px; }
-  .sa-table-footer { padding: 14px 16px; }
+  .sa-table tbody td {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .sa-table-footer {
+    padding: 14px 16px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -429,19 +437,32 @@
     margin-bottom: 16px;
   }
 
-  .sa-page-header h1 { font-size: 21px; }
-
-  .branch-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 11px;
-    padding: 14px;
+  .sa-page-header h1 {
+    font-size: 21px;
   }
 
-  .branch-search { width: 100%; }
-  .branch-add-btn { width: 100%; min-width: 0; }
+  .branch-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+  }
 
-  .sa-card { border-radius: 14px; }
+  .branch-search {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .branch-add-btn {
+    width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .sa-card {
+    border-radius: 14px;
+  }
 
   .sa-table-footer {
     flex-direction: column;
@@ -449,7 +470,9 @@
     gap: 12px;
   }
 
-  .sa-pagination { justify-content: flex-end; }
+  .sa-pagination {
+    justify-content: flex-end;
+  }
 
   .sa-view-row {
     align-items: flex-start;
@@ -457,5 +480,49 @@
     gap: 5px;
   }
 
-  .sa-view-row > span:last-child { text-align: left; }
+  .sa-view-row > span:last-child {
+    text-align: left;
+  }
+}
+
+@media (max-width: 380px) {
+  .branch-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .branch-search,
+  .branch-add-btn {
+    min-height: 38px;
+  }
+
+  .branch-search input,
+  .branch-add-btn {
+    font-size: 11px;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .branch-toolbar {
+    display: grid;
+    grid-template-columns: 6fr 4fr;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .branch-search {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .branch-add-btn {
+    width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
 }

@@ -475,5 +475,357 @@
 .reports-search{padding-left:9px !important;padding-right:9px !important}
 .reports-filters>select,.reports-filters>input[type="date"]{padding-left:8px !important;padding-right:8px !important}
 .reports-download{padding-left:10px !important;padding-right:10px !important}
-@media (max-width:1320px) and (min-width:901px){.reports-tab{padding-left:5px !important;padding-right:5px !important;font-size:9.5px !important}.reports-tab svg{width:12px !important;height:12px !important}}
-@media (max-width:760px){.reports-tabs{gap:1px !important;padding:3px !important}.reports-tab{padding-left:8px !important;padding-right:8px !important}.reports-filters{gap:6px !important}}
+@media (max-width: 700px) {
+  .reports-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px 8px 22px !important;
+    overflow-x: hidden !important;
+  }
+
+  .reports-tabs-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    margin-bottom: 8px !important;
+  }
+
+  .reports-tabs {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+    padding: 4px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .reports-tabs::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .reports-tab {
+    flex: 0 0 auto !important;
+    min-width: 96px !important;
+    width: auto !important;
+    max-width: none !important;
+    height: 38px !important;
+    padding: 0 12px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    box-sizing: border-box !important;
+  }
+
+  .reports-filters {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 7px !important;
+    padding: 8px !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  .reports-search {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 40px !important;
+    box-sizing: border-box !important;
+  }
+
+  .reports-search input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    font-size: 10px !important;
+  }
+
+  .reports-filters > select,
+  .reports-filters > input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 40px !important;
+    font-size: 10px !important;
+    padding: 0 9px !important;
+    box-sizing: border-box !important;
+  }
+
+  .reports-filters > select:nth-of-type(1) {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  .reports-filters > select:nth-of-type(2) {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+  }
+
+  .reports-filters > select:nth-of-type(3) {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+  }
+
+  .reports-filters > input[type="date"]:nth-of-type(1) {
+    grid-column: 2 !important;
+    grid-row: 3 !important;
+  }
+
+  .reports-filters > input[type="date"]:nth-of-type(2) {
+    grid-column: 1 !important;
+    grid-row: 4 !important;
+  }
+
+  .reports-reset,
+  .reports-clear {
+    grid-column: 2 !important;
+    grid-row: 4 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 40px !important;
+  }
+
+  .reports-download {
+    grid-column: 1 / -1 !important;
+    grid-row: 5 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 40px !important;
+  }
+
+  .reports-overview-content {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px 8px 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .reports-metric-tiles {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 2px 2px 7px !important;
+    margin-bottom: 10px !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .reports-metric-tiles::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .reports-metric-tile {
+    flex: 0 0 145px !important;
+    width: 145px !important;
+    min-width: 145px !important;
+    max-width: 145px !important;
+    min-height: 82px !important;
+    padding: 10px !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .reports-metric-icon {
+    width: 31px !important;
+    height: 31px !important;
+    flex: 0 0 31px !important;
+  }
+
+  .reports-metric-copy {
+    min-width: 0 !important;
+  }
+
+  .reports-metric-copy > span {
+    font-size: 8px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .reports-metric-copy > strong {
+    font-size: 15px !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .reports-metric-copy > small {
+    font-size: 7px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .reports-viz-grid {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    margin: 10px 0 !important;
+    padding: 2px 2px 7px !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .reports-viz-grid::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .reports-viz-card {
+    flex: 0 0 285px !important;
+    width: 285px !important;
+    min-width: 285px !important;
+    max-width: 285px !important;
+    padding: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .reports-viz-grid--overview .reports-viz-card {
+    flex-basis: 285px !important;
+    width: 285px !important;
+    min-width: 285px !important;
+  }
+
+  .reports-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .reports-table-scroll,
+  .reports-table-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .reports-table-scroll::-webkit-scrollbar,
+  .reports-table-wrap::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .reports-table,
+  .reports-table-wrap table {
+    width: max-content !important;
+    min-width: 1050px !important;
+    table-layout: auto !important;
+  }
+
+  .reports-table th,
+  .reports-table-wrap th {
+    white-space: nowrap !important;
+    padding: 10px 11px !important;
+    font-size: 9px !important;
+  }
+
+  .reports-table td,
+  .reports-table-wrap td {
+    white-space: nowrap !important;
+    padding: 11px !important;
+    font-size: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .reports-page {
+    padding: 8px 7px 20px !important;
+  }
+
+  .reports-tabs {
+    gap: 4px !important;
+    padding: 3px !important;
+  }
+
+  .reports-tab {
+    flex: 0 0 auto !important;
+    min-width: 92px !important;
+    height: 37px !important;
+    padding: 0 11px !important;
+    font-size: 9.5px !important;
+  }
+
+  .reports-filters {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 6px !important;
+    padding: 7px !important;
+  }
+
+  .reports-search {
+    grid-column: 1 / -1 !important;
+    height: 39px !important;
+  }
+
+  .reports-filters > select,
+  .reports-filters > input {
+    height: 39px !important;
+    font-size: 9.5px !important;
+  }
+
+  .reports-overview-content {
+    padding: 9px 7px 13px !important;
+  }
+
+  .reports-metric-tile {
+    flex-basis: 140px !important;
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    min-height: 80px !important;
+  }
+
+  .reports-viz-card {
+    flex-basis: 275px !important;
+    width: 275px !important;
+    min-width: 275px !important;
+    max-width: 275px !important;
+  }
+
+  .reports-table,
+  .reports-table-wrap table {
+    min-width: 1050px !important;
+  }
+}
+
+

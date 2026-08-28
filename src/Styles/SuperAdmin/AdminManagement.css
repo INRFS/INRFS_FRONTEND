@@ -1237,212 +1237,90 @@
   }
 }
 
-@media (max-width: 1100px) {
-  .sa-table {
-    min-width: 980px;
-  }
 
-  .sa-toolbar {
-    gap: 8px;
-    padding: 12px;
-  }
-}
+
+
+
+
+
 
 @media (max-width: 760px) {
   .sa-toolbar {
-    gap: 5px;
-    padding: 9px;
+    display: grid !important;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 3fr) !important;
+    grid-template-rows: 38px 38px !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .sa-card-search {
-    min-width: 0;
-    height: 35px;
-    padding: 0 8px;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 90% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 38px !important;
   }
 
   .sa-add-admin-btn {
-    flex: 0 0 92px;
-    width: 92px;
-    min-width: 92px;
-    height: 35px;
-    padding: 0 6px;
-    font-size: 9.5px;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 38px !important;
+    padding: 0 5px !important;
+    flex: none !important;
   }
 
   .sa-export-btn {
-    flex: 0 0 66px;
-    width: 66px;
-    min-width: 66px;
-    height: 35px;
-    padding: 0 6px;
-    font-size: 9.5px;
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 38px !important;
+    padding: 0 8px !important;
+    flex: none !important;
   }
 
-  .sa-table {
-    min-width: 900px;
+  .sa-refresh-btn {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 38px !important;
+    padding: 0 !important;
+    flex: none !important;
+    font-size: 0 !important;
   }
 
-  .sa-table thead th {
-    height: 39px;
-    padding: 0 7px;
-    font-size: 8px;
+  .sa-refresh-btn svg {
+    width: 17px !important;
+    height: 17px !important;
   }
 
-  .sa-table tbody td {
-    height: 53px;
-    padding: 0 7px;
-    font-size: 10px;
-  }
-
-  .sa-actions {
-    gap: 4px;
-  }
-
-  .sa-icon-btn {
-    width: 27px;
-    height: 27px;
-    min-width: 27px;
-    flex-basis: 27px;
-  }
-
-  .sa-icon-btn svg {
-    width: 12px;
-    height: 12px;
-  }
-
-  .sa-modal-overlay {
-    align-items: flex-end;
-    padding: 10px;
-  }
-
-  .sa-modal {
-    width: 100%;
-    max-height: calc(100vh - 20px);
-    border-radius: 17px;
-  }
-
-  .sa-modal-header {
-    min-height: 61px;
-    padding: 0 17px;
-  }
-
-  .sa-modal-header h2,
-  .sa-modal-header h3 {
-    font-size: 17px;
-  }
-
-  .sa-modal-body {
-    padding: 17px;
-  }
-
-  .sa-modal-profile {
-    margin-bottom: 16px;
-    padding: 12px;
-  }
-
-  .sa-modal-avatar {
-    width: 45px;
-    height: 45px;
-    min-width: 45px;
-    border-radius: 12px;
-    font-size: 16px;
-  }
-
-  .sa-modal-profile-name {
-    font-size: 14px;
-  }
-
-  .sa-modal-profile-role {
-    font-size: 10px;
-  }
-
-  .sa-modal-status {
-    padding: 5px 8px;
-    font-size: 9px;
-  }
-
-  .sa-modal-detail-row {
-    min-height: 45px;
-    grid-template-columns: 90px minmax(0, 1fr);
-    gap: 10px;
-    padding: 0 11px;
-  }
-
-  .sa-modal-detail-label {
-    font-size: 10px;
-  }
-
-  .sa-modal-detail-value {
-    font-size: 10.5px;
-  }
-
-  .sa-modal-footer {
-    min-height: 61px;
-    padding: 0 17px;
+  .sa-card-search input {
+    min-width: 0 !important;
+    width: 100% !important;
   }
 }
 
 @media (max-width: 430px) {
   .sa-toolbar {
-    gap: 4px;
-    padding: 8px;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 3fr) !important;
+    grid-template-rows: 36px 36px !important;
+    gap: 7px !important;
+    padding: 9px !important;
   }
 
-  .sa-card-search {
-    height: 33px;
-    padding: 0 7px;
-  }
-
-  .sa-card-search input {
-    font-size: 9.5px;
-  }
-
-  .sa-add-admin-btn {
-    flex-basis: 82px;
-    width: 82px;
-    min-width: 82px;
-    height: 33px;
-    font-size: 9px;
-  }
-
-  .sa-export-btn {
-    flex-basis: 59px;
-    width: 59px;
-    min-width: 59px;
-    height: 33px;
-    font-size: 9px;
-  }
-
-  .sa-table {
-    min-width: 880px;
-  }
-
-  .sa-modal-overlay {
-    padding: 7px;
-  }
-
-  .sa-modal {
-    max-height: calc(100vh - 14px);
-  }
-
-  .sa-modal-header {
-    min-height: 57px;
-    padding: 0 14px;
-  }
-
-  .sa-modal-body {
-    padding: 14px;
-  }
-
-  .sa-modal-detail-row {
-    min-height: 43px;
-    grid-template-columns: 78px minmax(0, 1fr);
-    gap: 7px;
-    padding: 0 9px;
-  }
-
-  .sa-modal-footer {
-    min-height: 58px;
-    padding: 0 14px;
+  .sa-card-search,
+  .sa-add-admin-btn,
+  .sa-export-btn,
+  .sa-refresh-btn {
+    height: 36px !important;
   }
 }

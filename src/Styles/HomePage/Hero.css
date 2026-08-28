@@ -157,13 +157,137 @@
     justify-content: flex-start;
   }
 }
-
 @media (max-width: 720px) {
+  .inrfs-hero {
+    padding: 40px 18px 36px;
+  }
+
+  .inrfs-hero-inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
   .inrfs-hero-title {
     font-size: 30px;
+    line-height: 1.12;
+    margin: 15px 0 13px;
   }
+
+  .inrfs-hero-subtitle {
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  /* Buttons in one row on mobile */
+  .inrfs-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 28px;
+  }
+
+  .inrfs-hero-actions .btn {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    padding: 0 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  .inrfs-hero-actions .btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
   .inrfs-hero-stats {
-    grid-template-columns: repeat(2, auto);
-    row-gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 16px;
+    padding-top: 20px;
+  }
+
+  .hero-stat-value {
+    font-size: 19px;
+  }
+
+  .hero-stat-label {
+    font-size: 9px;
+  }
+
+  .inrfs-hero-right {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .portfolio-card {
+    max-width: none;
+    padding: 16px;
+  }
+
+  .portfolio-tile {
+    padding: 11px;
+  }
+
+  .portfolio-tile-value {
+    font-size: 15px;
+  }
+
+  .portfolio-tile-label {
+    font-size: 10px;
+  }
+
+  .bond-card {
+    padding: 11px;
+  }
+
+  .bond-card-title {
+    font-size: 12px;
+  }
+
+  .badge-active {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .inrfs-hero {
+    padding: 32px 14px 30px;
+  }
+
+  .inrfs-hero-title {
+    font-size: 27px;
+  }
+
+  .inrfs-hero-subtitle {
+    font-size: 12.5px;
+  }
+
+  .inrfs-hero-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+
+  .inrfs-hero-actions .btn {
+    height: 42px;
+    padding: 0 7px;
+    font-size: 10px;
+  }
+
+  .inrfs-hero-actions .btn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .hero-stat-value {
+    font-size: 17px;
+  }
+
+  .hero-stat-label {
+    font-size: 8px;
   }
 }

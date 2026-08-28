@@ -1,6 +1,8 @@
 const API_URL =
   process.env.REACT_APP_API_URL ||
-"http://187.52.115.32:8000";
+  "http://187.52.115.32:8000";
+
+const MAX_PAGE_SIZE = 100;
 
 const getToken = () => {
   const keys = [
@@ -47,8 +49,7 @@ const getHeaders = (json = false) => {
 
     ...(json
       ? {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         }
       : {}),
 
@@ -100,6 +101,23 @@ const apiRequest = async (
         data?.detail ||
         "You do not have permission to access this resource.";
     } else if (
+      response.status === 422
+    ) {
+      if (Array.isArray(data?.detail)) {
+        message = data.detail
+          .map(
+            (item) =>
+              item?.msg ||
+              item?.message ||
+              String(item)
+          )
+          .join(", ");
+      } else {
+        message =
+          data?.detail ||
+          "Invalid request parameters.";
+      }
+    } else if (
       Array.isArray(data?.detail)
     ) {
       message = data.detail
@@ -133,22 +151,36 @@ export const getList = (
 ) => {
   const candidates = [
     response,
+
     response?.data,
+
     response?.items,
+
     response?.results,
+
     response?.requests,
+
     response?.settlements,
+
     response?.preclose_requests,
+
     response?.tenure_timeout_settlements,
+
     response?.closed_settlements,
 
     response?.data?.items,
+
     response?.data?.results,
+
     response?.data?.requests,
+
     response?.data?.settlements,
+
     response?.data?.preclose_requests,
+
     response?.data
       ?.tenure_timeout_settlements,
+
     response?.data
       ?.closed_settlements,
   ];
@@ -162,21 +194,52 @@ export const getList = (
   return [];
 };
 
-const makePagination = (
-  limit = 100,
+const normalizePagination = (
+  limit = MAX_PAGE_SIZE,
   offset = 0
 ) => {
+  const safeLimit = Math.min(
+    Math.max(
+      Number(limit) || MAX_PAGE_SIZE,
+      1
+    ),
+    MAX_PAGE_SIZE
+  );
+
+  const safeOffset = Math.max(
+    Number(offset) || 0,
+    0
+  );
+
+  return {
+    limit: safeLimit,
+    offset: safeOffset,
+  };
+};
+
+const makePagination = (
+  limit = MAX_PAGE_SIZE,
+  offset = 0
+) => {
+  const {
+    limit: safeLimit,
+    offset: safeOffset,
+  } = normalizePagination(
+    limit,
+    offset
+  );
+
   const params =
     new URLSearchParams();
 
   params.set(
     "limit",
-    String(limit)
+    String(safeLimit)
   );
 
   params.set(
     "offset",
-    String(offset)
+    String(safeOffset)
   );
 
   return params.toString();
@@ -191,12 +254,24 @@ const normalizeType = (
     .replace(/_/g, " ")
     .replace(/\s+/g, " ");
 
+/* =========================================================
+   GENERIC PAYMENT QUEUE
+   ========================================================= */
+
 export const getPaymentQueue =
   async ({
     paymentType = "All",
-    limit = 100,
+    limit = MAX_PAGE_SIZE,
     offset = 0,
   } = {}) => {
+    const {
+      limit: safeLimit,
+      offset: safeOffset,
+    } = normalizePagination(
+      limit,
+      offset
+    );
+
     const type =
       normalizeType(paymentType);
 
@@ -205,8 +280,8 @@ export const getPaymentQueue =
     ) {
       return getSuperAdminTenureTimeoutSettlements(
         {
-          limit,
-          offset,
+          limit: safeLimit,
+          offset: safeOffset,
         }
       );
     }
@@ -219,8 +294,8 @@ export const getPaymentQueue =
     ) {
       return getSuperAdminPrecloseRequests(
         {
-          limit,
-          offset,
+          limit: safeLimit,
+          offset: safeOffset,
         }
       );
     }
@@ -235,12 +310,12 @@ export const getPaymentQueue =
 
     params.set(
       "limit",
-      String(limit)
+      String(safeLimit)
     );
 
     params.set(
       "offset",
-      String(offset)
+      String(safeOffset)
     );
 
     return apiRequest(
@@ -250,6 +325,10 @@ export const getPaymentQueue =
       }
     );
   };
+
+/* =========================================================
+   PAYMENT DETAILS
+   ========================================================= */
 
 export const getPaymentDetails =
   async (
@@ -307,6 +386,10 @@ export const getPaymentDetails =
     );
   };
 
+/* =========================================================
+   APPROVE PAYMENT
+   ========================================================= */
+
 export const approvePayment =
   async (
     sourceId,
@@ -338,6 +421,10 @@ export const approvePayment =
       }
     );
   };
+
+/* =========================================================
+   REJECT PAYMENT
+   ========================================================= */
 
 export const rejectPayment =
   async (
@@ -385,6 +472,10 @@ export const rejectPayment =
     );
   };
 
+/* =========================================================
+   MARK PAYMENT PAID
+   ========================================================= */
+
 export const markPaymentPaid =
   async (
     sourceId,
@@ -423,9 +514,17 @@ export const markPaymentPaid =
 
 export const getMonthlyInterestQueue =
   async ({
-    limit = 100,
+    limit = MAX_PAGE_SIZE,
     offset = 0,
   } = {}) => {
+    const {
+      limit: safeLimit,
+      offset: safeOffset,
+    } = normalizePagination(
+      limit,
+      offset
+    );
+
     const params =
       new URLSearchParams();
 
@@ -436,12 +535,12 @@ export const getMonthlyInterestQueue =
 
     params.set(
       "limit",
-      String(limit)
+      String(safeLimit)
     );
 
     params.set(
       "offset",
-      String(offset)
+      String(safeOffset)
     );
 
     return apiRequest(
@@ -531,9 +630,17 @@ export const markMonthlyInterestPaymentPaid =
 export const getAllTenureExtensions =
   async ({
     branchId = null,
-    limit = 100,
+    limit = MAX_PAGE_SIZE,
     offset = 0,
   } = {}) => {
+    const {
+      limit: safeLimit,
+      offset: safeOffset,
+    } = normalizePagination(
+      limit,
+      offset
+    );
+
     const params =
       new URLSearchParams();
 
@@ -550,12 +657,12 @@ export const getAllTenureExtensions =
 
     params.set(
       "limit",
-      String(limit)
+      String(safeLimit)
     );
 
     params.set(
       "offset",
-      String(offset)
+      String(safeOffset)
     );
 
     return apiRequest(
@@ -691,7 +798,7 @@ export const markTenureExtensionPaid =
 
 export const getSuperAdminPrecloseRequests =
   async ({
-    limit = 100,
+    limit = MAX_PAGE_SIZE,
     offset = 0,
   } = {}) => {
     return apiRequest(
@@ -729,12 +836,12 @@ export const getSuperAdminPrecloseRequestDetails =
   };
 
 /* =========================================================
-   TENURE TIMEOUT
+   TENURE TIMEOUT / TENURE SETTLEMENT
    ========================================================= */
 
 export const getSuperAdminTenureTimeoutSettlements =
   async ({
-    limit = 100,
+    limit = MAX_PAGE_SIZE,
     offset = 0,
   } = {}) => {
     return apiRequest(
@@ -771,6 +878,10 @@ export const getSuperAdminTenureTimeoutSettlementDetails =
     );
   };
 
+/* =========================================================
+   ALIASES
+   ========================================================= */
+
 export const getPrecloseRequests =
   getSuperAdminPrecloseRequests;
 
@@ -782,6 +893,10 @@ export const getTenureTimeoutSettlements =
 
 export const getTenureTimeoutSettlementDetails =
   getSuperAdminTenureTimeoutSettlementDetails;
+
+/* =========================================================
+   PRE-CLOSE ACTIONS
+   ========================================================= */
 
 export const approvePrecloseRequest =
   async (requestId) => {
@@ -811,6 +926,10 @@ export const markPrecloseRequestPaid =
     );
   };
 
+/* =========================================================
+   TENURE SETTLEMENT ACTIONS
+   ========================================================= */
+
 export const approveTenureTimeoutSettlement =
   async (settlementId) => {
     return approvePayment(
@@ -838,6 +957,10 @@ export const markTenureTimeoutSettlementPaid =
       "Tenure Settlement"
     );
   };
+
+/* =========================================================
+   DEFAULT EXPORT
+   ========================================================= */
 
 export default {
   getPaymentQueue,
@@ -884,4 +1007,9 @@ export default {
   approveTenureTimeoutSettlement,
   rejectTenureTimeoutSettlement,
   markTenureTimeoutSettlementPaid,
+};
+
+export {
+  API_URL,
+  MAX_PAGE_SIZE,
 };
