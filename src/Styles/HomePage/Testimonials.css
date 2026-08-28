@@ -81,7 +81,7 @@
 }
 
 .inrfs-cta p {
-  font-size: 14.5px;
+  font-size: 1.5px;
   color: #c3c9e8;
   max-width: 540px;
   margin: 0 auto 28px;
@@ -93,4 +93,74 @@
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+@media (max-width: 720px) {
+  .inrfs-cta {
+    padding: 56px 16px 48px;
+    overflow: hidden;
+  }
+
+  .inrfs-cta h2 {
+    font-size: 24px;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .inrfs-cta p {
+    font-size: 13px;
+    line-height: 1.55;
+    margin-bottom: 24px;
+    padding: 0 4px;
+  }
+
+  .inrfs-cta-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .inrfs-cta-actions .btn {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    max-width: none;
+    height: 44px;
+    padding: 0 8px;
+    font-size: 11px;
+    white-space: nowrap;
+    text-align: center;
+    justify-content: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 380px) {
+  .inrfs-cta {
+    padding: 48px 12px 42px;
+  }
+
+  .inrfs-cta h2 {
+    font-size: 22px;
+  }
+
+  .inrfs-cta p {
+    font-size: 12px;
+    padding: 0;
+  }
+
+  .inrfs-cta-actions {
+    gap: 7px;
+  }
+
+  .inrfs-cta-actions .btn {
+    height: 42px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
 }

@@ -305,33 +305,70 @@ const normalizePayment = (
       [
         "interest_amount",
         "interestAmount",
-        "interest_due",
-        "interest_due_amount",
+        "interest",
+        "amount",
         "payment_amount",
         "paymentAmount",
+        "approved_amount",
+        "approvedAmount",
+        "interest_due",
+        "interest_due_amount",
       ],
       0
     )
   );
 
-  const monthlyNetAmount = toNumber(
-    getValue(
-      row,
-      [
-        "net_interest_amount",
-        "netInterestAmount",
-        "net_interest",
-        "netInterest",
-        "amount",
-      ],
-      monthlyInterestAmount - gst
-    )
+  const monthlyStoredGst = getValue(
+    row,
+    [
+      "gst_amount",
+      "gstAmount",
+      "gst",
+    ],
+    null
   );
+
+  const monthlyGst =
+    monthlyStoredGst === null
+      ? Number(
+          (monthlyInterestAmount * GST_RATE).toFixed(2)
+        )
+      : toNumber(monthlyStoredGst);
+
+  const monthlyStoredNet = getValue(
+    row,
+    [
+      "net_interest_amount",
+      "netInterestAmount",
+      "net_interest",
+      "netInterest",
+      "net_payable",
+      "netPayable",
+      "amount_after_gst",
+      "amountAfterGst",
+    ],
+    null
+  );
+
+  const monthlyNetAmount =
+    monthlyStoredNet === null
+      ? Number(
+          (
+            monthlyInterestAmount -
+            monthlyGst
+          ).toFixed(2)
+        )
+      : toNumber(monthlyStoredNet);
 
   const amount =
     type === "Monthly Interest"
-      ? monthlyNetAmount
+      ? monthlyInterestAmount
       : settlementNet;
+
+  const displayGst =
+    type === "Monthly Interest"
+      ? monthlyGst
+      : gst;
 
   const sourceId = getValue(
     row,
@@ -401,7 +438,7 @@ const normalizePayment = (
 
     principal,
     interest,
-    gst,
+    gst: displayGst,
     penalty,
     netSettlement: settlementNet,
     monthlyInterestAmount,
@@ -690,6 +727,8 @@ export default function Payments() {
   const [tenureRequests, setTenureRequests] = useState([]);
 
   const [activeTab, setActiveTab] = useState("All");
+  const PAGE_SIZE = 15;
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [loading, setLoading] = useState(true);
   const [tenureLoading, setTenureLoading] = useState(true);
@@ -725,44 +764,108 @@ export default function Payments() {
       setLoading(true);
       setError("");
 
-      const response =
-        activeTab === "Monthly Interest"
-          ? await getMonthlyInterestPaymentQueue({
-              limit: 100,
-              offset: 0,
-            })
-          : await getPaymentQueue({
-              paymentType: activeTab,
-              limit: 100,
-              offset: 0,
-            });
+      let normalized = [];
 
-      const rows = getList(response);
-
-      const forcedType =
-        activeTab === "Monthly Interest"
-          ? "Monthly Interest"
-          : activeTab === "Tenure Settlement"
-          ? "Tenure Settlement"
-          : activeTab === "Pre-Close Settlement"
-          ? "Pre-Close Settlement"
-          : null;
-
-      let normalized = rows.map(
-        (row, index) =>
-          normalizePayment(
-            row,
-            index,
-            forcedType
-          )
-      );
+      if (activeTab === "Tenure Extension") {
+        await loadTenureRequests();
+        setPayments([]);
+        return;
+      }
 
       if (activeTab === "All") {
-        normalized = normalized.filter(
-          (payment) =>
-            payment.type === "Monthly Interest" ||
-            payment.type === "Tenure Settlement" ||
-            payment.type === "Pre-Close Settlement"
+        const [
+          monthlyResponse,
+          tenureSettlementResponse,
+          preCloseResponse,
+        ] = await Promise.all([
+          getMonthlyInterestPaymentQueue({
+            limit: 100,
+            offset: 0,
+          }),
+          getPaymentQueue({
+            paymentType: "Tenure Settlement",
+            limit: 100,
+            offset: 0,
+          }),
+          getPaymentQueue({
+            paymentType: "Pre-Close Settlement",
+            limit: 100,
+            offset: 0,
+          }),
+        ]);
+
+        const monthlyRows = getList(monthlyResponse);
+        const tenureSettlementRows = getList(
+          tenureSettlementResponse
+        );
+        const preCloseRows = getList(
+          preCloseResponse
+        );
+
+        normalized = [
+          ...monthlyRows.map((row, index) =>
+            normalizePayment(
+              row,
+              index,
+              "Monthly Interest"
+            )
+          ),
+          ...tenureSettlementRows.map(
+            (row, index) =>
+              normalizePayment(
+                row,
+                index,
+                "Tenure Settlement"
+              )
+          ),
+          ...preCloseRows.map(
+            (row, index) =>
+              normalizePayment(
+                row,
+                index,
+                "Pre-Close Settlement"
+              )
+          ),
+        ];
+
+        await loadTenureRequests();
+      } else if (activeTab === "Monthly Interest") {
+        const response =
+          await getMonthlyInterestPaymentQueue({
+            limit: 100,
+            offset: 0,
+          });
+
+        normalized = getList(response).map(
+          (row, index) =>
+            normalizePayment(
+              row,
+              index,
+              "Monthly Interest"
+            )
+        );
+      } else {
+        const response =
+          await getPaymentQueue({
+            paymentType: activeTab,
+            limit: 100,
+            offset: 0,
+          });
+
+        const forcedType =
+          activeTab === "Tenure Settlement"
+            ? "Tenure Settlement"
+            : activeTab === "Pre-Close Settlement"
+            ? "Pre-Close Settlement"
+            : null;
+
+        normalized = getList(response).map(
+          (row, index) =>
+            normalizePayment(
+              row,
+              index,
+              forcedType
+            )
         );
       }
 
@@ -792,6 +895,10 @@ export default function Payments() {
       );
 
       setPayments([]);
+
+      if (activeTab === "All" || activeTab === "Tenure Extension") {
+        setTenureRequests([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -831,12 +938,9 @@ export default function Payments() {
   };
 
   useEffect(() => {
+    setCurrentPage(1);
     loadPayments();
   }, [activeTab]);
-
-  useEffect(() => {
-    loadTenureRequests();
-  }, []);
 
   const allRows = useMemo(() => {
     if (activeTab === "Tenure Extension") {
@@ -861,7 +965,77 @@ export default function Payments() {
     tenureRequests,
   ]);
 
-  const pendingSummary = useMemo(() => {
+  const totalPages = Math.max(
+    1,
+    Math.ceil(allRows.length / PAGE_SIZE)
+  );
+
+  const paginatedRows = useMemo(() => {
+    const start =
+      (currentPage - 1) * PAGE_SIZE;
+
+    return allRows.slice(
+      start,
+      start + PAGE_SIZE
+    );
+  }, [
+    allRows,
+    currentPage,
+  ]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [
+    currentPage,
+    totalPages,
+  ]);
+
+  const getPendingAmountForRow = (row) => {
+    if (row.type === "Monthly Interest") {
+      return toNumber(
+        row.monthlyNetAmount ??
+        row.netAmount ??
+        row.net_interest_amount ??
+        row.netInterestAmount ??
+        row.amount ??
+        0
+      );
+    }
+
+    if (
+      row.type === "Tenure Settlement" ||
+      row.type === "Pre-Close Settlement"
+    ) {
+      return toNumber(
+        row.netSettlement ??
+        row.net_settlement ??
+        row.net_settlement_amount ??
+        row.net_payable ??
+        row.amount ??
+        0
+      );
+    }
+
+    if (row.type === "Tenure Extension") {
+      return toNumber(
+        row.amount ??
+        row.principal ??
+        row.netSettlement ??
+        0
+      );
+    }
+
+    return toNumber(
+      row.netSettlement ??
+      row.monthlyNetAmount ??
+      row.amount ??
+      0
+    );
+  };
+
+  const tabPendingSummary = useMemo(() => {
     const pending = allRows.filter(
       (row) =>
         normalizeStatus(row.status) ===
@@ -872,11 +1046,14 @@ export default function Payments() {
       count: pending.length,
       total: pending.reduce(
         (sum, row) =>
-          sum + toNumber(row.amount),
+          sum +
+          getPendingAmountForRow(row),
         0
       ),
     };
   }, [allRows]);
+
+  const pendingSummary = tabPendingSummary;
 
   const closeApproval = () => {
     if (actionLoading) {
@@ -1813,7 +1990,7 @@ export default function Payments() {
   );
 
   const renderTenureExtensionTable =
-    () => (
+    (rows = tenureRequests) => (
       <div className="pq-table-wrap">
         <table className="pq-table pq-tenure-table">
           <thead>
@@ -1847,7 +2024,7 @@ export default function Payments() {
                   </span>
                 </td>
               </tr>
-            ) : tenureRequests.length === 0 ? (
+            ) : rows.length === 0 ? (
               <tr>
                 <td
                   colSpan={10}
@@ -1865,7 +2042,7 @@ export default function Payments() {
                 </td>
               </tr>
             ) : (
-              tenureRequests.map(
+              rows.map(
                 (request) => (
                   <tr
                     key={request.requestId}
@@ -1949,7 +2126,9 @@ export default function Payments() {
 
   const renderContent = () => {
     if (activeTab === "Tenure Extension") {
-      return renderTenureExtensionTable();
+      return renderTenureExtensionTable(
+        paginatedRows
+      );
     }
 
     if (
@@ -1957,18 +2136,18 @@ export default function Payments() {
       activeTab === "Pre-Close Settlement"
     ) {
       return renderSettlementTable(
-        payments
+        paginatedRows
       );
     }
 
     if (activeTab === "Monthly Interest") {
       return renderMonthlyTable(
-        payments
+        paginatedRows
       );
     }
 
     const settlementRows =
-      payments.filter(
+      paginatedRows.filter(
         (row) =>
           row.type ===
             "Tenure Settlement" ||
@@ -1977,11 +2156,26 @@ export default function Payments() {
       );
 
     const monthlyRows =
-      payments.filter(
+      paginatedRows.filter(
         (row) =>
           row.type ===
           "Monthly Interest"
       );
+
+    const tenureRows =
+      paginatedRows.filter(
+        (row) =>
+          row.type ===
+          "Tenure Extension"
+      );
+
+    if (
+      settlementRows.length === 0 &&
+      monthlyRows.length === 0 &&
+      tenureRows.length === 0
+    ) {
+      return renderMonthlyTable([]);
+    }
 
     return (
       <div>
@@ -2005,20 +2199,90 @@ export default function Payments() {
           </div>
         )}
 
-        {tenureRequests.length > 0 && (
+        {tenureRows.length > 0 && (
           <div
             style={{
               marginTop: 16,
             }}
           >
-            {renderTenureExtensionTable()}
+            {renderTenureExtensionTable(
+              tenureRows
+            )}
           </div>
         )}
+      </div>
+    );
+  };
 
-        {settlementRows.length === 0 &&
-          monthlyRows.length === 0 &&
-          tenureRequests.length === 0 &&
-          renderMonthlyTable([])}
+  const renderPagination = () => {
+    if (allRows.length <= PAGE_SIZE) {
+      return null;
+    }
+
+    return (
+      <div className="pq-pagination">
+        <div className="pq-pagination-info">
+          Showing{" "}
+          <strong>
+            {Math.min(
+              (currentPage - 1) * PAGE_SIZE + 1,
+              allRows.length
+            )}
+          </strong>
+          {" - "}
+          <strong>
+            {Math.min(
+              currentPage * PAGE_SIZE,
+              allRows.length
+            )}
+          </strong>
+          {" of "}
+          <strong>
+            {allRows.length}
+          </strong>
+        </div>
+
+        <div className="pq-pagination-controls">
+          <button
+            type="button"
+            className="pq-page-btn"
+            disabled={currentPage === 1}
+            onClick={() =>
+              setCurrentPage(
+                (page) =>
+                  Math.max(
+                    1,
+                    page - 1
+                  )
+              )
+            }
+          >
+            Previous
+          </button>
+
+          <span className="pq-page-number">
+            {currentPage} / {totalPages}
+          </span>
+
+          <button
+            type="button"
+            className="pq-page-btn"
+            disabled={
+              currentPage === totalPages
+            }
+            onClick={() =>
+              setCurrentPage(
+                (page) =>
+                  Math.min(
+                    totalPages,
+                    page + 1
+                  )
+              )
+            }
+          >
+            Next
+          </button>
+        </div>
       </div>
     );
   };
@@ -2107,11 +2371,14 @@ export default function Payments() {
         {renderContent()}
 
         <div className="pq-table-footer">
-          Showing{" "}
-          <strong>
-            {allRows.length}
-          </strong>{" "}
-          records
+          <span>
+            Page{" "}
+            <strong>{currentPage}</strong>
+            {" of "}
+            <strong>{totalPages}</strong>
+          </span>
+
+          {renderPagination()}
         </div>
       </div>
 

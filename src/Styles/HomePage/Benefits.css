@@ -83,9 +83,163 @@
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   MOBILE BENEFIT CARDS - FINAL FIX
+   ========================================================= */
 
 @media (max-width: 720px) {
+
+  .inrfs-section {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .benefits-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    gap: 28px;
+    box-sizing: border-box;
+  }
+
+  .benefits-left {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
   .benefits-right {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    gap: 10px;
+    box-sizing: border-box;
+  }
+
+  .stat-card {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: 13px;
+    border-radius: 10px;
+  }
+
+  .stat-card-top {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 7px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .stat-card-label {
+    display: block;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: calc(100% - 34px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    line-height: 1.25;
+    font-size: 8px;
+  }
+
+  .stat-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 25px;
+    width: 25px;
+    min-width: 25px;
+    max-width: 25px;
+    height: 25px;
+    padding: 0;
+    box-sizing: border-box;
+    border-radius: 7px;
+  }
+
+  .stat-card-icon svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+  }
+
+  .stat-card-value {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 18px;
+    line-height: 1.2;
+    box-sizing: border-box;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+  .inrfs-section {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .benefits-right {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .stat-card {
+    padding: 10px;
+  }
+
+  .stat-card-top {
+    gap: 4px;
+  }
+
+  .stat-card-label {
+    font-size: 7px;
+    max-width: calc(100% - 30px);
+  }
+
+  .stat-card-icon {
+    width: 22px;
+    min-width: 22px;
+    max-width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+  }
+
+  .stat-card-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .stat-card-value {
+    font-size: 16px;
   }
 }

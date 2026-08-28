@@ -966,137 +966,393 @@
     width: 100%;
   }
 }
-
 @media (max-width: 700px) {
   .sa-stat-grid {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 9px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 2px 2px 7px;
-    margin-bottom: 12px;
-    scrollbar-width: none;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 9px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 2px 2px 8px !important;
+    margin-bottom: 12px !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
+    align-items: stretch !important;
   }
 
   .sa-stat-grid::-webkit-scrollbar {
-    display: none;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   .sa-stat-card {
-    flex: 0 0 160px;
-    width: 160px;
-    min-width: 160px;
-    height: 78px;
-    padding: 10px 11px;
+    position: relative;
+    flex: 0 0 160px !important;
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+    height: 94px !important;
+    min-height: 94px !important;
+    padding: 11px 12px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
     scroll-snap-align: start;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .sa-stat-card-top {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
   .sa-stat-label {
-    font-size: 8px;
+    min-width: 0 !important;
+    max-width: calc(100% - 32px) !important;
+    font-size: 8px !important;
+    line-height: 1.2 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
 
   .sa-stat-icon {
-    width: 27px;
-    height: 27px;
-    flex-basis: 27px;
+    flex: 0 0 27px !important;
+    width: 27px !important;
+    height: 27px !important;
+    min-width: 27px !important;
   }
 
   .sa-stat-value {
-    font-size: 20px;
-    margin-top: 6px;
+    display: block !important;
+    margin-top: 6px !important;
+    font-size: 20px !important;
+    line-height: 1.1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .sa-stat-note {
-    font-size: 7px;
+    display: block !important;
+    margin-top: 5px !important;
+    font-size: 7px !important;
+    line-height: 1.2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
 
   .sa-dashboard-grid,
   .sa-chart-grid {
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 10px !important;
+    margin-bottom: 10px !important;
   }
 
   .sa-activity-card,
   .sa-investor-card,
   .sa-chart-card {
-    padding: 13px;
-    border-radius: 13px;
+    width: 100% !important;
+    padding: 13px !important;
+    border-radius: 13px !important;
   }
 
   .sa-section-head,
   .sa-chart-head {
-    margin-bottom: 8px;
+    margin-bottom: 8px !important;
   }
 
   .sa-section-kicker {
-    font-size: 7.5px;
+    font-size: 7.5px !important;
   }
 
   .sa-section-head h3,
   .sa-chart-head h3 {
-    font-size: 16px;
+    font-size: 16px !important;
   }
 
   .sa-section-head p,
   .sa-chart-head p {
-    font-size: 8.5px;
+    font-size: 8.5px !important;
   }
 
   .sa-activity-row,
   .sa-investor-row {
-    min-height: 50px;
+    min-height: 50px !important;
   }
 
   .sa-activity-title strong,
   .sa-investor-main strong {
-    font-size: 10.5px;
+    font-size: 10.5px !important;
   }
 
   .sa-activity-title span,
   .sa-investor-main span {
-    font-size: 9px;
+    font-size: 9px !important;
   }
 
   .sa-activity-meta span {
-    font-size: 7.5px;
+    font-size: 7.5px !important;
   }
 
   .sa-investor-main small {
-    font-size: 7px;
+    font-size: 7px !important;
   }
 
   .sa-investor-avatar,
   .sa-activity-icon {
-    width: 30px;
-    height: 30px;
-    flex-basis: 30px;
+    width: 30px !important;
+    height: 30px !important;
+    flex-basis: 30px !important;
   }
 
   .sa-investor-right strong {
-    font-size: 8.5px;
+    font-size: 8.5px !important;
   }
 
   .sa-admin-status {
-    font-size: 8.5px;
+    font-size: 8.5px !important;
   }
 
   .sa-activity-status-date {
-    font-size: 6.5px;
+    font-size: 6.5px !important;
   }
 
   .sa-chart-footer-stats strong {
-    font-size: 12px;
+    font-size: 12px !important;
   }
 
   .sa-chart-footer-stats span {
-    font-size: 6.5px;
+    font-size: 6.5px !important;
   }
 
   .sa-status-chart {
-    min-height: 205px;
+    min-height: 205px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sa-stat-card {
+    flex-basis: 152px !important;
+    width: 152px !important;
+    min-width: 152px !important;
+    max-width: 152px !important;
+    height: 92px !important;
+    min-height: 92px !important;
+    padding: 10px 11px !important;
+  }
+
+  .sa-stat-value {
+    font-size: 19px !important;
+  }
+
+  .sa-stat-note {
+    font-size: 7px !important;
+    margin-top: 5px !important;
+  }
+
+  .sa-section-head h3,
+  .sa-chart-head h3 {
+    font-size: 15px !important;
+  }
+
+  .sa-section-head p,
+  .sa-chart-head p {
+    font-size: 8px !important;
+  }
+
+  .sa-activity-row,
+  .sa-investor-row {
+    min-height: 48px !important;
+  }
+
+  .sa-activity-icon,
+  .sa-investor-avatar {
+    width: 29px !important;
+    height: 29px !important;
+    flex-basis: 29px !important;
+  }
+
+  .sa-activity-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+
+  .sa-activity-title strong,
+  .sa-investor-main strong {
+    font-size: 10px !important;
+  }
+
+  .sa-activity-title span,
+  .sa-investor-main span {
+    font-size: 8.5px !important;
+  }
+
+  .sa-activity-meta span {
+    font-size: 7px !important;
+  }
+
+  .sa-investor-main small {
+    font-size: 6.8px !important;
+  }
+
+  .sa-investor-right {
+    gap: 2px;
+  }
+
+  .sa-investor-right strong {
+    font-size: 8px !important;
+  }
+
+  .sa-activity-right {
+    gap: 2px;
+  }
+
+  .sa-admin-status {
+    font-size: 8px !important;
+  }
+
+  .sa-activity-status-date {
+    min-width: 43px;
+    font-size: 6.5px !important;
+  }
+
+  .sa-investor-status {
+    min-width: 43px;
+    font-size: 6.5px !important;
+  }
+
+  .sa-admin-summary {
+    gap: 12px;
+  }
+
+  .sa-admin-summary strong {
+    font-size: 12px !important;
+  }
+
+  .sa-admin-summary span {
+    font-size: 7px !important;
+  }
+
+  .sa-report-link {
+    height: 27px;
+    padding: 0 8px;
+    font-size: 7px;
+  }
+
+  .sa-investor-footer > span {
+    font-size: 7px;
+  }
+
+  .sa-chart-footer-stats {
+    gap: 5px;
+  }
+
+  .sa-chart-footer-stats > div {
+    padding: 6px;
+  }
+
+  .sa-chart-footer-stats strong {
+    font-size: 11px;
+  }
+
+  .sa-status-list {
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+
+  .sa-status-row {
+    min-height: 29px;
+    padding: 0 7px;
+  }
+
+  .sa-status-row span {
+    font-size: 7px;
+  }
+
+  .sa-status-row strong {
+    font-size: 8px;
+  }
+
+  .sa-mini-highlight strong {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 380px) {
+  .sa-stat-grid {
+    gap: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .sa-stat-card {
+    flex-basis: 145px !important;
+    width: 145px !important;
+    min-width: 145px !important;
+    max-width: 145px !important;
+    height: 91px !important;
+    min-height: 91px !important;
+    padding: 9px 10px !important;
+  }
+
+  .sa-stat-label {
+    font-size: 7.5px !important;
+  }
+
+  .sa-stat-value {
+    font-size: 18px !important;
+    margin-top: 6px !important;
+  }
+
+  .sa-stat-note {
+    font-size: 6.5px !important;
+    line-height: 1.25 !important;
+    margin-top: 5px !important;
+    white-space: normal !important;
+    overflow: visible !important;
+  }
+
+  .sa-section-head h3,
+  .sa-chart-head h3 {
+    font-size: 14px !important;
+  }
+
+  .sa-section-head p,
+  .sa-chart-head p {
+    font-size: 7.5px !important;
+  }
+
+  .sa-investor-right {
+    display: flex;
+  }
+
+  .sa-admin-summary {
+    gap: 9px;
+  }
+
+  .sa-admin-summary strong {
+    font-size: 11px;
+  }
+
+  .sa-admin-summary span {
+    font-size: 6.5px;
+  }
+
+  .sa-report-link {
+    padding: 0 6px;
+    font-size: 6.5px;
   }
 }
 
