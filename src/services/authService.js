@@ -1,6 +1,6 @@
 const API_URL =
   process.env.REACT_APP_API_URL ||
- "http://187.52.115.32:8000";
+  "http://187.52.115.32:8000";
 
 function getToken() {
   return (
@@ -182,6 +182,79 @@ export const getBranches = async (
   );
 };
 
+export const sendEmailOtp = async (
+  email,
+  name
+) => {
+  const normalizedEmail = String(
+    email || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const normalizedName = String(
+    name || ""
+  ).trim();
+
+  if (!normalizedEmail) {
+    throw new Error(
+      "Please enter your email address."
+    );
+  }
+
+  return request(
+    "/auth/email/send-otp",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        email: normalizedEmail,
+        name: normalizedName || "User",
+      }),
+    }
+  );
+};
+
+export const verifyEmailOtp = async (
+  email,
+  otp
+) => {
+  const normalizedEmail = String(
+    email || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const normalizedOtp = String(
+    otp || ""
+  ).trim();
+
+  if (!normalizedEmail) {
+    throw new Error(
+      "Please enter your email address."
+    );
+  }
+
+  if (
+    normalizedOtp.length !== 6 ||
+    !/^\d{6}$/.test(normalizedOtp)
+  ) {
+    throw new Error(
+      "Please enter a valid 6-digit OTP."
+    );
+  }
+
+  return request(
+    "/auth/email/verify-otp",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        email: normalizedEmail,
+        otp: normalizedOtp,
+      }),
+    }
+  );
+};
+
 export const registerInvestor = async (
   formData
 ) => {
@@ -340,8 +413,9 @@ export const approveInvestor =
         method: "PUT",
         body: JSON.stringify({
           remarks:
-            String(remarks || "").trim() ||
-            null,
+            String(
+              remarks || ""
+            ).trim() || null,
         }),
       }
     );
@@ -370,7 +444,9 @@ export const rejectInvestor =
         method: "PUT",
         body: JSON.stringify({
           remarks:
-            String(remarks || "").trim() ||
+            String(
+              remarks || ""
+            ).trim() ||
             "Investor rejected by admin",
         }),
       }
