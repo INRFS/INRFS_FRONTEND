@@ -849,3 +849,103 @@
     padding: 22px 15px 19px;
   }
 }
+
+
+.reg-page .reg-field input[type="email"] {
+  min-width: 0;
+}
+
+.reg-page .reg-field button.btn-primary[style*="minHeight"] {
+  flex-shrink: 0;
+}
+
+.reg-page .reg-field input[placeholder="Enter 6-digit OTP"] {
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--border-light);
+  border-radius: 7px;
+  outline: none;
+  background: #fff;
+  color: var(--text-dark);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.reg-page .reg-field input[placeholder="Enter 6-digit OTP"]:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(47, 92, 240, 0.08);
+}
+
+.reg-page .reg-field input[placeholder="Enter 6-digit OTP"]::placeholder {
+  color: #a2a9b7;
+  font-size: 11px;
+  letter-spacing: 0;
+  font-weight: 500;
+  text-align: left;
+}
+
+.reg-page .reg-field > div[style*="marginTop"] {
+  width: 100%;
+}
+
+.reg-page .reg-field > div[style*="marginTop"] button {
+  flex-shrink: 0;
+}
+
+.reg-page .reg-field > div[style*="marginTop"] button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.reg-page .reg-field > div[style*="marginTop"] span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 35px;
+  padding: 0 9px;
+  border: 1px solid #bde7cc;
+  border-radius: 7px;
+  background: #f0fdf4;
+}
+
+.reg-page .reg-field > div[style*="marginTop"] + div[style*="marginTop"] {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .reg-page .reg-field > div[style*="marginTop"] {
+    gap: 7px !important;
+  }
+
+  .reg-page .reg-field > div[style*="marginTop"] button {
+    min-height: 35px !important;
+    padding: 0 11px !important;
+    font-size: 10.5px;
+  }
+
+  .reg-page .reg-field input[placeholder="Enter 6-digit OTP"] {
+    height: 35px;
+    min-height: 35px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 400px) {
+  .reg-page .reg-field > div[style*="marginTop"] {
+    gap: 6px !important;
+  }
+
+  .reg-page .reg-field > div[style*="marginTop"] button {
+    padding: 0 9px !important;
+    font-size: 10px;
+  }
+
+  .reg-page .reg-field input[placeholder="Enter 6-digit OTP"] {
+    font-size: 10.5px;
+    letter-spacing: 1.5px;
+  }
+}

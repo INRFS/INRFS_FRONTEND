@@ -20,6 +20,8 @@ import {
   getStates,
   getBranches,
   registerInvestor,
+  sendEmailOtp,
+  verifyEmailOtp,
 } from "../../services/authService";
 
 const steps = [
@@ -90,14 +92,109 @@ function PersonalInfoStep({
   const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
   const [validationError, setValidationError] = useState("");
+  const [otp, setOtp] = useState("");
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpMessage, setOtpMessage] = useState("");
 
   const update = (field) => (e) => {
+    const value = e.target.value;
+
     setFormData((prev) => ({
       ...prev,
-      [field]: e.target.value,
+      [field]: value,
     }));
 
+    if (field === "email") {
+      setEmailVerified(false);
+      setEmailOtpSent(false);
+      setOtp("");
+      setOtpMessage("");
+    }
+
     setValidationError("");
+  };
+
+  const handleSendEmailOtp = async () => {
+    const email = formData.email.trim();
+
+    if (!formData.fullName.trim()) {
+      setValidationError("Please enter your full name before sending the OTP.");
+      return;
+    }
+
+    if (!email) {
+      setValidationError("Please enter your email address.");
+      return;
+    }
+
+    setValidationError("");
+    setOtpMessage("");
+    setOtpLoading(true);
+
+    try {
+      const response = await sendEmailOtp(
+        email,
+        formData.fullName.trim()
+      );
+
+      setEmailOtpSent(true);
+      setEmailVerified(false);
+      setOtp("");
+      setOtpMessage(
+        response?.message ||
+          "OTP sent successfully to your email."
+      );
+    } catch (error) {
+      setEmailOtpSent(false);
+      setOtpMessage("");
+      setValidationError(
+        error.message ||
+          "Unable to send OTP. Please try again."
+      );
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    const email = formData.email.trim();
+
+    if (!emailOtpSent) {
+      setValidationError("Please send the OTP first.");
+      return;
+    }
+
+    if (!otp || otp.length !== 6) {
+      setValidationError("Please enter the 6-digit OTP.");
+      return;
+    }
+
+    setValidationError("");
+    setOtpMessage("");
+    setOtpLoading(true);
+
+    try {
+      const response = await verifyEmailOtp(
+        email,
+        otp
+      );
+
+      setEmailVerified(true);
+      setOtpMessage(
+        response?.message ||
+          "Email verified successfully."
+      );
+    } catch (error) {
+      setEmailVerified(false);
+      setValidationError(
+        error.message ||
+          "Invalid OTP. Please try again."
+      );
+    } finally {
+      setOtpLoading(false);
+    }
   };
 
   const handleMobileChange = (e) => {
@@ -198,6 +295,13 @@ function PersonalInfoStep({
     if (!formData.email.trim()) {
       setValidationError(
         "Please enter your email address."
+      );
+      return;
+    }
+
+    if (!emailVerified) {
+      setValidationError(
+        "Please verify your email address with OTP."
       );
       return;
     }
@@ -355,8 +459,132 @@ function PersonalInfoStep({
               value={formData.email}
               onChange={update("email")}
               autoComplete="email"
+              disabled={emailVerified}
             />
           </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              marginTop: "8px",
+              alignItems: "center",
+            }}
+          >
+            {!emailVerified && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSendEmailOtp}
+                disabled={otpLoading}
+                style={{
+                  minHeight: "38px",
+                  padding: "0 14px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {otpLoading && !emailVerified ? (
+                  <>
+                    <Loader2
+                      size={14}
+                      className="reg-spin"
+                    />
+                    Sending...
+                  </>
+                ) : emailOtpSent ? (
+                  "Resend OTP"
+                ) : (
+                  "Send OTP"
+                )}
+              </button>
+            )}
+
+            {emailVerified && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  color: "#16a34a",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                }}
+              >
+                <CheckCircle2 size={14} />
+                Email verified
+              </span>
+            )}
+          </div>
+
+          {emailOtpSent && !emailVerified && (
+            <div style={{ marginTop: "8px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "8px",
+                  alignItems: "center",
+                }}
+              >
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Enter 6-digit OTP"
+                  value={otp}
+                  onChange={(e) => {
+                    setOtp(
+                      e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6)
+                    );
+                    setValidationError("");
+                  }}
+                  style={{ flex: 1 }}
+                />
+
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleVerifyEmailOtp}
+                  disabled={
+                    otpLoading ||
+                    otp.length !== 6
+                  }
+                  style={{
+                    minHeight: "38px",
+                    padding: "0 14px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {otpLoading ? (
+                    <>
+                      <Loader2
+                        size={14}
+                        className="reg-spin"
+                      />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify"
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {otpMessage && (
+            <div
+              style={{
+                marginTop: "7px",
+                fontSize: "12px",
+                color: emailVerified
+                  ? "#16a34a"
+                  : "#475569",
+              }}
+            >
+              {otpMessage}
+            </div>
+          )}
         </div>
 
         <div className="reg-field">

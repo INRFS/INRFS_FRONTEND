@@ -12,6 +12,7 @@ import {
   User,
   ShieldCheck,
   ArrowRight,
+  Mail,
 } from "lucide-react";
 
 import "../../Styles/login/Login.css";
@@ -66,6 +67,30 @@ export default function Login() {
 
   const [loading, setLoading] =
     useState(false);
+
+  const [showForgotPassword, setShowForgotPassword] =
+    useState(false);
+
+  const [forgotStep, setForgotStep] =
+    useState("email");
+
+  const [forgotEmail, setForgotEmail] =
+    useState("");
+
+  const [forgotOtp, setForgotOtp] =
+    useState("");
+
+  const [newPassword, setNewPassword] =
+    useState("");
+
+  const [confirmNewPassword, setConfirmNewPassword] =
+    useState("");
+
+  const [forgotLoading, setForgotLoading] =
+    useState(false);
+
+  const [forgotMessage, setForgotMessage] =
+    useState("");
 
   const getPageTitle = () => {
     if (isAdminLogin) {
@@ -200,6 +225,215 @@ if (data.branch_name) {
     } catch {
       return "Unable to connect to the server.";
     }
+  };
+
+  const handleSendForgotPasswordOtp = async () => {
+    setForgotMessage("");
+
+    const email = forgotEmail.trim().toLowerCase();
+
+    if (!email) {
+      setForgotMessage("Please enter your email address.");
+      return;
+    }
+
+    try {
+      setForgotLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/auth/forgot-password/send-otp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            email,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const message = await getApiError(response);
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+
+      setForgotMessage(
+        data?.message ||
+          "OTP has been sent to your email."
+      );
+      setForgotStep("otp");
+    } catch (err) {
+      console.error(
+        "Forgot password OTP error:",
+        err
+      );
+
+      setForgotMessage(
+        err.message ||
+          "Unable to send OTP."
+      );
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleVerifyForgotPasswordOtp = async () => {
+    setForgotMessage("");
+
+    const email = forgotEmail.trim().toLowerCase();
+    const otp = forgotOtp.trim();
+
+    if (!otp || !/^\d{6}$/.test(otp)) {
+      setForgotMessage(
+        "Please enter a valid 6-digit OTP."
+      );
+      return;
+    }
+
+    try {
+      setForgotLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/auth/forgot-password/verify-otp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            otp,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const message = await getApiError(response);
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+
+      setForgotMessage(
+        data?.message ||
+          "OTP verified successfully."
+      );
+      setForgotStep("password");
+    } catch (err) {
+      console.error(
+        "Forgot password OTP verification error:",
+        err
+      );
+
+      setForgotMessage(
+        err.message ||
+          "Invalid OTP."
+      );
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setForgotMessage("");
+
+    if (!newPassword) {
+      setForgotMessage(
+        "Please enter a new password."
+      );
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setForgotMessage(
+        "Password must contain at least 8 characters."
+      );
+      return;
+    }
+
+    if (
+      newPassword !==
+      confirmNewPassword
+    ) {
+      setForgotMessage(
+        "Passwords do not match."
+      );
+      return;
+    }
+
+    try {
+      setForgotLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/auth/forgot-password/reset`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            email:
+              forgotEmail.trim().toLowerCase(),
+            otp: forgotOtp.trim(),
+            new_password: newPassword,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const message = await getApiError(response);
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+
+      setForgotMessage(
+        data?.message ||
+          "Password reset successfully."
+      );
+
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setForgotStep("email");
+        setForgotEmail("");
+        setForgotOtp("");
+        setNewPassword("");
+        setConfirmNewPassword("");
+        setForgotMessage("");
+      }, 1200);
+    } catch (err) {
+      console.error(
+        "Password reset error:",
+        err
+      );
+
+      setForgotMessage(
+        err.message ||
+          "Unable to reset password."
+      );
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const closeForgotPassword = () => {
+    if (forgotLoading) {
+      return;
+    }
+
+    setShowForgotPassword(false);
+    setForgotStep("email");
+    setForgotEmail("");
+    setForgotOtp("");
+    setNewPassword("");
+    setConfirmNewPassword("");
+    setForgotMessage("");
   };
 
   const handleInvestorLogin =
@@ -649,6 +883,21 @@ if (data.branch_name) {
 
           </div>
 
+          <div className="auth-forgot-row">
+            <button
+              type="button"
+              className="auth-forgot-link"
+              onClick={() => {
+                setError("");
+                setForgotMessage("");
+                setShowForgotPassword(true);
+              }}
+              disabled={loading}
+            >
+              Forgot Password?
+            </button>
+          </div>
+
           {error && (
             <p className="auth-error">
               {error}
@@ -692,6 +941,230 @@ if (data.branch_name) {
           >
             Back to Home
           </a>
+
+          {showForgotPassword && (
+            <div className="auth-modal-overlay">
+              <div className="auth-modal">
+                <div className="auth-modal-header">
+                  <h3>Forgot Password</h3>
+                  <button
+                    type="button"
+                    className="auth-modal-close"
+                    onClick={closeForgotPassword}
+                    disabled={forgotLoading}
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {forgotStep === "email" && (
+                  <>
+                    <p className="auth-modal-subtitle">
+                      Enter your registered email address.
+                      We will send you a 6-digit OTP.
+                    </p>
+
+                    <label
+                      className="auth-field-label"
+                      htmlFor="forgotEmail"
+                    >
+                      Email Address
+                    </label>
+
+                    <div className="auth-input">
+                      <Mail
+                        size={16}
+                        className="auth-input-icon"
+                      />
+                      <input
+                        id="forgotEmail"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={forgotEmail}
+                        onChange={(e) => {
+                          setForgotEmail(
+                            e.target.value
+                          );
+                          setForgotMessage("");
+                        }}
+                        disabled={forgotLoading}
+                        autoComplete="email"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-block auth-modal-primary-btn"
+                      onClick={
+                        handleSendForgotPasswordOtp
+                      }
+                      disabled={forgotLoading}
+                    >
+                      {forgotLoading
+                        ? "Sending OTP..."
+                        : "Send OTP"}
+                    </button>
+                  </>
+                )}
+
+                {forgotStep === "otp" && (
+                  <>
+                    <p className="auth-modal-subtitle">
+                      Enter the OTP sent to
+                      <strong>
+                        {" "}
+                        {forgotEmail}
+                      </strong>
+                    </p>
+
+                    <label
+                      className="auth-field-label"
+                      htmlFor="forgotOtp"
+                    >
+                      OTP
+                    </label>
+
+                    <div className="auth-input">
+                      <ShieldCheck
+                        size={16}
+                        className="auth-input-icon"
+                      />
+                      <input
+                        id="forgotOtp"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder="Enter 6-digit OTP"
+                        value={forgotOtp}
+                        onChange={(e) => {
+                          const value =
+                            e.target.value
+                              .replace(/\D/g, "")
+                              .slice(0, 6);
+
+                          setForgotOtp(value);
+                          setForgotMessage("");
+                        }}
+                        disabled={forgotLoading}
+                        autoComplete="one-time-code"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-block auth-modal-primary-btn"
+                      onClick={
+                        handleVerifyForgotPasswordOtp
+                      }
+                      disabled={forgotLoading}
+                    >
+                      {forgotLoading
+                        ? "Verifying..."
+                        : "Verify OTP"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="auth-modal-secondary-btn"
+                      onClick={() => {
+                        setForgotOtp("");
+                        setForgotMessage("");
+                        setForgotStep("email");
+                      }}
+                      disabled={forgotLoading}
+                    >
+                      Change Email
+                    </button>
+                  </>
+                )}
+
+                {forgotStep === "password" && (
+                  <>
+                    <p className="auth-modal-subtitle">
+                      OTP verified. Create your new
+                      password.
+                    </p>
+
+                    <label
+                      className="auth-field-label"
+                      htmlFor="newPassword"
+                    >
+                      New Password
+                    </label>
+
+                    <div className="auth-input">
+                      <Lock
+                        size={16}
+                        className="auth-input-icon"
+                      />
+                      <input
+                        id="newPassword"
+                        type="password"
+                        placeholder="Minimum 8 characters"
+                        value={newPassword}
+                        onChange={(e) => {
+                          setNewPassword(
+                            e.target.value
+                          );
+                          setForgotMessage("");
+                        }}
+                        disabled={forgotLoading}
+                        autoComplete="new-password"
+                      />
+                    </div>
+
+                    <label
+                      className="auth-field-label"
+                      htmlFor="confirmNewPassword"
+                    >
+                      Confirm New Password
+                    </label>
+
+                    <div className="auth-input">
+                      <Lock
+                        size={16}
+                        className="auth-input-icon"
+                      />
+                      <input
+                        id="confirmNewPassword"
+                        type="password"
+                        placeholder="Re-enter new password"
+                        value={confirmNewPassword}
+                        onChange={(e) => {
+                          setConfirmNewPassword(
+                            e.target.value
+                          );
+                          setForgotMessage("");
+                        }}
+                        disabled={forgotLoading}
+                        autoComplete="new-password"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-block auth-modal-primary-btn"
+                      onClick={
+                        handleResetPassword
+                      }
+                      disabled={forgotLoading}
+                    >
+                      {forgotLoading
+                        ? "Updating..."
+                        : "Create New Password"}
+                    </button>
+                  </>
+                )}
+
+                {forgotMessage && (
+                  <p className="auth-forgot-message">
+                    {forgotMessage}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
         </div>
 
