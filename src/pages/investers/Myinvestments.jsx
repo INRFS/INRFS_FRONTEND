@@ -29,9 +29,7 @@ import {
 } from "./InvestorDataContext";
 import "../../Styles/Investor/MyInvestments.css";
 
-const getTenureMonths = (
-  tenure
-) => {
+const getTenureMonths = (tenure) => {
   const value =
     tenure?.tenure_months ??
     tenure?.tenureMonths ??
@@ -41,37 +39,27 @@ const getTenureMonths = (
 
   const number = Number(value);
 
-  return Number.isFinite(number)
-    ? number
-    : 0;
+  return Number.isFinite(number) ? number : 0;
 };
 
-const getInvestmentTenureId = (
-  investment
-) => {
+const getInvestmentTenureId = (investment) => {
   const value =
     investment?.tenure_id ??
     investment?.tenureId;
 
   const number = Number(value);
 
-  return Number.isFinite(number)
-    ? number
-    : null;
+  return Number.isFinite(number) ? number : null;
 };
 
-const getInvestmentId = (
-  investment
-) => {
+const getInvestmentId = (investment) => {
   return (
     investment?.id ??
     investment?.investment_id
   );
 };
 
-const getInvestmentStatus = (
-  investment
-) => {
+const getInvestmentStatus = (investment) => {
   const value =
     investment?.status_name ??
     investment?.statusName ??
@@ -79,10 +67,9 @@ const getInvestmentStatus = (
     investment?.status?.name;
 
   if (value) {
-    const status =
-      String(value)
-        .trim()
-        .toLowerCase();
+    const status = String(value)
+      .trim()
+      .toLowerCase();
 
     if (
       status === "active" ||
@@ -92,8 +79,7 @@ const getInvestmentStatus = (
     }
 
     if (
-      status ===
-        "pending approval" ||
+      status === "pending approval" ||
       status === "pending"
     ) {
       return "Pending Approval";
@@ -121,17 +107,14 @@ const getInvestmentStatus = (
     }
 
     if (
-      status ===
-        "extension requested"
+      status === "extension requested"
     ) {
       return "Extension Requested";
     }
 
     if (
-      status ===
-        "pre-close requested" ||
-      status ===
-        "preclose requested"
+      status === "pre-close requested" ||
+      status === "preclose requested"
     ) {
       return "Pre-Close Requested";
     }
@@ -167,21 +150,14 @@ const getInvestmentStatus = (
   return "Unknown";
 };
 
-const formatDate = (
-  value
-) => {
+const formatDate = (value) => {
   if (!value) {
     return "—";
   }
 
-  const date =
-    new Date(value);
+  const date = new Date(value);
 
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return String(value);
   }
 
@@ -195,9 +171,7 @@ const formatDate = (
   );
 };
 
-const getAmount = (
-  investment
-) => {
+const getAmount = (investment) => {
   return (
     investment?.investment_amount ??
     investment?.amount ??
@@ -205,9 +179,7 @@ const getAmount = (
   );
 };
 
-const getInterestRate = (
-  investment
-) => {
+const getInterestRate = (investment) => {
   const rate =
     investment?.interest_rate ??
     investment?.interestRate ??
@@ -216,23 +188,17 @@ const getInterestRate = (
   return `${rate}% p.a.`;
 };
 
-const getMonthlyInterest = (
-  investment
-) => {
+const getMonthlyInterest = (investment) => {
   if (
-    investment?.monthly_interest !==
-      undefined &&
-    investment?.monthly_interest !==
-      null
+    investment?.monthly_interest !== undefined &&
+    investment?.monthly_interest !== null
   ) {
     return investment.monthly_interest;
   }
 
   if (
-    investment?.expected_monthly_interest !==
-      undefined &&
-    investment?.expected_monthly_interest !==
-      null
+    investment?.expected_monthly_interest !== undefined &&
+    investment?.expected_monthly_interest !== null
   ) {
     return investment.expected_monthly_interest;
   }
@@ -261,9 +227,7 @@ const getMonthlyInterest = (
   );
 };
 
-const getEarnedAmount = (
-  investment
-) => {
+const getEarnedAmount = (investment) => {
   return (
     investment?.earned ??
     investment?.earned_amount ??
@@ -272,9 +236,99 @@ const getEarnedAmount = (
   );
 };
 
+const addMonthsToDate = (value, months) => {
+  if (
+    !value ||
+    !Number.isFinite(Number(months))
+  ) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const originalDay = date.getDate();
+
+  date.setDate(1);
+  date.setMonth(
+    date.getMonth() + Number(months)
+  );
+
+  const lastDayOfTargetMonth =
+    new Date(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      0
+    ).getDate();
+
+  date.setDate(
+    Math.min(
+      originalDay,
+      lastDayOfTargetMonth
+    )
+  );
+
+  return date;
+};
+
+const getMaturityDate = (investment) => {
+  return (
+    investment?.maturity_date ||
+    investment?.maturityDate ||
+    null
+  );
+};
+
+const getProjectedMaturityDate = (
+  investment,
+  extensionMonths
+) => {
+  const months = Number(extensionMonths);
+
+  if (
+    !Number.isFinite(months) ||
+    months <= 0
+  ) {
+    return null;
+  }
+
+  const currentMaturity =
+    getMaturityDate(investment);
+
+  if (currentMaturity) {
+    return addMonthsToDate(
+      currentMaturity,
+      months
+    );
+  }
+
+  const investmentDate =
+    investment?.investment_date ||
+    investment?.investmentDate;
+
+  const currentTenure = Number(
+    investment?.tenureMonths
+  );
+
+  if (
+    investmentDate &&
+    Number.isFinite(currentTenure) &&
+    currentTenure > 0
+  ) {
+    return addMonthsToDate(
+      investmentDate,
+      currentTenure + months
+    );
+  }
+
+  return null;
+};
+
 export default function Myinvestments() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const [
     investments,
@@ -351,154 +405,172 @@ export default function Myinvestments() {
     setLocalActionState,
   ] = useState({});
 
-  const loadInvestments =
-    useCallback(
-      async (
-        showLoader = true
-      ) => {
-        try {
-          if (showLoader) {
-            setLoading(true);
-          } else {
-            setRefreshing(true);
-          }
+  const loadInvestments = useCallback(
+    async (showLoader = true) => {
+      try {
+        if (showLoader) {
+          setLoading(true);
+        } else {
+          setRefreshing(true);
+        }
 
-          setError("");
+        setError("");
 
-          const [
-            investmentsResponse,
-            tenureResponse,
-          ] = await Promise.all([
-            getMyInvestments(),
-            getInvestmentTenures(),
-          ]);
+        const [
+          investmentsResponse,
+          tenureResponse,
+        ] = await Promise.all([
+          getMyInvestments(),
+          getInvestmentTenures(),
+        ]);
 
-          const investmentList =
-            Array.isArray(
-              investmentsResponse
-            )
-              ? investmentsResponse
-              : investmentsResponse?.data ||
-                investmentsResponse?.investments ||
-                [];
+        const investmentList =
+          Array.isArray(
+            investmentsResponse
+          )
+            ? investmentsResponse
+            : investmentsResponse?.data ||
+              investmentsResponse?.investments ||
+              [];
 
-          const tenureList =
-            Array.isArray(
-              tenureResponse
-            )
-              ? tenureResponse
-              : tenureResponse?.data ||
-                tenureResponse?.items ||
-                tenureResponse?.tenures ||
-                [];
+        const tenureList =
+          Array.isArray(tenureResponse)
+            ? tenureResponse
+            : tenureResponse?.data ||
+              tenureResponse?.items ||
+              tenureResponse?.tenures ||
+              [];
 
-          const normalized =
-            investmentList.map(
-              (investment) => {
-                const tenureId =
-                  getInvestmentTenureId(
+        const normalized =
+          investmentList.map(
+            (investment) => {
+              const tenureId =
+                getInvestmentTenureId(
+                  investment
+                );
+
+              const matchingTenure =
+                tenureList.find(
+                  (tenure) =>
+                    Number(tenure?.id) ===
+                    Number(tenureId)
+                );
+
+              const tenureMonths =
+                getTenureMonths(
+                  matchingTenure
+                );
+
+              return {
+                ...investment,
+                tenureId,
+                tenureMonths,
+                status_name:
+                  getInvestmentStatus(
+                    investment
+                  ),
+              };
+            }
+          );
+
+        const normalizedWithBonds =
+          await Promise.all(
+            normalized.map(
+              async (investment) => {
+                const investmentId =
+                  getInvestmentId(
                     investment
                   );
 
-                const matchingTenure =
-                  tenureList.find(
-                    (tenure) =>
-                      Number(
-                        tenure?.id
-                      ) ===
-                      Number(
-                        tenureId
-                      )
+                const status =
+                  getInvestmentStatus(
+                    investment
                   );
 
-                const tenureMonths =
-                  getTenureMonths(
-                    matchingTenure
-                  );
-
-                return {
-                  ...investment,
-                  tenureId,
-                  tenureMonths,
-                  status_name:
-                    getInvestmentStatus(
-                      investment
-                    ),
-                };
-              }
-            );
-
-          // Bond number is created by the backend when an investment is approved.
-          // Fetch it for active investments so the table always shows the latest value.
-          const normalizedWithBonds =
-            await Promise.all(
-              normalized.map(
-                async (investment) => {
-                  const investmentId =
-                    getInvestmentId(
-                      investment
-                    );
-
-                  const status =
-                    getInvestmentStatus(
-                      investment
-                    );
-
-                  if (
-                    !investmentId ||
-                    status !== "Active"
-                  ) {
-                    return investment;
-                  }
-
-                  try {
-                    const bond =
-                      await getMyInvestmentBond(
-                        investmentId
-                      );
-
-                    const bondNumber =
-                      bond?.bond_number ||
-                      bond?.bond_id ||
-                      bond?.bondNumber;
-
-                    return bondNumber
-                      ? {
-                          ...investment,
-                          bond_number: bondNumber,
-                          bond: bondNumber,
-                        }
-                      : investment;
-                  } catch (bondError) {
-                    // Keep the investment visible even if the bond endpoint is temporarily unavailable.
-                    return investment;
-                  }
+                if (
+                  !investmentId ||
+                  status !== "Active"
+                ) {
+                  return investment;
                 }
-              )
-            );
 
-          setInvestments(
-            normalizedWithBonds
+                try {
+                  const bond =
+                    await getMyInvestmentBond(
+                      investmentId
+                    );
+
+                  const bondNumber =
+                    bond?.bond_number ||
+                    bond?.bond_id ||
+                    bond?.bondNumber;
+
+                  return bondNumber
+                    ? {
+                        ...investment,
+                        bond_number:
+                          bondNumber,
+                        bond: bondNumber,
+                      }
+                    : investment;
+                } catch {
+                  return investment;
+                }
+              }
+            )
           );
 
-          setInvestmentTenures(
-            tenureList
-          );
-        } catch (err) {
-          setError(
-            err?.message ||
-              "Unable to load investments."
-          );
-        } finally {
-          setLoading(false);
-          setRefreshing(false);
-        }
-      },
-      []
-    );
+        setInvestments(
+          normalizedWithBonds
+        );
+
+        setInvestmentTenures(
+          tenureList
+        );
+      } catch (err) {
+        setError(
+          err?.message ||
+            "Unable to load investments."
+        );
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     loadInvestments();
+  }, [loadInvestments]);
+
+  useEffect(() => {
+    const refresh = () => {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        loadInvestments(false);
+      }
+    };
+
+    const interval = setInterval(
+      refresh,
+      30000
+    );
+
+    document.addEventListener(
+      "visibilitychange",
+      refresh
+    );
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener(
+        "visibilitychange",
+        refresh
+      );
+    };
   }, [loadInvestments]);
 
   useEffect(() => {
@@ -506,10 +578,9 @@ export default function Myinvestments() {
       return;
     }
 
-    const timer =
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 4000);
+    const timer = setTimeout(() => {
+      setSuccessMessage("");
+    }, 4000);
 
     return () =>
       clearTimeout(timer);
@@ -531,8 +602,7 @@ export default function Myinvestments() {
         (investment) =>
           getInvestmentStatus(
             investment
-          ) ===
-          "Pending Approval"
+          ) === "Pending Approval"
       );
     }, [investments]);
 
@@ -556,31 +626,18 @@ export default function Myinvestments() {
 
   const visibleInvestments =
     useMemo(() => {
-      let list =
-        investments;
+      let list = investments;
 
-      if (
-        activeTab ===
-        "active"
-      ) {
-        list =
-          activeInvestments;
+      if (activeTab === "active") {
+        list = activeInvestments;
       }
 
-      if (
-        activeTab ===
-        "pending"
-      ) {
-        list =
-          pendingInvestments;
+      if (activeTab === "pending") {
+        list = pendingInvestments;
       }
 
-      if (
-        activeTab ===
-        "other"
-      ) {
-        list =
-          otherInvestments;
+      if (activeTab === "other") {
+        list = otherInvestments;
       }
 
       const query =
@@ -605,8 +662,7 @@ export default function Myinvestments() {
 
           return values.some(
             (value) =>
-              value !==
-                undefined &&
+              value !== undefined &&
               value !== null &&
               String(value)
                 .toLowerCase()
@@ -626,10 +682,9 @@ export default function Myinvestments() {
   const getAvailableExtensions =
     useCallback(
       (investment) => {
-        const currentMonths =
-          Number(
-            investment?.tenureMonths
-          );
+        const currentMonths = Number(
+          investment?.tenureMonths
+        );
 
         if (
           !Number.isFinite(
@@ -640,126 +695,90 @@ export default function Myinvestments() {
           return [];
         }
 
-        const validTenures =
-          investmentTenures
-            .map(
-              (tenure) => {
-                const months =
-                  getTenureMonths(
-                    tenure
-                  );
+        const extensionMonthsList = [
+          3,
+          6,
+          9,
+          12,
+          24,
+          36,
+        ];
 
-                return {
-                  id:
-                    tenure?.id,
-                  months,
-                  name:
-                    tenure?.tenure_name ||
-                    tenure?.name ||
-                    `${months} Months`,
-                };
-              }
-            )
-            .filter(
-              (tenure) =>
-                tenure.months >
-                  currentMonths
-            )
-            .sort(
-              (a, b) =>
-                a.months -
-                b.months
-            );
-
-        return validTenures
-          .map(
-            (tenure) => ({
-              ...tenure,
-              extensionMonths:
-                tenure.months -
-                currentMonths,
-            })
-          )
-          .filter(
-            (tenure) =>
-              tenure.extensionMonths >
-              0
-          );
+        return extensionMonthsList.map(
+          (extensionMonths) => ({
+            id: `extension-${extensionMonths}`,
+            extensionMonths,
+            months:
+              currentMonths +
+              extensionMonths,
+            name: `+${extensionMonths} Months`,
+          })
+        );
       },
-      [investmentTenures]
+      []
     );
 
-  const openExtensionModal =
-    (investment) => {
-      const options =
-        getAvailableExtensions(
-          investment
-        );
-
-      if (
-        options.length === 0
-      ) {
-        setError(
-          "No valid tenure extension is available for this investment."
-        );
-        return;
-      }
-
-      setError("");
-
-      setSelectedExtension(
-        String(
-          options[0]
-            .extensionMonths
-        )
-      );
-
-      setExtensionRemarks("");
-
-      setExtensionModal(
-        {
-          investment,
-          options,
-        }
-      );
-    };
-
-  const closeExtensionModal =
-    () => {
-      if (submitting) {
-        return;
-      }
-
-      setExtensionModal(null);
-      setSelectedExtension("");
-      setExtensionRemarks("");
-    };
-
-  const openPreCloseModal =
-    (investment) => {
-      setError("");
-      setPreCloseReason("");
-
-      setPreCloseModal(
+  const openExtensionModal = (
+    investment
+  ) => {
+    const options =
+      getAvailableExtensions(
         investment
       );
-    };
 
-  const closePreCloseModal =
-    () => {
-      if (submitting) {
-        return;
-      }
+    if (options.length === 0) {
+      setError(
+        "No valid tenure extension is available for this investment."
+      );
+      return;
+    }
 
-      setPreCloseModal(null);
-      setPreCloseReason("");
-    };
+    setError("");
+
+    setSelectedExtension(
+      String(
+        options[0].extensionMonths
+      )
+    );
+
+    setExtensionRemarks("");
+
+    setExtensionModal({
+      investment,
+      options,
+    });
+  };
+
+  const closeExtensionModal = () => {
+    if (submitting) {
+      return;
+    }
+
+    setExtensionModal(null);
+    setSelectedExtension("");
+    setExtensionRemarks("");
+  };
+
+  const openPreCloseModal = (
+    investment
+  ) => {
+    setError("");
+    setPreCloseReason("");
+    setPreCloseModal(investment);
+  };
+
+  const closePreCloseModal = () => {
+    if (submitting) {
+      return;
+    }
+
+    setPreCloseModal(null);
+    setPreCloseReason("");
+  };
 
   const handleExtensionSubmit =
     async () => {
-      if (
-        !extensionModal?.investment
-      ) {
+      if (!extensionModal?.investment) {
         return;
       }
 
@@ -767,18 +786,17 @@ export default function Myinvestments() {
         extensionModal.investment;
 
       const investmentId =
-        getInvestmentId(
-          investment
-        );
+        getInvestmentId(investment);
 
       const extensionMonths =
+        Number(selectedExtension);
+
+      const currentMonths =
         Number(
-          selectedExtension
+          investment?.tenureMonths
         );
 
-      if (
-        !investmentId
-      ) {
+      if (!investmentId) {
         setError(
           "Investment ID is missing."
         );
@@ -797,6 +815,18 @@ export default function Myinvestments() {
         return;
       }
 
+      if (
+        !Number.isFinite(
+          currentMonths
+        ) ||
+        currentMonths <= 0
+      ) {
+        setError(
+          "Current investment tenure is missing."
+        );
+        return;
+      }
+
       try {
         setSubmitting(true);
         setError("");
@@ -807,11 +837,9 @@ export default function Myinvestments() {
           extensionRemarks
         );
 
-        setSuccessMessage(
-          "Tenure extension request submitted successfully."
-        );
-
-        closeExtensionModal();
+        setExtensionModal(null);
+        setSelectedExtension("");
+        setExtensionRemarks("");
 
         setLocalActionState(
           (previous) => ({
@@ -821,9 +849,11 @@ export default function Myinvestments() {
           })
         );
 
-        await loadInvestments(
-          false
+        setSuccessMessage(
+          "Tenure extension request submitted successfully. The maturity date will be updated after admin approval."
         );
+
+        await loadInvestments(false);
       } catch (err) {
         setError(
           err?.message ||
@@ -885,9 +915,7 @@ export default function Myinvestments() {
           })
         );
 
-        await loadInvestments(
-          false
-        );
+        await loadInvestments(false);
       } catch (err) {
         setError(
           err?.message ||
@@ -898,19 +926,29 @@ export default function Myinvestments() {
       }
     };
 
-  const handleView = async (investment) => {
-    const investmentId = getInvestmentId(investment);
+  const handleView = async (
+    investment
+  ) => {
+    const investmentId =
+      getInvestmentId(investment);
 
     if (!investmentId) {
-      setError("Investment ID is missing.");
+      setError(
+        "Investment ID is missing."
+      );
       return;
     }
 
     try {
       setError("");
 
-      const response = await getMyInvestmentBond(investmentId);
-      const bond = response?.data ?? response;
+      const response =
+        await getMyInvestmentBond(
+          investmentId
+        );
+
+      const bond =
+        response?.data ?? response;
 
       const bondNumber =
         bond?.bond_number ||
@@ -937,100 +975,161 @@ export default function Myinvestments() {
     }
   };
 
-  const handleDownloadBond = async (investment) => {
-    const investmentId = getInvestmentId(investment);
+  const handleDownloadBond =
+    async (investment) => {
+      const investmentId =
+        getInvestmentId(investment);
 
-    if (!investmentId) {
-      setError("Investment ID is missing.");
-      return;
-    }
-
-    try {
-      setError("");
-
-      const response = await getMyInvestmentBond(investmentId);
-      const bond = response?.data ?? response;
-
-      const bondNumber =
-        bond?.bond_number ||
-        bond?.bond_id ||
-        bond?.bondNumber;
-
-      if (!bondNumber) {
+      if (!investmentId) {
         setError(
-          "Bond certificate has not been generated yet. Please refresh after admin approval."
+          "Investment ID is missing."
         );
         return;
       }
 
-      navigate(
-        `/investor/bond-certificate/${encodeURIComponent(
-          investmentId
-        )}?download=1`
-      );
-    } catch (err) {
-      setError(
-        err?.message ||
-          "Unable to download the bond certificate."
-      );
-    }
-  };
+      try {
+        setError("");
 
-const getActionState =
-    (investment) => {
-      const investmentId =
-        getInvestmentId(
-          investment
+        const response =
+          await getMyInvestmentBond(
+            investmentId
+          );
+
+        const bond =
+          response?.data ?? response;
+
+        const bondNumber =
+          bond?.bond_number ||
+          bond?.bond_id ||
+          bond?.bondNumber;
+
+        if (!bondNumber) {
+          setError(
+            "Bond certificate has not been generated yet. Please refresh after admin approval."
+          );
+          return;
+        }
+
+        navigate(
+          `/investor/bond-certificate/${encodeURIComponent(
+            investmentId
+          )}?download=1`
         );
-
-      return (
-        localActionState[
-          investmentId
-        ] || ""
-      );
+      } catch (err) {
+        setError(
+          err?.message ||
+            "Unable to download the bond certificate."
+        );
+      }
     };
+
+  const getActionState = (
+    investment
+  ) => {
+    const investmentId =
+      getInvestmentId(investment);
+
+    return (
+      localActionState[
+        investmentId
+      ] || ""
+    );
+  };
 
   return (
     <div className="investor-page">
       <div className="my-investments-stat-grid">
         <div className="my-investments-stat-card my-investments-stat-card--blue">
           <span>Total Investments</span>
-          <strong>{investments.length}</strong>
-          <small>All investment requests</small>
+          <strong>
+            {investments.length}
+          </strong>
+          <small>
+            All investment requests
+          </small>
         </div>
+
         <div className="my-investments-stat-card my-investments-stat-card--green">
           <span>Active Investments</span>
-          <strong>{activeInvestments.length}</strong>
-          <small>Currently active</small>
+          <strong>
+            {activeInvestments.length}
+          </strong>
+          <small>
+            Currently active
+          </small>
         </div>
+
         <div className="my-investments-stat-card my-investments-stat-card--amber">
           <span>Pending Approval</span>
-          <strong>{pendingInvestments.length}</strong>
-          <small>Waiting for admin</small>
+          <strong>
+            {pendingInvestments.length}
+          </strong>
+          <small>
+            Waiting for admin
+          </small>
         </div>
+
         <div className="my-investments-stat-card my-investments-stat-card--purple">
           <span>Other Investments</span>
-          <strong>{otherInvestments.length}</strong>
-          <small>Closed or rejected</small>
+          <strong>
+            {otherInvestments.length}
+          </strong>
+          <small>
+            Closed or rejected
+          </small>
         </div>
+
         <div className="my-investments-stat-card my-investments-stat-card--teal">
           <span>Total Invested</span>
-          <strong>{formatINR(investments.reduce((sum, investment) => sum + Number(getAmount(investment) || 0), 0))}</strong>
-          <small>Total principal</small>
+          <strong>
+            {formatINR(
+              investments.reduce(
+                (sum, investment) =>
+                  sum +
+                  Number(
+                    getAmount(
+                      investment
+                    ) || 0
+                  ),
+                0
+              )
+            )}
+          </strong>
+          <small>
+            Total principal
+          </small>
         </div>
+
         <div className="my-investments-stat-card my-investments-stat-card--blue">
           <span>Interest Earned</span>
-          <strong>{formatINR(investments.reduce((sum, investment) => sum + Number(getEarnedAmount(investment) || 0), 0))}</strong>
-          <small>Expected interest</small>
+          <strong>
+            {formatINR(
+              investments.reduce(
+                (sum, investment) =>
+                  sum +
+                  Number(
+                    getEarnedAmount(
+                      investment
+                    ) || 0
+                  ),
+                0
+              )
+            )}
+          </strong>
+          <small>
+            Expected interest
+          </small>
         </div>
       </div>
 
       {successMessage && (
         <div className="investment-alert investment-alert--success">
           <CheckCircle size={18} />
+
           <span>
             {successMessage}
           </span>
+
           <button
             type="button"
             onClick={() =>
@@ -1045,7 +1144,9 @@ const getActionState =
       {error && (
         <div className="investment-alert investment-alert--error">
           <AlertCircle size={18} />
+
           <span>{error}</span>
+
           <button
             type="button"
             onClick={() =>
@@ -1057,10 +1158,10 @@ const getActionState =
         </div>
       )}
 
-      {pendingInvestments.length >
-        0 && (
+      {pendingInvestments.length > 0 && (
         <div className="pending-approval-banner">
           <Clock size={18} />
+
           <p>
             <strong>
               Pending approval
@@ -1079,111 +1180,109 @@ const getActionState =
       <div className="investor-table-card">
         <div className="investor-table-card__header">
           <div className="my-investments-header-tabs">
+            <button
+              type="button"
+              className={`mb-tab${
+                activeTab === "all"
+                  ? " mb-tab--active"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveTab("all")
+              }
+            >
+              All Investments
+              <span className="mb-tab-count">
+                {investments.length}
+              </span>
+            </button>
 
-        <button
-          type="button"
-          className={`mb-tab${
-            activeTab === "all"
-              ? " mb-tab--active"
-              : ""
-          }`}
-          onClick={() =>
-            setActiveTab("all")
-          }
-        >
-          All Investments
-          <span className="mb-tab-count">
-            {investments.length}
-          </span>
-        </button>
+            <button
+              type="button"
+              className={`mb-tab${
+                activeTab === "active"
+                  ? " mb-tab--active"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveTab("active")
+              }
+            >
+              Active
+              <span className="mb-tab-count">
+                {activeInvestments.length}
+              </span>
+            </button>
 
-        <button
-          type="button"
-          className={`mb-tab${
-            activeTab === "active"
-              ? " mb-tab--active"
-              : ""
-          }`}
-          onClick={() =>
-            setActiveTab("active")
-          }
-        >
-          Active
-          <span className="mb-tab-count">
-            {activeInvestments.length}
-          </span>
-        </button>
+            <button
+              type="button"
+              className={`mb-tab${
+                activeTab === "pending"
+                  ? " mb-tab--active"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveTab("pending")
+              }
+            >
+              Pending
+              <span className="mb-tab-count">
+                {pendingInvestments.length}
+              </span>
+            </button>
 
-        <button
-          type="button"
-          className={`mb-tab${
-            activeTab === "pending"
-              ? " mb-tab--active"
-              : ""
-          }`}
-          onClick={() =>
-            setActiveTab("pending")
-          }
-        >
-          Pending
-          <span className="mb-tab-count">
-            {pendingInvestments.length}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          className={`mb-tab${
-            activeTab === "other"
-              ? " mb-tab--active"
-              : ""
-          }`}
-          onClick={() =>
-            setActiveTab("other")
-          }
-        >
-          Others
-          <span className="mb-tab-count">
-            {otherInvestments.length}
-          </span>
-        </button>
-
+            <button
+              type="button"
+              className={`mb-tab${
+                activeTab === "other"
+                  ? " mb-tab--active"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveTab("other")
+              }
+            >
+              Others
+              <span className="mb-tab-count">
+                {otherInvestments.length}
+              </span>
+            </button>
           </div>
 
           <div className="my-investments-header-actions">
-       
+            <div className="my-investments-header-search">
+              <input
+                className="investor-search-input"
+                placeholder="Search investments or bonds..."
+                value={searchTerm}
+                onChange={(event) =>
+                  setSearchTerm(
+                    event.target.value
+                  )
+                }
+              />
 
-          <div className="my-investments-header-search">
-          <input
-            className="investor-search-input"
-            placeholder="Search investments or bonds..."
-            value={searchTerm}
-            onChange={(event) =>
-              setSearchTerm(
-                event.target.value
-              )
-            }
-          />
-               <button
-              type="button"
-              className="my-investment-add-tab"
-              onClick={() =>
-                navigate(
-                  "/investor/invest-now"
-                )
-              }
-            >
-              <Plus size={14} />
-              New Investment
-            </button>
-<button
-            type="button"
-            className="investor-btn investor-btn--outline"
-          >
-            <Download size={14} />
-            Export
-          </button>
-          </div>
+              <button
+                type="button"
+                className="my-investment-add-tab"
+                onClick={() =>
+                  navigate(
+                    "/investor/invest-now"
+                  )
+                }
+              >
+                <Plus size={14} />
+                New Investment
+              </button>
+
+              <button
+                type="button"
+                className="investor-btn investor-btn--outline"
+              >
+                <Download size={14} />
+                Export
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1244,9 +1343,7 @@ const getActionState =
                   )}
 
                   {visibleInvestments.map(
-                    (
-                      investment
-                    ) => {
+                    (investment) => {
                       const investmentId =
                         getInvestmentId(
                           investment
@@ -1295,7 +1392,8 @@ const getActionState =
                               <span
                                 className="link"
                                 style={{
-                                  cursor: "pointer",
+                                  cursor:
+                                    "pointer",
                                 }}
                                 onClick={() =>
                                   handleView(
@@ -1331,6 +1429,7 @@ const getActionState =
                               {getInterestRate(
                                 investment
                               )}
+
                               {isPending
                                 ? " (initial)"
                                 : ""}
@@ -1345,12 +1444,10 @@ const getActionState =
                           </td>
 
                           <td>
-                            {isPending
-                              ? "—"
-                              : formatDate(
-                                  investment?.maturity_date ||
-                                    investment?.maturityDate
-                                )}
+                            {formatDate(
+                              investment?.maturity_date ||
+                                investment?.maturityDate
+                            )}
                           </td>
 
                           <td className="mono amount-positive">
@@ -1404,9 +1501,15 @@ const getActionState =
                                   type="button"
                                   title="Download Bond"
                                   className="icon-btn icon-btn--settle"
-                                  onClick={() => handleDownloadBond(investment)}
+                                  onClick={() =>
+                                    handleDownloadBond(
+                                      investment
+                                    )
+                                  }
                                 >
-                                  <Download size={14} />
+                                  <Download
+                                    size={14}
+                                  />
                                 </button>
 
                                 {actionState !==
@@ -1427,7 +1530,9 @@ const getActionState =
                                           0
                                         }
                                       >
-                                        <RefreshCw size={13} />
+                                        <RefreshCw
+                                          size={13}
+                                        />
                                         Extend
                                       </button>
 
@@ -1440,7 +1545,9 @@ const getActionState =
                                           )
                                         }
                                       >
-                                        <X size={13} />
+                                        <X
+                                          size={13}
+                                        />
                                         Pre-Close
                                       </button>
                                     </>
@@ -1498,6 +1605,7 @@ const getActionState =
                 <h3>
                   Extend Investment
                 </h3>
+
                 <p>
                   Select the new tenure
                   for this investment.
@@ -1524,6 +1632,7 @@ const getActionState =
                   <span>
                     Investment
                   </span>
+
                   <strong>
                     {getInvestmentId(
                       extensionModal.investment
@@ -1535,6 +1644,7 @@ const getActionState =
                   <span>
                     Current Tenure
                   </span>
+
                   <strong>
                     {
                       extensionModal
@@ -1555,7 +1665,7 @@ const getActionState =
                   (option) => (
                     <button
                       type="button"
-                      key={`${option.id}-${option.months}`}
+                      key={option.id}
                       className={`extension-option${
                         String(
                           option.extensionMonths
@@ -1573,6 +1683,7 @@ const getActionState =
                           )
                         )
                       }
+                      disabled={submitting}
                     >
                       <strong>
                         +
@@ -1581,17 +1692,53 @@ const getActionState =
                         }{" "}
                         Months
                       </strong>
+
                       <span>
                         Total{" "}
-                        {
-                          option.months
-                        }{" "}
+                        {option.months}{" "}
                         Months
                       </span>
                     </button>
                   )
                 )}
               </div>
+
+              {selectedExtension && (
+                <div className="extension-preview">
+                  <div>
+                    <span>
+                      New Tenure
+                    </span>
+
+                    <strong>
+                      {Number(
+                        extensionModal
+                          .investment
+                          .tenureMonths
+                      ) +
+                        Number(
+                          selectedExtension
+                        )}{" "}
+                      Months
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      New Maturity
+                    </span>
+
+                    <strong>
+                      {formatDate(
+                        getProjectedMaturityDate(
+                          extensionModal.investment,
+                          selectedExtension
+                        )
+                      )}
+                    </strong>
+                  </div>
+                </div>
+              )}
 
               <label className="investment-modal-label">
                 Remarks
@@ -1609,9 +1756,7 @@ const getActionState =
                 }
                 placeholder="Enter remarks"
                 rows={3}
-                disabled={
-                  submitting
-                }
+                disabled={submitting}
               />
             </div>
 
@@ -1622,9 +1767,7 @@ const getActionState =
                 onClick={
                   closeExtensionModal
                 }
-                disabled={
-                  submitting
-                }
+                disabled={submitting}
               >
                 Cancel
               </button>
@@ -1657,6 +1800,7 @@ const getActionState =
                 <h3>
                   Pre-Close Investment
                 </h3>
+
                 <p>
                   Send a pre-close request
                   to the administrator.
@@ -1683,6 +1827,7 @@ const getActionState =
                   <span>
                     Investment
                   </span>
+
                   <strong>
                     {getInvestmentId(
                       preCloseModal
@@ -1694,6 +1839,7 @@ const getActionState =
                   <span>
                     Amount
                   </span>
+
                   <strong>
                     {formatINR(
                       getAmount(
@@ -1720,9 +1866,7 @@ const getActionState =
                 }
                 placeholder="Enter reason for pre-close"
                 rows={5}
-                disabled={
-                  submitting
-                }
+                disabled={submitting}
               />
             </div>
 
@@ -1733,9 +1877,7 @@ const getActionState =
                 onClick={
                   closePreCloseModal
                 }
-                disabled={
-                  submitting
-                }
+                disabled={submitting}
               >
                 Cancel
               </button>
