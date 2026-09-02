@@ -1,6 +1,6 @@
 const API_URL =
   process.env.REACT_APP_API_URL ||
-"http://187.52.115.32:8000";
+  "http://187.52.115.32:8000";
 
 const getToken = () => {
   const keys = [
@@ -150,7 +150,9 @@ const makePagination = (
   return params.toString();
 };
 
-const makeQuery = (params = {}) => {
+const makeQuery = (
+  params = {}
+) => {
   const searchParams =
     new URLSearchParams();
 
@@ -371,7 +373,7 @@ export const getInvestmentBondDetails =
 
 /* =========================================================
    TENURE EXTENSION
-   ADMIN CAN ONLY REVIEW AND SEND
+   ADMIN APPROVES OR REJECTS DIRECTLY
    ========================================================= */
 
 export const getPendingTenureExtensions =
@@ -381,13 +383,11 @@ export const getPendingTenureExtensions =
     offset = 0,
   } = {}) => {
     return request(
-      `/admin/tenure-extensions/pending${makeQuery(
-        {
-          branch_id: branchId,
-          limit,
-          offset,
-        }
-      )}`
+      `/admin/tenure-extensions/pending${makeQuery({
+        branch_id: branchId,
+        limit,
+        offset,
+      })}`
     );
   };
 
@@ -405,19 +405,12 @@ export const getTenureExtensionDetails =
 
     return request(
       `/admin/tenure-extensions/${encodeURIComponent(
-        requestId
+        String(requestId)
       )}`
     );
   };
 
-/*
- * IMPORTANT:
- *
- * Admin does NOT approve tenure extension.
- * Admin only submits the request to Super Admin.
- */
-
-export const submitTenureExtension =
+export const approveTenureExtension =
   async (
     requestId,
     {
@@ -436,24 +429,72 @@ export const submitTenureExtension =
 
     return request(
       `/admin/tenure-extensions/${encodeURIComponent(
-        requestId
-      )}/submit`,
+        String(requestId)
+      )}/approve`,
       {
         method: "PUT",
         body: JSON.stringify({
           remarks:
-            remarks || null,
+            String(remarks || "").trim() ||
+            null,
         }),
       }
     );
   };
 
-/*
- * These are intentionally NOT used by Admin.
- *
- * Super Admin should use its own service/routes
- * for approve/reject.
- */
+export const rejectTenureExtension =
+  async (
+    requestId,
+    {
+      remarks = "",
+    } = {}
+  ) => {
+    if (
+      requestId === undefined ||
+      requestId === null ||
+      requestId === ""
+    ) {
+      throw new Error(
+        "Tenure extension request ID is required."
+      );
+    }
+
+    const reason =
+      String(remarks || "").trim();
+
+    if (!reason) {
+      throw new Error(
+        "Rejection reason is required."
+      );
+    }
+
+    return request(
+      `/admin/tenure-extensions/${encodeURIComponent(
+        String(requestId)
+      )}/reject`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          remarks: reason,
+        }),
+      }
+    );
+  };
+
+export const getAllTenureExtensions =
+  async ({
+    branchId = null,
+    limit = 100,
+    offset = 0,
+  } = {}) => {
+    return request(
+      `/admin/tenure-extensions/all${makeQuery({
+        branch_id: branchId,
+        limit,
+        offset,
+      })}`
+    );
+  };
 
 /* =========================================================
    TENURE TIMEOUT SETTLEMENTS
@@ -713,43 +754,9 @@ export const getList = (
   return [];
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export const getAllTenureExtensions = async ({
-  limit = 100,
-  offset = 0,
-} = {}) => {
-  return request(
-    `/admin/tenure-extensions/all${makeQuery({
-      limit,
-      offset,
-    })}`
-  );
-};
-
-
-
-
-
-
-
-
 export { API_URL };
 
-export default {
+const investmentManagementService = {
   getInvestments,
   getAllInvestments,
   getPendingInvestments,
@@ -760,7 +767,9 @@ export default {
 
   getPendingTenureExtensions,
   getTenureExtensionDetails,
-  submitTenureExtension,
+  approveTenureExtension,
+  rejectTenureExtension,
+  getAllTenureExtensions,
 
   getTenureTimeoutSettlements,
   getTenureTimeoutSettlementDetails,
@@ -773,8 +782,6 @@ export default {
   approveAllMonthlyInterest,
 
   getList,
-
-
-
-  getAllTenureExtensions,
 };
+
+export default investmentManagementService;

@@ -11,7 +11,8 @@ import {
   getInvestments,
   rejectInvestment,
   getPendingTenureExtensions,
-  submitTenureExtension,
+  approveTenureExtension,
+  rejectTenureExtension,
 } from "../../services/admin/investmentManagementService";
 
 import "../../Styles/Admin/investments.css";
@@ -732,117 +733,117 @@ export default function InvestmentManagement() {
       }
     };
 
-  /*
-   * IMPORTANT:
-   *
-   * Admin does NOT approve/reject
-   * tenure extension requests.
-   *
-   * Admin only sends the request
-   * to Super Admin.
-   */
+  const openTenureAction = (request) => {
+    setSelectedTenureRequest(request);
+    setTenureRemarks("");
+    setError("");
+    setTenureSendOpen(true);
+  };
 
-  const openTenureSend =
-    (request) => {
-      setSelectedTenureRequest(
-        request
-      );
+  const closeTenureAction = () => {
+    if (tenureActionLoading) {
+      return;
+    }
 
-      setTenureRemarks("");
+    setTenureSendOpen(false);
+    setSelectedTenureRequest(null);
+    setTenureRemarks("");
+  };
+
+  const handleApproveTenure = async () => {
+    if (!selectedTenureRequest) {
+      return;
+    }
+
+    const requestId = getTenureRequestId(
+      selectedTenureRequest
+    );
+
+    if (requestId === null || requestId === undefined || requestId === "") {
+      setError("Tenure extension request ID is missing.");
+      return;
+    }
+
+    try {
+      setTenureActionLoading(true);
       setError("");
-      setTenureSendOpen(true);
-    };
 
-  const closeTenureSend =
-    () => {
-      if (
-        tenureActionLoading
-      ) {
-        return;
-      }
+      await approveTenureExtension(requestId, {
+        remarks: tenureRemarks.trim() || null,
+      });
+
+      setTenureRequests((previous) =>
+        previous.filter(
+          (item) =>
+            String(getTenureRequestId(item)) !==
+            String(requestId)
+        )
+      );
 
       setTenureSendOpen(false);
-      setSelectedTenureRequest(
-        null
-      );
+      setSelectedTenureRequest(null);
       setTenureRemarks("");
-    };
 
-  const handleSendTenure =
-    async () => {
-      if (
-        !selectedTenureRequest
-      ) {
-        return;
-      }
+      await loadAllData();
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Failed to approve tenure extension."
+      );
+    } finally {
+      setTenureActionLoading(false);
+    }
+  };
 
-      const requestId =
-        getTenureRequestId(
-          selectedTenureRequest
-        );
+  const handleRejectTenure = async () => {
+    if (!selectedTenureRequest) {
+      return;
+    }
 
-      if (
-        requestId === null ||
-        requestId === undefined ||
-        requestId === ""
-      ) {
-        setError(
-          "Tenure extension request ID is missing."
-        );
-        return;
-      }
+    const requestId = getTenureRequestId(
+      selectedTenureRequest
+    );
 
-      try {
-        setTenureActionLoading(
-          true
-        );
+    if (requestId === null || requestId === undefined || requestId === "") {
+      setError("Tenure extension request ID is missing.");
+      return;
+    }
 
-        setError("");
+    if (!tenureRemarks.trim()) {
+      setError("Rejection reason is required.");
+      return;
+    }
 
-        await submitTenureExtension(
-          requestId,
-          {
-            remarks:
-              tenureRemarks.trim() ||
-              "Submitted to Super Admin by Admin.",
-          }
-        );
+    try {
+      setTenureActionLoading(true);
+      setError("");
 
-        /*
-         * Remove immediately from the
-         * Admin pending list.
-         */
-        setTenureRequests(
-          (previous) =>
-            previous.filter(
-              (item) =>
-                String(
-                  getTenureRequestId(
-                    item
-                  )
-                ) !==
-                String(requestId)
-            )
-        );
+      await rejectTenureExtension(requestId, {
+        remarks: tenureRemarks.trim(),
+      });
 
-        setTenureSendOpen(false);
-        setSelectedTenureRequest(
-          null
-        );
-        setTenureRemarks("");
+      setTenureRequests((previous) =>
+        previous.filter(
+          (item) =>
+            String(getTenureRequestId(item)) !==
+            String(requestId)
+        )
+      );
 
-        await loadTenureRequests();
-      } catch (err) {
-        setError(
-          err?.message ||
-            "Failed to send tenure extension request to Super Admin."
-        );
-      } finally {
-        setTenureActionLoading(
-          false
-        );
-      }
-    };
+      setTenureSendOpen(false);
+      setSelectedTenureRequest(null);
+      setTenureRemarks("");
+
+      await loadTenureRequests();
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Failed to reject tenure extension."
+      );
+    } finally {
+      setTenureActionLoading(false);
+    }
+  };
 
   const pendingCount =
     investments.filter(
@@ -1307,12 +1308,12 @@ export default function InvestmentManagement() {
                               type="button"
                               className="investment-btn investment-btn--approve"
                               onClick={() =>
-                                openTenureSend(
+                                openTenureAction(
                                   item
                                 )
                               }
                             >
-                              Review &amp; Send
+                              Review
                             </button>
 
                           </div>
@@ -1991,7 +1992,7 @@ export default function InvestmentManagement() {
                 <button
                   type="button"
                   onClick={
-                    closeTenureSend
+                    closeTenureAction
                   }
                 >
                   ×
@@ -2076,9 +2077,8 @@ export default function InvestmentManagement() {
                 </div>
 
                 <div className="investment-superadmin-notice">
-                  This request will be sent to Super Admin.
-                  Admin cannot approve or reject a tenure
-                  extension request.
+                  Admin can approve or reject this tenure extension request.
+                  Approval updates the investment maturity date immediately.
                 </div>
 
                 <label>
@@ -2094,7 +2094,7 @@ export default function InvestmentManagement() {
                       event.target.value
                     )
                   }
-                  placeholder="Optional remarks for Super Admin"
+                  placeholder="Remarks or rejection reason"
                 />
 
               </div>
@@ -2104,7 +2104,7 @@ export default function InvestmentManagement() {
                 <button
                   type="button"
                   onClick={
-                    closeTenureSend
+                    closeTenureAction
                   }
                   disabled={
                     tenureActionLoading
@@ -2115,17 +2115,24 @@ export default function InvestmentManagement() {
 
                 <button
                   type="button"
-                  className="investment-btn investment-btn--approve"
-                  onClick={
-                    handleSendTenure
-                  }
-                  disabled={
-                    tenureActionLoading
-                  }
+                  className="investment-btn investment-btn--reject"
+                  onClick={handleRejectTenure}
+                  disabled={tenureActionLoading}
                 >
                   {tenureActionLoading
-                    ? "Sending..."
-                    : "Send to Super Admin"}
+                    ? "Processing..."
+                    : "Reject"}
+                </button>
+
+                <button
+                  type="button"
+                  className="investment-btn investment-btn--approve"
+                  onClick={handleApproveTenure}
+                  disabled={tenureActionLoading}
+                >
+                  {tenureActionLoading
+                    ? "Processing..."
+                    : "Approve"}
                 </button>
 
               </div>
